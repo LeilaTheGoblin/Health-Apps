@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>העשרה ובריאות אישית</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#10B981">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="העשרה יומית">
+<link rel="icon" href="icon-192.png">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #0F1117; color: #F9FAFB;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 14px; direction: rtl; min-height: 100vh;
+  }
+  #app { max-width: 640px; margin: 0 auto; }
+
+  /* ── HEADER ── */
+  .header {
+    padding: 20px 16px 16px;
+    background: linear-gradient(180deg, #111827 0%, #0F1117 100%);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    position: sticky; top: 0; z-index: 10;
+  }
+  .header-eyebrow { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 3px; }
+  .header-title { font-size: 22px; font-weight: 800; color: #F9FAFB; }
+  .header-date { font-size: 11px; color: #4B5563; margin-top: 3px; }
+
+  .content { padding: 16px; }
+
+  /* ── DID YOU KNOW ── */
+  .dyk-card {
+    background: linear-gradient(135deg, rgba(59,130,246,0.10), rgba(139,92,246,0.07));
+    border: 1px solid rgba(59,130,246,0.22);
+    border-radius: 12px; padding: 14px 16px; margin-bottom: 16px;
+    position: relative; overflow: hidden;
+  }
+  .dyk-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, #3B82F6, #8B5CF6);
+  }
+  .dyk-label { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #60A5FA; margin-bottom: 7px; }
+  .dyk-text { font-size: 14px; color: #E5E7EB; line-height: 1.7; }
+  .dyk-source { font-size: 10px; color: #4B5563; margin-top: 9px; }
+
+  /* ── ARTICLE CARD ── */
+  .article-card {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 12px; overflow: hidden; margin-bottom: 16px;
+  }
+  .article-header { padding: 14px 16px 12px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+  .article-tag {
+    display: inline-block; font-size: 10px; font-weight: 700;
+    letter-spacing: 1px; text-transform: uppercase;
+    padding: 3px 9px; border-radius: 20px; margin-bottom: 9px;
+  }
+  .article-title { font-size: 18px; font-weight: 800; color: #F9FAFB; line-height: 1.35; margin-bottom: 8px; }
+  .article-meta { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+  .article-meta-item { font-size: 11px; color: #6B7280; display: flex; align-items: center; gap: 4px; }
+
+  .article-body { padding: 16px; }
+  .article-body h3 { font-size: 14px; font-weight: 700; color: #D1D5DB; margin: 14px 0 6px; }
+  .article-body p { font-size: 13px; color: #9CA3AF; line-height: 1.78; margin-bottom: 10px; }
+  .article-body strong { color: #D1D5DB; }
+  .highlight-box {
+    background: rgba(16,185,129,0.07); border: 1px solid rgba(16,185,129,0.18);
+    border-radius: 8px; padding: 11px 13px; margin: 13px 0;
+    font-size: 13px; color: #6EE7B7; line-height: 1.65;
+  }
+  .warn-box {
+    background: rgba(245,158,11,0.07); border: 1px solid rgba(245,158,11,0.18);
+    border-radius: 8px; padding: 11px 13px; margin: 13px 0;
+    font-size: 13px; color: #FCD34D; line-height: 1.65;
+  }
+
+  /* ── SOURCES ── */
+  .sources-section { border-top: 1px solid rgba(255,255,255,0.06); padding: 12px 16px; }
+  .sources-label { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #4B5563; margin-bottom: 8px; }
+  .source-item { font-size: 11px; color: #6B7280; margin-bottom: 5px; padding-right: 12px; position: relative; line-height: 1.5; }
+  .source-item::before { content: '›'; position: absolute; right: 0; color: #374151; font-weight: 700; }
+
+  /* ── READ SECTION ── */
+  .read-section {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 12px; padding: 14px 16px; margin-bottom: 16px;
+  }
+  .read-checkbox-row { display: flex; align-items: center; gap: 13px; cursor: pointer; user-select: none; }
+  .read-checkbox {
+    width: 26px; height: 26px; border-radius: 7px; flex-shrink: 0;
+    background: rgba(255,255,255,0.08); border: 1.5px solid rgba(255,255,255,0.2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; transition: all 0.2s;
+  }
+  .read-checkbox.checked { background: #10B981; border-color: #10B981; }
+  .read-label { font-size: 14px; font-weight: 600; color: #D1D5DB; }
+  .read-label.checked { color: #6EE7B7; }
+  .read-sub { font-size: 11px; color: #4B5563; margin-top: 3px; }
+
+  /* ── AGENT STATUS (machine-readable) ── */
+  /*
+   * AGENT INSTRUCTIONS:
+   * Scan #agent-status-block to get:
+   *   READ_STATUS = UNREAD | READ
+   *   DATE = YYYY-MM-DD (today's date when checkbox was set)
+   *   ARTICLE_ID = unique identifier for current article
+   *
+   * Logic for agent:
+   *   IF READ_STATUS == READ → user read today's content → safe to update tomorrow
+   *   IF READ_STATUS == UNREAD → do NOT replace article content yet
+   *   Update #did-you-know-content, #dyk-source, #article-tag, #article-title,
+   *   #reading-time, #article-date, #evidence-level, #article-body,
+   *   #article-sources, #agent-article-id with new content.
+   */
+  .agent-status-block {
+    background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 8px; padding: 9px 12px; margin-top: 12px;
+    font-family: monospace; font-size: 11px;
+  }
+  .status-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px; }
+  .status-row:last-child { margin-bottom: 0; }
+  .status-key { color: #4B5563; }
+  .status-val { color: #6B7280; }
+  .status-val.read { color: #10B981; font-weight: 700; }
+  .status-val.unread { color: #F59E0B; }
+
+  /* ── FOOTER ── */
+  .footer { padding: 10px 16px 30px; font-size: 10px; color: #374151; text-align: center; border-top: 1px solid rgba(255,255,255,0.04); margin-top: 8px; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ══ HEADER ══ -->
+  <div class="header">
+    <div class="header-eyebrow">מנטור בריאותי</div>
+    <div class="header-title">העשרה ובריאות</div>
+    <div style="font-size:11px;color:#4B5563;margin-top:3px">אימונים · תוספים · קוגניציה · פיזיולוגיה · פריצות דרך</div>
+    <div class="header-date" id="header-date"></div>
+  </div>
+
+  <div class="content">
+
+    <!-- ══ DID YOU KNOW ══
+         AGENT: update id="did-you-know-content" and id="dyk-source" daily -->
+    <div class="dyk-card">
+      <div class="dyk-label">💡 הידעת?</div>
+      <div class="dyk-text" id="did-you-know-content">
+        <strong>יותר מ-70% מהפרשת הורמון הגדילה (GH) מתרחשת בגל הראשון של שינה עמוקה (SWS/N3)</strong> — לרוב בתוך 90–120 דקות מההירדמות. GH מרכזי לסינתזת חלבון שריר, ניידות שומן ואיחוי רקמות. שינה מקוטעת, קפאין מאוחר, או חשיפה לאור כחול לפני השינה מפחיתים מאוד את עוצמת גל ה-SWS הראשוני — ובכך <strong>מקטינים את ה-GH pulse הלילי</strong> משמעותית. זו אחת הסיבות שהירדמות מהירה ועמוקה עדיפה בהרבה על כמות שינה גדולה אך מקוטעת.
+      </div>
+      <div class="dyk-source" id="dyk-source">מקור: Van Cauter E et al. (2000). Age-related changes in slow wave sleep and REM sleep and relationship with growth hormone and cortisol levels in healthy men. JAMA, 284(7), 861–868. DOI: 10.1001/jama.284.7.861</div>
+    </div>
+
+    <!-- ══ ARTICLE ══
+         AGENT: update all id="article-*" elements below -->
+    <div class="article-card">
+      <div class="article-header">
+        <!-- AGENT: change style color to match topic -->
+        <div class="article-tag" id="article-tag" style="background:rgba(139,92,246,0.15);color:#A78BFA">תוספי תזונה · נוירוביולוגיה · מטבוליזם</div>
+        <div class="article-title" id="article-title">קריאטין ומוח: מאגרי אנרגיה תאיים, קוגניציה תחת לחץ ונוירופרוטקציה</div>
+        <div class="article-meta">
+          <div class="article-meta-item">⏱ <span id="reading-time">7 דקות קריאה</span></div>
+          <div class="article-meta-item">📅 <span id="article-date"></span></div>
+          <div class="article-meta-item" id="evidence-level">🔬 רמת ראיה: גבוהה (RCTs, MRS, מטה-אנליזות)</div>
+        </div>
+      </div>
+
+      <!-- AGENT: replace full innerHTML of #article-body -->
+      <div class="article-body" id="article-body">
+        <p>Zone 2 Cardio — אירובי בדופק 60–70% מהמקסימום, קצב שמאפשר לנהל שיחה — הוא כלי שעל יעילותו מסכימים כמעט כל חוקרי הפיזיולוגיה, הרפואה המונעת ורפואת הספורט. אך מה קורה ברמה התאית כשמתמידים בעצימות הנמוכה-בינונית הזאת? התשובה נוגעת לאחד ממנגנוני ההסתגלות הביולוגיים החזקים שיש.</p>
+
+        <h3>הגדרת Zone 2: לא אינטואיטיבית</h3>
+        <p>Zone 2 מוגדרת קלינית לפי ריכוז לקטט בדם: <strong>1.5–2.0 mmol/L</strong> — מתחת לסף הלקטט הראשון (LT1). בדופק, זה לרוב 60–70% מהמקסימום. הבדיקה הפשוטה: "כלל השיחה" — אם ניתן לדבר במשפטים שלמים בלי להפסיק לנשום, מדובר ב-Zone 2 ולא Zone 1. אם מתקשים לסיים משפט — עברת ל-Zone 3–4. בפועל, רוב האנשים "חושבים" שהם ב-Zone 2 אך רצים מהר מדי. נסה להנמיך את הדופק ב-10–15 פעימות לעומת מה שנראה לך נוח — כנראה שם תהיה הזון האמיתי.</p>
+
+        <h3>PGC-1α: מנצח סימפוניה של מיטוכונדריות</h3>
+        <p>כשנכנסים ל-Zone 2 ומתמידים בו, רמת AMP תאית עולה (ATP מתרוקן) → מפעיל <strong>AMPK</strong> (AMP-activated protein kinase) → AMPK מפעיל <strong>PGC-1α</strong> (peroxisome proliferator-activated receptor gamma coactivator 1-alpha). PGC-1α הוא ה"מנצח" של ביוגנזה מיטוכונדריאלית: הוא מפעיל תמלול גנים לייצור מיטוכונדריות חדשות, לאנזימי שרשרת הנשימה ולשינוע שומנים. מחקרי Holloszy משנות ה-1960 — שחוללו מהפכה בפיזיולוגיה של הפעילות — הראו שאימון אירובי עקבי <strong>מכפיל את צפיפות המיטוכונדריות בשריר השלד</strong>. Zone 2 ספציפית (לא HIIT) היא הגירוי היעיל ביותר ל-PGC-1α עקב משך המאמץ הארוך.</p>
+
+        <div class="highlight-box">
+          ⚡ <strong>מיטוכונדריות הן הרבה יותר ממנועי אנרגיה:</strong> הן אורגנלות דינמיות שעוברות fusion ו-fission, מתקשרות עם הגרעין ומווסתות אפופטוזיס. ספורטאי סיבורה (סבולת) מציגים צפיפות מיטוכונדריאלית גבוהה פי 3–4 מאנשים לא-מאומנים — זה משנה את קצב ייצור ה-ATP, ניצול חמצן ויכולת פינוי לקטט.
+        </div>
+
+        <h3>גמישות מטבולית: שריפת שומן כ-fuel</h3>
+        <p>ב-Zone 2, הגוף מסתמך בעיקר על <strong>חמצון שומנים (Fat Oxidation)</strong> כדלק. זה מחייב מכונה מטבולית עובדת: אנזים CPT-1 מעביר חומצות שומן לתוך המיטוכונדריה, שרשרת β-oxidation מפרקת אותן ל-Acetyl-CoA שנכנס למחזור קרבס. אנשים עם <strong>"metabolic inflexibility"</strong> — נפוצה בשיבות ממושכות ותזונה עתירת פחמימות — מאבדים יכולת זו: הגוף נסמך כמעט לגמרי על גלוקוז. Zone 2 עקבי (3–4× שבועי, 45+ דקות) מחזיר גמישות זו, משפר ספיקת חמצן ומוריד RER (Respiratory Exchange Ratio) — מדד ישיר לתמהיל הדלק.</p>
+
+        <h3>BDNF: האפקט הנוירולוגי</h3>
+        <p><strong>BDNF (Brain-Derived Neurotrophic Factor)</strong> הוא פקטור גדילה שמקדם הישרדות נוירונים, נוירוגנזה בהיפוקמפוס ו-synaptic plasticity. רמות נמוכות של BDNF נקשרות לדיכאון, לקות קוגניטיבית וניוון נוירולוגי. פעילות אירובית היא הגורם הלא-פרמקולוגי שמעלה BDNF ברמות המובהקות ביותר בספרות. מחקר של Seifert et al. (2010, Acta Physiologica) מדד BDNF בדם ובנוזל עמוד השדרה לפני ואחרי פעילות אירובית ממושכת — ומצא עלייה של <strong>עד 32%</strong> ב-serum BDNF לאחר 20–30 דקות ב-Zone 2–3. HIIT מראה עליות חדות אך קצרות; Zone 2 ממושך יוצר עלייה מתמשכת ועקבית יותר. עבור שיקום קוגניטיבי ונוירוביולוגיה — זה המנגנון הנכון להפעיל.</p>
+
+        <div class="highlight-box">
+          🧠 <strong>נוירוגנזה בהיפוקמפוס:</strong> ה-DG (Dentate Gyrus) של ההיפוקמפוס הוא אחד מהאזורים הנדירים במוח הבוגר עם נוירוגנזה מתמשכת. BDNF שמשתחרר בזמן Zone 2 מפעיל TrkB receptors על progenitor cells באזור זה ← מעודד הבשלתם לנוירונים בוגרים. Van Praag et al. (2005, Journal of Neuroscience) הדגימו שריצה מעלה proliferation ו-survival של נוירונים חדשים בהיפוקמפוס — אחד המאמרים המצוטטים ביותר בנוירוביולוגיה של פעילות גופנית.
+        </div>
+
+        <h3>מינון ופרוטוקול</h3>
+        <p>ה-consensus הנוכחי: <strong>150–300 דקות/שבוע</strong> בעצימות Zone 2 כ-baseline (AHA guidelines). חוקרים כ-Iñigo San Millán (Colorado School of Medicine) מדגישים שספורטאי סיבורה עלית מצברים 80% מהאימון שלהם ב-Zone 2. עבור מטרות בריאות ושיפור קוגניטיבי: 3–4 יחידות שבועיות × 30–60 דקות ב-Zone 2 הן מטרה ריאלית ומוכחת. ניתן לבצע ברכיבה (עומס נמוך על עמ"ש), הליכה מהירה בשיפוע, שחייה או אליפטי — ובלבד שהדופק יישאר ביעד לאורך כל האימון.</p>
+
+        <div class="warn-box">
+          ⚠️ <strong>Zone 2 ≠ קל, אבל גם לא מאמץ:</strong> טעות נפוצה — Zone 2 לא מרגיש קשה, ולכן נוטים לשדרג עצימות "כי זה לא מספיק". אך ה-PGC-1α signaling דורש <em>משך</em>, לא עצימות. 45 דקות בדופק 130 עדיפות על 20 דקות בדופק 160 למטרות ביוגנזה מיטוכונדריאלית ו-BDNF מתמשך.
+        </div>
+
+        <h3>Zone 2 מול HIIT: האיזון הנכון</h3>
+        <p>HIIT מפעיל מסלולי הסתגלות שונים (EPOC, HGH pulse, שיפור VO2max מהיר יותר). Zone 2 בונה את ה-aerobic base — ה"מנוע" שעליו HIIT יכול לפעול ביעילות. הספרות תומכת ב-polarized model: ~80% Zone 2 + ~20% עצימות גבוהה. Zone 2 הוא השכבה שרוב האנשים מזניחים לטובת האימונים הקשים — ובכך מגבילים את ה-ceiling של הביצועים שלהם.</p>
+      </div>
+
+      <!-- AGENT: replace full innerHTML of #article-sources -->
+      <div class="sources-section">
+        <div class="sources-label">מקורות</div>
+        <div id="article-sources">
+          <div class="source-item">Holloszy JO (1967). Biochemical adaptations in muscle. Effects of exercise on mitochondrial oxygen uptake and respiratory enzyme activity in skeletal muscle. <em>Journal of Biological Chemistry</em>, 242(9), 2278–2282.</div>
+          <div class="source-item">Seifert T et al. (2010). Endurance training enhances BDNF release from the human brain. <em>Acta Physiologica</em>, 200(1), 105–110. DOI: 10.1111/j.1748-1716.2010.02116.x</div>
+          <div class="source-item">Van Praag H et al. (2005). Exercise enhances learning and hippocampal neurogenesis in aged mice. <em>Journal of Neuroscience</em>, 25(38), 8680–8685. DOI: 10.1523/JNEUROSCI.1731-05.2005</div>
+          <div class="source-item">Wrann CD et al. (2013). Exercise induces hippocampal BDNF through a PGC-1α/FNDC5 pathway. <em>Cell Metabolism</em>, 18(5), 649–659. DOI: 10.1016/j.cmet.2013.09.008</div>
+          <div class="source-item">San Millán I & Brooks GA (2018). Assessment of metabolic flexibility by means of measuring blood lactate, fat, and carbohydrate oxidation responses to exercise in professional endurance athletes and less-fit individuals. <em>Sports Medicine</em>, 48(2), 467–479. DOI: 10.1007/s40279-017-0751-x</div>
+          <div class="source-item">Iaia FM & Bangsbo J (2010). Speed endurance training is a powerful stimulus for physiological adaptations and performance improvements of athletes. <em>Scandinavian Journal of Medicine &amp; Science in Sports</em>, 20 Suppl 2, 11–23. DOI: 10.1111/j.1600-0838.2010.01193.x</div>
+          <div class="source-item">Kramer AF & Erickson KI (2007). Capitalizing on cortical plasticity: influence of physical activity on cognition and brain function. <em>Trends in Cognitive Sciences</em>, 11(8), 342–348. DOI: 10.1016/j.tics.2007.06.009</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ READ STATUS ══ -->
+    <div class="read-section">
+      <div class="read-checkbox-row" id="read-toggle">
+        <div class="read-checkbox" id="read-checkbox"></div>
+        <div>
+          <div class="read-label" id="read-label">קראתי את החומר של היום</div>
+          <div class="read-sub">סמן לאחר קריאה — הסוכן יעדכן תוכן חדש מחר</div>
+        </div>
+      </div>
+
+      <!--
+        ══════════════════════════════════════════════
+        AGENT-READABLE STATUS BLOCK
+        Scan this block to determine if content should be updated.
+        READ_STATUS: UNREAD = do not replace content yet.
+                     READ   = safe to update with new article.
+        ══════════════════════════════════════════════
+      -->
+      <div class="agent-status-block" id="agent-status-block">
+        <div class="status-row">
+          <span class="status-key">READ_STATUS:</span>
+          <span class="status-val unread" id="agent-read-status">UNREAD</span>
+        </div>
+        <div class="status-row">
+          <span class="status-key">READ_DATE:</span>
+          <span class="status-val" id="agent-read-date">—</span>
+        </div>
+        <div class="status-row">
+          <span class="status-key">TODAY:</span>
+          <span class="status-val" id="agent-today"></span>
+        </div>
+        <div class="status-row">
+          <span class="status-key">ARTICLE_ID:</span>
+          <span class="status-val" id="agent-article-id">zone2-cardio-mitochondria-bdnf-2026-06-23</span>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+
+  <div class="footer">תוכן מעודכן יומית על-ידי המנטור הבריאותי · מבוסס ראיות מדעיות</div>
+</div><!-- /app -->
+
+<script>
+// ── DATE SETUP ──
+const today = new Date();
+const todayStr = today.toISOString().split('T')[0];
+const heDate = today.toLocaleDateString('he-IL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+document.getElementById('header-date').textContent = heDate;
+document.getElementById('article-date').textContent = todayStr;
+document.getElementById('agent-today').textContent = todayStr;
+
+// ── READ STATE ──
+const READ_KEY = 'health_read_' + todayStr;
+let readData = JSON.parse(localStorage.getItem(READ_KEY) || 'null');
+// readData = { status: "READ"|"UNREAD", date: "YYYY-MM-DD" } | null
+
+function applyReadState(isRead, date) {
+  const cb     = document.getElementById('read-checkbox');
+  const lbl    = document.getElementById('read-label');
+  const status = document.getElementById('agent-read-status');
+  const rdDate = document.getElementById('agent-read-date');
+
+  if (isRead) {
+    cb.className = 'read-checkbox checked';
+    cb.textContent = '✓';
+    lbl.className = 'read-label checked';
+    lbl.textContent = 'קראתי — תוכן חדש זמין מחר ✓';
+    status.textContent = 'READ';
+    status.className = 'status-val read';
+    rdDate.textContent = date || todayStr;
+  } else {
+    cb.className = 'read-checkbox';
+    cb.textContent = '';
+    lbl.className = 'read-label';
+    lbl.textContent = 'קראתי את החומר של היום';
+    status.textContent = 'UNREAD';
+    status.className = 'status-val unread';
+    rdDate.textContent = '—';
+  }
+}
+
+// Init
+const isAlreadyRead = readData && readData.status === 'READ';
+applyReadState(isAlreadyRead, readData?.date);
+
+// Toggle
+document.getElementById('read-toggle').addEventListener('click', () => {
+  const nowRead = !(readData && readData.status === 'READ');
+  readData = { status: nowRead ? 'READ' : 'UNREAD', date: todayStr };
+  localStorage.setItem(READ_KEY, JSON.stringify(readData));
+  applyReadState(nowRead, todayStr);
+});
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(()=>{});
+  });
+}
+</script>
+</body>
+</html>
