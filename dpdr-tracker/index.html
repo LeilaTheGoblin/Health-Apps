@@ -1,0 +1,1274 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>מנטור DPDR</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#4f8ef7">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="מנטור DPDR">
+<link rel="icon" href="icon-192.png">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0e1117;--surface:#161b27;--card:#1c2235;--border:#252d42;
+  --accent:#4f8ef7;--accent2:#7c5cbf;--green:#3ecf8e;--amber:#f6a623;--red:#e05c5c;
+  --text:#e8ecf4;--muted:#6b7694;--dim:#3a4260;
+}
+body{background:var(--bg);color:var(--text);font-family:'Rubik',sans-serif;font-size:15px;min-height:100vh;direction:rtl}
+.shell{max-width:780px;margin:0 auto;padding-bottom:80px}
+
+/* HEADER */
+.header{padding:22px 20px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:14px;position:sticky;top:0;background:var(--bg);z-index:100}
+.header-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.header-title{font-size:16px;font-weight:600}
+.header-sub{font-size:11px;color:var(--muted);margin-top:1px}
+.header-badge{margin-right:auto;background:rgba(62,207,142,.12);color:var(--green);border:1px solid rgba(62,207,142,.3);font-size:11px;padding:3px 10px;border-radius:20px;font-weight:500}
+
+/* TABS */
+.tabs{display:flex;gap:2px;padding:10px 14px;background:var(--surface);border-bottom:1px solid var(--border);overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{padding:7px 15px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;border:none;background:transparent;color:var(--muted);white-space:nowrap;transition:all .18s;font-family:'Rubik',sans-serif}
+.tab:hover{color:var(--text);background:var(--border)}
+.tab.active{background:var(--accent);color:#fff}
+
+/* PAGES */
+.page{display:none;padding:18px 16px}
+.page.active{display:block}
+.section-label{font-size:11px;letter-spacing:1.1px;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:12px}
+
+/* METER CARDS */
+.checkin-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px}
+@media(max-width:480px){.checkin-grid{grid-template-columns:1fr}}
+.meter-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px}
+.meter-card .mlabel{font-size:12px;color:var(--muted);margin-bottom:10px;font-weight:500}
+.meter-card .score-display{font-size:38px;font-weight:300;line-height:1;margin-bottom:10px;transition:color .3s}
+.slider{-webkit-appearance:none;appearance:none;width:100%;height:4px;border-radius:2px;background:var(--border);outline:none;cursor:pointer}
+.slider::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--accent);cursor:pointer;transition:transform .15s}
+.slider::-webkit-slider-thumb:hover{transform:scale(1.2)}
+
+/* TOOL CARDS */
+.tools-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px}
+@media(max-width:500px){.tools-grid{grid-template-columns:1fr}}
+.tool-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px 16px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+.tool-card:hover{border-color:var(--accent);transform:translateY(-1px)}
+.tool-card.done{border-color:var(--green)}
+.tool-card.done .tc-check{opacity:1}
+.tc-check{position:absolute;top:10px;left:10px;background:var(--green);color:#0e1117;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;opacity:0;transition:opacity .2s}
+.tool-icon{font-size:22px;margin-bottom:8px}
+.tool-name{font-size:14px;font-weight:600;margin-bottom:4px}
+.tool-desc{font-size:12px;color:var(--muted);line-height:1.5}
+.tool-tag{display:inline-block;margin-top:8px;font-size:10px;padding:2px 8px;border-radius:10px;background:var(--border);color:var(--muted)}
+.tool-hint{font-size:11px;color:var(--accent);margin-top:6px;opacity:.8}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:10px 20px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;border:none;font-family:'Rubik',sans-serif;transition:all .18s}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:#6a9ff8}
+.btn-ghost{background:var(--border);color:var(--text)}
+.btn-ghost:hover{background:var(--dim)}
+.btn-green{background:var(--green);color:#0e1117}
+.btn-sm{padding:7px 14px;font-size:12px}
+
+/* TASKS */
+.tasks-list{display:flex;flex-direction:column;gap:8px;margin-bottom:18px}
+.task-item{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:14px;cursor:pointer;transition:all .2s}
+.task-item:hover{border-color:var(--dim)}
+.task-item.done{opacity:.6}
+.task-check{width:22px;height:22px;border-radius:6px;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s;font-size:12px;font-weight:700}
+.task-item.done .task-check{background:var(--green);border-color:var(--green);color:#0e1117}
+.task-text{font-size:14px;flex:1}
+.task-item.done .task-text{text-decoration:line-through;color:var(--muted)}
+.task-priority{font-size:10px;padding:2px 8px;border-radius:8px;font-weight:600;white-space:nowrap}
+.prio-high{background:rgba(224,92,92,.15);color:var(--red)}
+.prio-med{background:rgba(246,166,35,.15);color:var(--amber)}
+.prio-low{background:rgba(79,142,247,.15);color:var(--accent)}
+
+/* GROUNDING */
+.grounding-box{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:12px}
+.grounding-step{display:none}
+.grounding-step.active{display:block}
+.grounding-step-num{font-size:52px;font-weight:700;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1;margin-bottom:6px}
+.grounding-step-sense{font-size:18px;font-weight:600;margin-bottom:6px}
+.grounding-step-instruction{font-size:14px;color:var(--muted);line-height:1.65;margin-bottom:18px}
+.grounding-progress{display:flex;gap:6px;margin-bottom:18px}
+.gp-dot{height:3px;flex:1;border-radius:2px;background:var(--border);transition:background .3s}
+.gp-dot.done{background:var(--accent)}
+
+/* BREATHING */
+.breathe-wrap{display:flex;flex-direction:column;align-items:center;padding:24px 0}
+.breathe-circle{width:120px;height:120px;border-radius:50%;background:linear-gradient(135deg,rgba(79,142,247,.25),rgba(124,92,191,.18));border:2px solid var(--accent);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:500;color:var(--accent);margin-bottom:16px;transition:transform 0.1s}
+@keyframes expand{from{transform:scale(1)}to{transform:scale(1.35)}}
+@keyframes shrink{from{transform:scale(1.35)}to{transform:scale(1)}}
+.breathe-label{font-size:22px;font-weight:300;margin-bottom:6px}
+.breathe-count{font-size:13px;color:var(--muted);margin-bottom:20px}
+.breathe-btns{display:flex;gap:10px}
+
+/* TRIGGERS */
+.trigger-list{display:flex;flex-direction:column;gap:8px;margin-bottom:20px}
+.trigger-row{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px;display:flex;align-items:flex-start;gap:12px}
+.trigger-dot{width:8px;height:8px;border-radius:50%;margin-top:5px;flex-shrink:0}
+.trigger-title{font-size:14px;font-weight:600;margin-bottom:5px}
+.trigger-text{font-size:13px;color:var(--muted);line-height:1.6}
+
+/* LOG */
+.log-week{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:16px}
+.log-week-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.log-week-title{font-size:15px;font-weight:600}
+.log-grid{display:flex;flex-direction:column;gap:12px}
+.log-row{display:flex;align-items:center;gap:12px}
+.log-row-label{font-size:13px;color:var(--muted);width:130px;flex-shrink:0}
+.log-row-slider{flex:1}
+.log-row-val{font-size:14px;font-weight:600;width:28px;text-align:center}
+.history-row{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.history-week{font-size:12px;color:var(--muted);margin-top:3px}
+.history-score{font-size:20px;font-weight:300;padding:3px 12px;border-radius:8px}
+
+/* INFO */
+.info-block{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:10px}
+.info-block h3{font-size:14px;font-weight:600;margin-bottom:8px}
+.info-block p,.info-block li{font-size:13px;color:var(--muted);line-height:1.65}
+.info-block ul{padding-right:16px}
+.info-block li{margin-bottom:4px}
+.warn-box{border-color:rgba(246,166,35,.4);background:rgba(246,166,35,.06)}
+.warn-box h3{color:var(--amber)}
+.spacer{height:16px}
+
+/* ── DAILY KNOWLEDGE ── */
+.dk-card{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:10px}
+.dk-header{padding:16px 18px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border)}
+.dk-day-badge{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;white-space:nowrap}
+.dk-title{font-size:15px;font-weight:600;flex:1}
+.dk-read-badge{font-size:11px;padding:3px 10px;border-radius:20px;font-weight:600;cursor:pointer;border:none;font-family:'Rubik',sans-serif;transition:all .2s;white-space:nowrap}
+.dk-read-badge.unread{background:rgba(79,142,247,.15);color:var(--accent)}
+.dk-read-badge.read{background:rgba(62,207,142,.15);color:var(--green)}
+.dk-body{padding:18px}
+.dk-body p{font-size:14px;color:var(--text);line-height:1.75;margin-bottom:12px}
+.dk-body p:last-child{margin-bottom:0}
+.dk-body strong{color:var(--accent);font-weight:600}
+.dk-body em{color:var(--muted);font-style:normal}
+.dk-concept{background:rgba(79,142,247,.07);border:1px solid rgba(79,142,247,.18);border-radius:10px;padding:12px 14px;margin:12px 0;font-size:13px;color:var(--muted);line-height:1.65}
+.dk-concept b{color:var(--text)}
+.dk-progress{padding:14px 18px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.dk-prog-bar-wrap{flex:1;height:4px;background:var(--border);border-radius:2px}
+.dk-prog-bar{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .4s}
+.dk-prog-label{font-size:11px;color:var(--muted);white-space:nowrap}
+.dk-nav{display:flex;gap:8px;justify-content:flex-end;padding:0 18px 16px}
+
+/* ── MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:500;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .25s}
+.modal-overlay.open{opacity:1;pointer-events:all}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:22px 22px 0 0;width:100%;max-width:780px;max-height:88vh;overflow-y:auto;padding:0 0 32px;transform:translateY(40px);transition:transform .3s cubic-bezier(.22,1,.36,1)}
+.modal-overlay.open .modal{transform:translateY(0)}
+.modal-handle{width:40px;height:4px;background:var(--border);border-radius:2px;margin:14px auto 0}
+.modal-header{padding:20px 24px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-size:17px;font-weight:600;display:flex;align-items:center;gap:10px}
+.modal-close{background:var(--border);border:none;color:var(--muted);width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:all .18s;font-family:'Rubik',sans-serif}
+.modal-close:hover{background:var(--dim);color:var(--text)}
+.modal-body{padding:20px 24px}
+.modal-meta{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap}
+.modal-tag{font-size:11px;padding:3px 10px;border-radius:10px;font-weight:500}
+.modal-tag-time{background:rgba(79,142,247,.15);color:var(--accent)}
+.modal-tag-why{background:rgba(62,207,142,.12);color:var(--green)}
+.modal-section{margin-bottom:18px}
+.modal-section h4{font-size:13px;font-weight:600;color:var(--muted);letter-spacing:.8px;text-transform:uppercase;margin-bottom:10px}
+.modal-section p{font-size:14px;color:var(--text);line-height:1.7}
+.modal-steps{list-style:none;display:flex;flex-direction:column;gap:10px}
+.modal-steps li{display:flex;gap:12px;align-items:flex-start}
+.step-num{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;margin-top:1px}
+.step-text{font-size:14px;line-height:1.65;color:var(--text)}
+.step-text em{font-style:normal;color:var(--muted)}
+.modal-tip{background:rgba(79,142,247,.08);border:1px solid rgba(79,142,247,.2);border-radius:10px;padding:12px 14px;font-size:13px;color:var(--muted);line-height:1.6;margin-top:4px}
+.modal-tip strong{color:var(--accent)}
+.modal-action{padding:0 24px;display:flex;gap:10px;flex-wrap:wrap}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<div class="header">
+  <div class="header-icon">🧠</div>
+  <div>
+    <div class="header-title">מנטור DPDR</div>
+    <div class="header-sub">תוכנית תמיכה אישית</div>
+  </div>
+  <div class="header-badge">פעיל</div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('daily',this)">יומי</button>
+  <button class="tab" onclick="switchTab('grounding',this)">כלי Grounding</button>
+  <button class="tab" onclick="switchTab('triggers',this)">טריגרים</button>
+  <button class="tab" onclick="switchTab('log',this)">מעקב שבועי</button>
+  <button class="tab" onclick="switchTab('tasks',this)">משימות</button>
+  <button class="tab" onclick="switchTab('info',this)">מידע</button>
+</div>
+
+<!-- DAILY -->
+<div id="page-daily" class="page active">
+
+  <div class="section-label">מדדים עכשיו</div>
+  <div class="checkin-grid">
+    <div class="meter-card">
+      <div class="mlabel">📡 עוצמת DPDR</div>
+      <div class="score-display" id="dpdr-val" style="color:var(--accent)">5</div>
+      <input type="range" class="slider" min="1" max="10" value="5" oninput="updateMeter('dpdr',this.value)">
+    </div>
+    <div class="meter-card">
+      <div class="mlabel">⚡ קוגניציה</div>
+      <div class="score-display" id="cog-val" style="color:var(--green)">7</div>
+      <input type="range" class="slider" min="1" max="10" value="7" oninput="updateMeter('cog',this.value)">
+    </div>
+    <div class="meter-card">
+      <div class="mlabel">😴 שינה אמש (שעות)</div>
+      <div class="score-display" id="sleep-val" style="color:var(--amber)">7</div>
+      <input type="range" class="slider" min="4" max="10" value="7" oninput="updateMeter('sleep',this.value)">
+    </div>
+    <div class="meter-card">
+      <div class="mlabel">💪 כאב גב (1-10)</div>
+      <div class="score-display" id="pain-val" style="color:var(--muted)">3</div>
+      <input type="range" class="slider" min="1" max="10" value="3" oninput="updateMeter('pain',this.value)">
+    </div>
+  </div>
+
+  <div class="section-label">כלים מהירים — לחץ לפרטים ולהפעלה</div>
+  <div class="tools-grid">
+    <div class="tool-card" id="tool-54321" onclick="openModal('modal-54321')">
+      <div class="tc-check">✓</div>
+      <div class="tool-icon">🌿</div>
+      <div class="tool-name">5-4-3-2-1</div>
+      <div class="tool-desc">עגינה חושית — מחזיר נוכחות מהר</div>
+      <div class="tool-tag">2 דקות</div>
+      <div class="tool-hint">לחץ לפרטים ←</div>
+    </div>
+    <div class="tool-card" id="tool-breath" onclick="openModal('modal-breath')">
+      <div class="tc-check">✓</div>
+      <div class="tool-icon">🌬️</div>
+      <div class="tool-name">נשימה 4-6</div>
+      <div class="tool-desc">מוריד arousal — נשיפה ארוכה</div>
+      <div class="tool-tag">2 דקות</div>
+      <div class="tool-hint">לחץ לפרטים ←</div>
+    </div>
+    <div class="tool-card" id="tool-temp" onclick="openModal('modal-temp')">
+      <div class="tc-check">✓</div>
+      <div class="tool-icon">🧊</div>
+      <div class="tool-name">טמפרטורה</div>
+      <div class="tool-desc">מים קרים על פנים / כפות ידיים</div>
+      <div class="tool-tag">30 שניות</div>
+      <div class="tool-hint">לחץ לפרטים ←</div>
+    </div>
+    <div class="tool-card" id="tool-pressure" onclick="openModal('modal-pressure')">
+      <div class="tc-check">✓</div>
+      <div class="tool-icon">🤲</div>
+      <div class="tool-name">לחץ גופני</div>
+      <div class="tool-desc">ידיים חזקות על ירכיים, הרגש את המשקל</div>
+      <div class="tool-tag">30 שניות</div>
+      <div class="tool-hint">לחץ לפרטים ←</div>
+    </div>
+    <div class="tool-card" id="tool-mindful" onclick="openModal('modal-mindful')">
+      <div class="tc-check">✓</div>
+      <div class="tool-icon">🪟</div>
+      <div class="tool-name">מיינדפולנס חיצוני</div>
+      <div class="tool-desc">קשב לסביבה — לא לגוף</div>
+      <div class="tool-tag">10 דקות</div>
+      <div class="tool-hint">לחץ לפרטים ←</div>
+    </div>
+    <div class="tool-card" id="tool-anchor" onclick="openModal('modal-anchor')">
+      <div class="tc-check">✓</div>
+      <div class="tool-icon">⚓</div>
+      <div class="tool-name">עוגן חושי</div>
+      <div class="tool-desc">נגיעה עקבית + מוסיקה מוכרת</div>
+      <div class="tool-tag">מיידי</div>
+      <div class="tool-hint">לחץ לפרטים ←</div>
+    </div>
+  </div>
+
+  <div class="section-label">רשימת משימות — היום</div>
+  <div class="tasks-list">
+    <div class="task-item" onclick="toggleTask(this)">
+      <div class="task-check"></div>
+      <div class="task-text">Grounding 5-4-3-2-1 — לפחות פעם אחת</div>
+      <div class="task-priority prio-high">חובה</div>
+    </div>
+    <div class="task-item" onclick="toggleTask(this)">
+      <div class="task-check"></div>
+      <div class="task-text">מיינדפולנס חיצוני — 10 דקות, קשב החוצה בלבד</div>
+      <div class="task-priority prio-high">חובה</div>
+    </div>
+    <div class="task-item" onclick="toggleTask(this)">
+      <div class="task-check"></div>
+      <div class="task-text">קרדיו Zone 2 — 25-30 דקות הליכה/ריצה</div>
+      <div class="task-priority prio-med">מומלץ</div>
+    </div>
+    <div class="task-item" onclick="toggleTask(this)">
+      <div class="task-check"></div>
+      <div class="task-text">שמירה על שעת שינה — כניסה למיטה 21:00</div>
+      <div class="task-priority prio-med">מומלץ</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- GROUNDING PAGE -->
+<div id="page-grounding" class="page">
+
+  <div class="section-label">תרגיל עיגון — 5-4-3-2-1</div>
+  <div class="grounding-box" id="grounding-box">
+    <div class="grounding-progress">
+      <div class="gp-dot done" id="gd0"></div>
+      <div class="gp-dot" id="gd1"></div>
+      <div class="gp-dot" id="gd2"></div>
+      <div class="gp-dot" id="gd3"></div>
+      <div class="gp-dot" id="gd4"></div>
+    </div>
+    <div class="grounding-step active" id="gs0">
+      <div class="grounding-step-num">5</div>
+      <div class="grounding-step-sense">👁️ דברים שאתה רואה</div>
+      <div class="grounding-step-instruction">הסתכל סביבך. מצא 5 דברים שאתה רואה כרגע.<br>תאר כל אחד בצורה מדויקת — צבע, צורה, מרחק.</div>
+      <button class="btn btn-primary" onclick="nextGrounding()">עשיתי ← הבא</button>
+    </div>
+    <div class="grounding-step" id="gs1">
+      <div class="grounding-step-num">4</div>
+      <div class="grounding-step-sense">✋ דברים שאתה נוגע</div>
+      <div class="grounding-step-instruction">גע ב-4 דברים פיזיים ליד ידיך.<br>שים לב למרקם, לטמפרטורה, לקשיות.</div>
+      <button class="btn btn-primary" onclick="nextGrounding()">עשיתי ← הבא</button>
+    </div>
+    <div class="grounding-step" id="gs2">
+      <div class="grounding-step-num">3</div>
+      <div class="grounding-step-sense">👂 דברים שאתה שומע</div>
+      <div class="grounding-step-instruction">עצום עיניים לשנייה. הקשב ל-3 צלילים שונים.<br>קרוב, רחוק, רקע — אפילו שקט הוא צליל.</div>
+      <button class="btn btn-primary" onclick="nextGrounding()">עשיתי ← הבא</button>
+    </div>
+    <div class="grounding-step" id="gs3">
+      <div class="grounding-step-num">2</div>
+      <div class="grounding-step-sense">👃 דברים שאתה מריח</div>
+      <div class="grounding-step-instruction">שאף עמוק דרך האף. מה אתה מריח?<br>אפשר לפתוח חלון, לרחרח שרוול — כל דבר.</div>
+      <button class="btn btn-primary" onclick="nextGrounding()">עשיתי ← הבא</button>
+    </div>
+    <div class="grounding-step" id="gs4">
+      <div class="grounding-step-num">1</div>
+      <div class="grounding-step-sense">👅 דבר שאתה טועם</div>
+      <div class="grounding-step-instruction">שתה לגימת מים, או שים לב לטעם שכבר בפה.<br>הישאר עם התחושה לרגע.</div>
+      <button class="btn btn-green" onclick="finishGrounding()">✓ סיימתי</button>
+    </div>
+  </div>
+
+  <div class="spacer"></div>
+  <div class="section-label">נשימה 4-6 — הורדת Arousal</div>
+  <div class="grounding-box">
+    <div class="breathe-wrap">
+      <div class="breathe-circle" id="breathe-circle">התחל</div>
+      <div class="breathe-label" id="breathe-label">נשימה מרגיעה</div>
+      <div class="breathe-count" id="breathe-count">שאיפה 4 שניות / נשיפה 6 שניות</div>
+      <div class="breathe-btns">
+        <button class="btn btn-primary" onclick="startBreath()">התחל</button>
+        <button class="btn btn-ghost" onclick="stopBreath()">עצור</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- TRIGGERS -->
+<div id="page-triggers" class="page">
+  <div class="section-label">הטריגרים שלך — ומה לעשות</div>
+  <div class="trigger-list">
+    <div class="trigger-row">
+      <div class="trigger-dot" style="background:var(--red)"></div>
+      <div>
+        <div class="trigger-title">🚗 נסיעה באוטו</div>
+        <div class="trigger-text">שינויים ויזואליים מהירים + חוסר שליטה = arousal גבוה.<br><br>
+        <span style="color:var(--text);font-weight:500">מה לעשות:</span> לגעת חוזר ונשנה במפרק האגודל. מוסיקה מוכרת ורגשית. לא לנסוע עייף.</div>
+      </div>
+    </div>
+    <div class="trigger-row">
+      <div class="trigger-dot" style="background:var(--amber)"></div>
+      <div>
+        <div class="trigger-title">🏫 מקומות הומי אדם — פקולטה, קניון</div>
+        <div class="trigger-text">גירוי עודף → arousal → החמרת DPDR.<br><br>
+        <span style="color:var(--text);font-weight:500">לפני כניסה:</span> 5 נשימות 4-6 בחוץ.<br>
+        <span style="color:var(--text);font-weight:500">תוך כדי:</span> להתמקד בתחושת הרצפה מתחת לנעליים.</div>
+      </div>
+    </div>
+    <div class="trigger-row">
+      <div class="trigger-dot" style="background:var(--red)"></div>
+      <div>
+        <div class="trigger-title">😴 חסך שינה</div>
+        <div class="trigger-text">הטריגר הכי ניתן לשליטה שיש לך.<br><br>
+        <span style="color:var(--text);font-weight:500">פרוטוקול:</span> כניסה למיטה 21:00, קימה 5:30 — גם בסוף שבוע.</div>
+      </div>
+    </div>
+    <div class="trigger-row">
+      <div class="trigger-dot" style="background:var(--accent)"></div>
+      <div>
+        <div class="trigger-title">📱 גלילה לפני שינה</div>
+        <div class="trigger-text">Stimulation גבוהה מחמירה DPDR למחרת בבוקר.<br><br>
+        <span style="color:var(--text);font-weight:500">כלל:</span> מסך רחוק מ-21:00.</div>
+      </div>
+    </div>
+    <div class="trigger-row">
+      <div class="trigger-dot" style="background:var(--red)"></div>
+      <div>
+        <div class="trigger-title">🚫 קנאביס</div>
+        <div class="trigger-text">הגורם המקורי. אין מינון "בטוח" — אפילו חשיפה חד-פעמית יכולה להחמיר DPDR חודשים קדימה.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-label">מה לא לעשות בגל DPDR</div>
+  <div class="info-block warn-box">
+    <h3>⚠️ 3 טעויות שמחמירות את הגל</h3>
+    <ul>
+      <li><strong style="color:var(--text)">"לבדוק" אם אתה מרגיש:</strong> "האם אני עכשיו בDPDR?" — שאלה זו מחזקת את ההתמקדות ומאריכה את הגל. לעבור מיד לכלי.</li>
+      <li><strong style="color:var(--text)">להתנגד לתחושה:</strong> ניסיון לעצור את הגל מגביר חרדה ומאריך אותו.</li>
+      <li><strong style="color:var(--text)">מיינדפולנס פנימי:</strong> לשים לב לנשימה/גוף — אצל DPDR יכול להגביר ניתוק. לוחשות חיצוניות בלבד.</li>
+    </ul>
+  </div>
+</div>
+
+<!-- LOG -->
+<div id="page-log" class="page">
+  <div class="section-label">רשומת השבוע הנוכחי</div>
+  <div class="log-week">
+    <div class="log-week-header">
+      <div class="log-week-title">שבוע — <span id="week-date"></span></div>
+      <button class="btn btn-primary" id="save-btn" onclick="saveWeek()" style="font-size:12px;padding:7px 14px">שמור</button>
+    </div>
+    <div class="log-grid">
+      <div class="log-row">
+        <div class="log-row-label">DPDR ממוצע</div>
+        <input type="range" class="slider log-row-slider" min="1" max="10" value="5" id="lDpdr" oninput="document.getElementById('lDpdrV').textContent=this.value">
+        <div class="log-row-val" id="lDpdrV">5</div>
+      </div>
+      <div class="log-row">
+        <div class="log-row-label">קוגניציה ממוצעת</div>
+        <input type="range" class="slider log-row-slider" min="1" max="10" value="6" id="lCog" oninput="document.getElementById('lCogV').textContent=this.value">
+        <div class="log-row-val" id="lCogV">6</div>
+      </div>
+      <div class="log-row">
+        <div class="log-row-label">ממוצע שינה (שעות)</div>
+        <input type="range" class="slider log-row-slider" min="4" max="10" value="7" id="lSleep" oninput="document.getElementById('lSleepV').textContent=this.value">
+        <div class="log-row-val" id="lSleepV">7</div>
+      </div>
+      <div class="log-row">
+        <div class="log-row-label">ימי Grounding</div>
+        <input type="range" class="slider log-row-slider" min="0" max="7" value="3" id="lGround" oninput="document.getElementById('lGroundV').textContent=this.value">
+        <div class="log-row-val" id="lGroundV">3</div>
+      </div>
+      <div class="log-row">
+        <div class="log-row-label">אימוני Zone 2</div>
+        <input type="range" class="slider log-row-slider" min="0" max="7" value="2" id="lCardio" oninput="document.getElementById('lCardioV').textContent=this.value">
+        <div class="log-row-val" id="lCardioV">2</div>
+      </div>
+    </div>
+  </div>
+  <div class="section-label">היסטוריה</div>
+  <div id="log-history">
+    <div style="font-size:13px;color:var(--muted);padding:12px 0">כאן יופיעו השבועות לאחר שתשמור לראשונה.</div>
+  </div>
+</div>
+
+<!-- TASKS -->
+<div id="page-tasks" class="page">
+  <div class="section-label">🔴 דחוף — השבוע</div>
+  <div class="tasks-list">
+    <div class="task-item" onclick="toggleTask(this)">
+      <div class="task-check"></div>
+      <div class="task-text">לתאם תור ל-Video-EEG</div>
+      <div class="task-priority prio-high">דחוף</div>
+    </div>
+    <div class="task-item" onclick="toggleTask(this)">
+      <div class="task-check"></div>
+      <div class="task-text">לתאם אורתופד — לציין: טראומה צווארית, חוסר תחושה, MRI צווארי חסר</div>
+      <div class="task-priority prio-high">דחוף</div>
+    </div>
+  </div>
+  <div class="section-label">📋 ממתין לתוצאות</div>
+  <div class="tasks-list">
+    <div class="task-item" onclick="toggleTask(this)">
+      <div class="task-check"></div>
+      <div class="task-text">פסיכיאטר — לאחר Video-EEG</div>
+      <div class="task-priority prio-med">ממתין</div>
+    </div>
+    <div class="task-item" onclick="toggleTask(this)">
+      <div class="task-check"></div>
+      <div class="task-text">פיזיותרפיסט — לאחר אבחנה מהאורתופד</div>
+      <div class="task-priority prio-med">ממתין</div>
+    </div>
+    <div class="task-item" onclick="toggleTask(this)">
+      <div class="task-check"></div>
+      <div class="task-text">בדיקות דם: D, B12, פריטין, שומנים, TSH, CRP, טסטוסטרון</div>
+      <div class="task-priority prio-med">יוני 2026</div>
+    </div>
+  </div>
+  <div class="section-label">💊 לשקול עם רופא</div>
+  <div class="tasks-list">
+    <div class="task-item" onclick="toggleTask(this)">
+      <div class="task-check"></div>
+      <div class="task-text">Omega-3 EPA+DHA 2-3g — להוסיף לשגרה</div>
+      <div class="task-priority prio-low">תוסף</div>
+    </div>
+    <div class="task-item" onclick="toggleTask(this)">
+      <div class="task-check"></div>
+      <div class="task-text">Vitamin D3 + K2 — לאחר בדיקת דם</div>
+      <div class="task-priority prio-low">תוסף</div>
+    </div>
+    <div class="task-item" onclick="toggleTask(this)">
+      <div class="task-check"></div>
+      <div class="task-text">מלטונין: להפחית מ-5mg ל-1mg בהדרגה</div>
+      <div class="task-priority prio-low">תרופה</div>
+    </div>
+  </div>
+</div>
+
+<!-- INFO -->
+<div id="page-info" class="page">
+
+  <!-- DAILY KNOWLEDGE BLOCK -->
+  <div class="section-label">📚 ידע יומי — בנייה הדרגתית</div>
+  <div class="dk-card">
+    <div class="dk-header">
+      <div class="dk-day-badge" id="dk-day-badge">יום 1</div>
+      <div class="dk-title" id="dk-title">טוען...</div>
+      <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+        <span id="dk-read-time" style="font-size:11px;color:var(--muted);white-space:nowrap">⏱ <span id="dk-read-time-val">—</span></span>
+        <button class="dk-read-badge unread" id="dk-read-btn" onclick="markRead()">סימון כנקרא</button>
+      </div>
+    </div>
+    <div class="dk-body" id="dk-body"></div>
+    <div class="dk-progress">
+      <div class="dk-prog-bar-wrap"><div class="dk-prog-bar" id="dk-prog-bar" style="width:3%"></div></div>
+      <div class="dk-prog-label" id="dk-prog-label">1 / 30</div>
+    </div>
+    <div class="dk-nav">
+      <button class="btn btn-ghost" style="font-size:12px;padding:6px 12px" onclick="dkNav(-1)">← הקודם</button>
+      <button class="btn btn-ghost" style="font-size:12px;padding:6px 12px" onclick="dkNav(1)">הבא ←</button>
+    </div>
+  </div>
+
+  <div class="spacer"></div>
+  <div class="section-label">מה זה DPDR ואיך מתמודדים</div>
+  <div class="info-block">
+    <h3>🔬 מהי דה-ראליזציה?</h3>
+    <p>Depersonalisation/Derealisation (DPDR) היא תחושת ניתוק — מהגוף, מהסביבה, מהמציאות. היא לא פסיכוזה ולא "שיגעון". היא מנגנון הגנה של מערכת העצבים שנתקע במצב hyperarousal כרוני.</p>
+  </div>
+  <div class="info-block">
+    <h3>🎯 הגישה הכי מגובה מחקרית</h3>
+    <p>Hunter &amp; Phillips Protocol — CBT ספציפי ל-DPDR. שובר את המעגל: hyperarousal → תשומת לב לתסמינים → חרדה → החמרה. מתמקד בכלים חיצוניים, Grounding, הפחתת hypervigilance ובניית חיים מחוץ ל-DPDR.</p>
+  </div>
+  <div class="info-block">
+    <h3>🏃 למה Zone 2 עוזר?</h3>
+    <p>ספורט אירובי מגביר BDNF, מפחית cortisol ו-arousal כרוני, ומספק מידע חושי אינטנסיבי שמנגד לניתוק. שיפור מדווח לאחר 4-8 שבועות עקביים.</p>
+  </div>
+  <div class="info-block warn-box">
+    <h3>⚠️ גבולות התוכנית הזו</h3>
+    <p>זוהי <strong>תמיכה התנהגותית-סביבתית בלבד</strong> — לא מחליפה אבחנה נוירולוגית (Video-EEG), פסיכיאטר, או פסיכותרפיה. טריגר חדש, החמרה חדה, סימן נוירולוגי — לפנות מיד לרופא.</p>
+  </div>
+  <div class="info-block">
+    <h3>🎯 יעדים ל-3 חודשים</h3>
+    <ul>
+      <li>DPDR ממוצע: ↓ ל-4-5</li>
+      <li>Grounding: 7/7 ימים</li>
+      <li>Zone 2: 3× שבוע עקבי</li>
+      <li>שינה: ≥7 שעות, 6/7 לילות</li>
+      <li>Video-EEG + פסיכיאטר: לפני סוף יולי 2026</li>
+    </ul>
+  </div>
+</div>
+
+</div><!-- /shell -->
+
+<!-- ═══════════════════════════════════════
+     MODALS
+═══════════════════════════════════════ -->
+
+<!-- MODAL: 5-4-3-2-1 -->
+<div class="modal-overlay" id="modal-54321" onclick="overlayClose(event,'modal-54321')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <div class="modal-title">🌿 5-4-3-2-1 — עיגון חושי</div>
+      <button class="modal-close" onclick="closeModal('modal-54321')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-meta">
+        <span class="modal-tag modal-tag-time">⏱ 1-2 דקות</span>
+        <span class="modal-tag modal-tag-why">✓ מגובה מחקרית</span>
+      </div>
+      <div class="modal-section">
+        <h4>למה זה עובד</h4>
+        <p>DPDR נגרמת כאשר המוח מפנה קשב פנימה — לתחושת הניתוק עצמה. התרגיל הזה מאלץ את הקשב <strong>החוצה</strong> לחמשת החושים בו זמנית, ושובר את לולאת הhypervigilance. ככל שהתיאור מדויק יותר, האפקט חזק יותר.</p>
+      </div>
+      <div class="modal-section">
+        <h4>שלבים</h4>
+        <ul class="modal-steps">
+          <li><div class="step-num">5</div><div class="step-text">👁️ <strong>ראייה</strong> — מצא 5 דברים שאתה רואה עכשיו. תאר כל אחד בפירוט: "כיסא חום עם משענת שחורה, נמצא במרחק שני מטר ממני". <em>הספציפיות חשובה — לא רק "כיסא".</em></div></li>
+          <li><div class="step-num">4</div><div class="step-text">✋ <strong>מגע</strong> — גע ב-4 דברים וציין בשקט: חם/קר, חלק/מחוספס, קשה/רך. <em>השולחן, הבגד, הכיסא, הרצפה — כל דבר.</em></div></li>
+          <li><div class="step-num">3</div><div class="step-text">👂 <strong>שמיעה</strong> — עצום עיניים. מה 3 הצלילים שאתה שומע? <em>אפילו רחש מזגן, רוח, או דממה — הדממה עצמה היא צליל.</em></div></li>
+          <li><div class="step-num">2</div><div class="step-text">👃 <strong>ריח</strong> — שאף עמוק. רחרח שרוול, פתח חלון, אחז כוס קפה. <em>אם אין ריח ברור — הריח הניטרלי של האוויר גם הוא תשובה.</em></div></li>
+          <li><div class="step-num">1</div><div class="step-text">👅 <strong>טעם</strong> — שתה לגימת מים, לגום קפה, או שים לב לטעם שכבר קיים בפה. הישאר עם התחושה 10 שניות.</div></li>
+        </ul>
+      </div>
+      <div class="modal-tip"><strong>טיפ:</strong> ניתן לעשות את זה בכל מקום — בכיתה, באוטובוס, בפקולטה. עם עיניים פקוחות, בלי שאיש יבחין.</div>
+    </div>
+    <div class="modal-action">
+      <button class="btn btn-primary" onclick="goGrounding54321(); closeModal('modal-54321')">← התחל תרגיל</button>
+      <button class="btn btn-ghost" onclick="markDoneFromModal('tool-54321'); closeModal('modal-54321')">✓ עשיתי</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: BREATH -->
+<div class="modal-overlay" id="modal-breath" onclick="overlayClose(event,'modal-breath')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <div class="modal-title">🌬️ נשימה 4-6 — הורדת Arousal</div>
+      <button class="modal-close" onclick="closeModal('modal-breath')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-meta">
+        <span class="modal-tag modal-tag-time">⏱ 2 דקות</span>
+        <span class="modal-tag modal-tag-why">✓ מגביר טונוס ואגאלי</span>
+      </div>
+      <div class="modal-section">
+        <h4>למה זה עובד</h4>
+        <p>נשיפה ארוכה מהשאיפה מפעילה את מערכת העצבים הפראסימפתטית (rest-and-digest) ומנגד לsympathetic arousal שמזין את הDPDR. 5 מחזורים של 4-6 מפחיתים heart rate variability ומשרים רוגע תוך דקות ספורות.</p>
+      </div>
+      <div class="modal-section">
+        <h4>שלבים</h4>
+        <ul class="modal-steps">
+          <li><div class="step-num">1</div><div class="step-text"><strong>שב ישר</strong> — גב ישר, רגליים על הרצפה, ידיים על ירכיים. <em>יציבה ישרה מאפשרת נפח ריאות מלא.</em></div></li>
+          <li><div class="step-num">2</div><div class="step-text"><strong>שאיפה — 4 שניות</strong> — שאף דרך האף, איטי ועמוק. מלא את הבטן קודם, אז את החזה. <em>ספור: 1, 2, 3, 4.</em></div></li>
+          <li><div class="step-num">3</div><div class="step-text"><strong>נשיפה — 6 שניות</strong> — נשוף דרך הפה לאט, כאילו אתה מנשב נר בעדינות. <em>ספור: 1, 2, 3, 4, 5, 6. הנשיפה חייבת להיות ארוכה מהשאיפה — זה המפתח.</em></div></li>
+          <li><div class="step-num">4</div><div class="step-text"><strong>חזור 5 פעמים</strong> — מחזור אחד = שאיפה + נשיפה. 5 מחזורים = ~50 שניות. <em>אפשר גם 10 מחזורים לאפקט חזק יותר.</em></div></li>
+        </ul>
+      </div>
+      <div class="modal-tip"><strong>מתי להשתמש:</strong> לפני כניסה לסביבה אינטנסיבית, בגל DPDR פתאומי, לפני שינה אם המוח לא נרגע.</div>
+    </div>
+    <div class="modal-action">
+      <button class="btn btn-primary" onclick="goBreath(); closeModal('modal-breath')">← התחל תרגיל</button>
+      <button class="btn btn-ghost" onclick="markDoneFromModal('tool-breath'); closeModal('modal-breath')">✓ עשיתי</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: TEMP -->
+<div class="modal-overlay" id="modal-temp" onclick="overlayClose(event,'modal-temp')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <div class="modal-title">🧊 הלם טמפרטורה</div>
+      <button class="modal-close" onclick="closeModal('modal-temp')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-meta">
+        <span class="modal-tag modal-tag-time">⏱ 30 שניות</span>
+        <span class="modal-tag modal-tag-why">✓ הכי מהיר שיש</span>
+      </div>
+      <div class="modal-section">
+        <h4>למה זה עובד</h4>
+        <p>מים קרים מפעילים את קולטני הטמפרטורה (thermoreceptors) ואת עצב הוואגוס בפנים — שני מנגנונים שמשדרים מידע חושי עצים ומיידי למוח. זה "מאלץ" את המוח לרשום גוף שקיים ונוכח, ומשבש את תחושת הניתוק לרגע.</p>
+      </div>
+      <div class="modal-section">
+        <h4>שלבים — אפשרות 1: ברז</h4>
+        <ul class="modal-steps">
+          <li><div class="step-num">1</div><div class="step-text">לך לכיור. הפעל מים קרים — כמה שיותר קרים.</div></li>
+          <li><div class="step-num">2</div><div class="step-text">הרטב את שתי כפות הידיים וספוג אותן מלאות מים קרים.</div></li>
+          <li><div class="step-num">3</div><div class="step-text">הנח את הידיים הרטובות על הפנים — מצח, לחיים, סנטר. <em>תחוש את הקור הישיר — זה הרגע שמחבר.</em></div></li>
+          <li><div class="step-num">4</div><div class="step-text">חזור 2-3 פעמים. <em>אפשר גם להחזיק מים קרים על פרקי כפות הידיים — כלי דם גדולים שם.</em></div></li>
+        </ul>
+      </div>
+      <div class="modal-section">
+        <h4>שלבים — אפשרות 2: קוביות קרח</h4>
+        <ul class="modal-steps">
+          <li><div class="step-num">1</div><div class="step-text">החזק קוביית קרח בכף יד אחת — 20-30 שניות.</div></li>
+          <li><div class="step-num">2</div><div class="step-text">שים לב לתחושה ביד — לא לתחושת הניתוק. <em>הקור הוא העוגן.</em></div></li>
+        </ul>
+      </div>
+      <div class="modal-tip"><strong>מתי להשתמש:</strong> גל DPDR פתאומי, כניסה לסביבה אינטנסיבית, אחרי קימה עייפה.</div>
+    </div>
+    <div class="modal-action">
+      <button class="btn btn-green" onclick="markDoneFromModal('tool-temp'); closeModal('modal-temp')">✓ עשיתי</button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-temp')">סגור</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: PRESSURE -->
+<div class="modal-overlay" id="modal-pressure" onclick="overlayClose(event,'modal-pressure')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <div class="modal-title">🤲 לחץ גופני — עיגון פיזי</div>
+      <button class="modal-close" onclick="closeModal('modal-pressure')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-meta">
+        <span class="modal-tag modal-tag-time">⏱ 30 שניות</span>
+        <span class="modal-tag modal-tag-why">✓ ניתן לעשות בכל מקום</span>
+      </div>
+      <div class="modal-section">
+        <h4>למה זה עובד</h4>
+        <p>DPDR פוגעת בתחושת proprioception — התחושה שיש לך גוף ושהוא מוצב במרחב. לחץ פיזי ממכיל מעביר מידע דרך קולטני מגע עמוק (mechanoreceptors) ו"מזכיר" למוח שהגוף קיים, מוצב ובשליטה. זהו העיקרון שמאחורי weighted blankets.</p>
+      </div>
+      <div class="modal-section">
+        <h4>שיטה 1 — ידיים על ירכיים (בכל מקום)</h4>
+        <ul class="modal-steps">
+          <li><div class="step-num">1</div><div class="step-text">שב. הנח שתי כפות ידיים שטוחות על הירכיים.</div></li>
+          <li><div class="step-num">2</div><div class="step-text">לחץ <strong>חזק</strong> — לא עד כאב, אבל לחץ שמורגש בבירור. <em>שים לב: אתה מרגיש את הלחץ? זה המידע שהמוח צריך.</em></div></li>
+          <li><div class="step-num">3</div><div class="step-text">החזק 10 שניות. שחרר. חזור 3 פעמים.</div></li>
+        </ul>
+      </div>
+      <div class="modal-section">
+        <h4>שיטה 2 — משקל הגוף על הכיסא</h4>
+        <ul class="modal-steps">
+          <li><div class="step-num">1</div><div class="step-text">שב ישר, רגליים שטוחות על הרצפה.</div></li>
+          <li><div class="step-num">2</div><div class="step-text">הרגש בכוונה את הכיסא מתחתיך — לאן בדיוק הגוף נוגע בו? <em>ישבן, גב, רגליים.</em></div></li>
+          <li><div class="step-num">3</div><div class="step-text">הרגש את הרגליים על הרצפה — לחץ הכבידה. <em>זה הגוף שלך, עכשיו, כאן.</em></div></li>
+        </ul>
+      </div>
+      <div class="modal-tip"><strong>וריאציה בתנועה:</strong> בנסיעה באוטו — לחץ חזק על הכוונן עם שתי ידיים. מיידי ואפקטיבי.</div>
+    </div>
+    <div class="modal-action">
+      <button class="btn btn-green" onclick="markDoneFromModal('tool-pressure'); closeModal('modal-pressure')">✓ עשיתי</button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-pressure')">סגור</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: MINDFUL -->
+<div class="modal-overlay" id="modal-mindful" onclick="overlayClose(event,'modal-mindful')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <div class="modal-title">🪟 מיינדפולנס חיצוני</div>
+      <button class="modal-close" onclick="closeModal('modal-mindful')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-meta">
+        <span class="modal-tag modal-tag-time">⏱ 10 דקות</span>
+        <span class="modal-tag modal-tag-why">✓ מותאם DPDR — לא מיינדפולנס רגיל</span>
+      </div>
+      <div class="modal-section">
+        <h4>למה זה שונה ממיינדפולנס רגיל</h4>
+        <p>מיינדפולנס קלאסי (לשים לב לנשימה, לגוף מבפנים) <strong>יכול להחמיר DPDR</strong> — כי הוא מגביר קשב פנימה, אל אותו ניתוק שממנו רוצים להתרחק. מיינדפולנס חיצוני עושה ההפך: כל הקשב יוצא החוצה.</p>
+      </div>
+      <div class="modal-section">
+        <h4>שלבים</h4>
+        <ul class="modal-steps">
+          <li><div class="step-num">1</div><div class="step-text">שב בחוץ או ליד חלון פתוח. טוב גם בלובי, בחצר, בכל מקום עם סביבה.</div></li>
+          <li><div class="step-num">2</div><div class="step-text">הניח את הטלפון. <em>10 דקות ללא גלילה.</em></div></li>
+          <li><div class="step-num">3</div><div class="step-text"><strong>תאר בשקט לעצמך</strong> מה שאתה רואה — לא מרגיש, לא חושב: "עץ עם עלים ירוקים, נע ברוח. רכב לבן נכנס לחניה. עוף יושב על גדר."</div></li>
+          <li><div class="step-num">4</div><div class="step-text">אם קשב נודד פנימה — בלי שיפוט, החזר אותו לתיאור החיצוני. <em>כמה פעמים שצריך.</em></div></li>
+          <li><div class="step-num">5</div><div class="step-text">לאחר 10 דקות — שים לב האם יש שינוי קטן בתחושת הנוכחות.</div></li>
+        </ul>
+      </div>
+      <div class="modal-tip"><strong>מה לא לעשות:</strong> לא לשאול "איך אני מרגיש עכשיו?". לא לבדוק אם הDPDR השתפרה. רק לתאר מה יש מחוצה לך.</div>
+    </div>
+    <div class="modal-action">
+      <button class="btn btn-green" onclick="markDoneFromModal('tool-mindful'); closeModal('modal-mindful')">✓ עשיתי</button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-mindful')">סגור</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: ANCHOR -->
+<div class="modal-overlay" id="modal-anchor" onclick="overlayClose(event,'modal-anchor')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <div class="modal-title">⚓ עוגן חושי — נגיעה + מוסיקה</div>
+      <button class="modal-close" onclick="closeModal('modal-anchor')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-meta">
+        <span class="modal-tag modal-tag-time">⏱ מיידי</span>
+        <span class="modal-tag modal-tag-why">✓ עובד מצוין בתנועה</span>
+      </div>
+      <div class="modal-section">
+        <h4>למה זה עובד</h4>
+        <p>שני ערוצים בו זמנית: נגיעה עקבית מספקת proprioception מתמשך; מוסיקה מוכרת ורגשית מחברת את הזיכרון הרגשי ויוצרת תחושת רצף וזהות — שניהם נפגעים ב-DPDR.</p>
+      </div>
+      <div class="modal-section">
+        <h4>עוגן נגיעה — שיטה</h4>
+        <ul class="modal-steps">
+          <li><div class="step-num">1</div><div class="step-text">בחר נקודה קבועה — מפרק האגודל, פרק כף יד, אזור בין האגודל לאצבע המורה.</div></li>
+          <li><div class="step-num">2</div><div class="step-text">גע בה בעדינות אבל בהכרה — לא מהרגל, אלא בכוונה. <em>לחץ קל, סיבוב קטן.</em></div></li>
+          <li><div class="step-num">3</div><div class="step-text">חזור על הנגיעה כל 30-60 שניות בסיטואציה מאתגרת. <em>בנסיעה, בהרצאה, בתור בסופר.</em></div></li>
+        </ul>
+      </div>
+      <div class="modal-section">
+        <h4>עוגן מוסיקה — שיטה</h4>
+        <ul class="modal-steps">
+          <li><div class="step-num">1</div><div class="step-text">הכן פלייליסט של 5-10 שירים שמעוררים בך <strong>רגש ספציפי</strong> — נוסטלגיה, שמחה, עצב. <em>לא מוסיקה ניטרלית — רגש הוא הנקודה.</em></div></li>
+          <li><div class="step-num">2</div><div class="step-text">בגל DPDR — אוזניות פנימה, שיר מהרשימה. לנסות לזהות את הרגש שהשיר מעלה.</div></li>
+          <li><div class="step-num">3</div><div class="step-text">השתדל <strong>לא לגלול</strong> — תן לשיר אחד לרוץ עד הסוף. הגלילה עצמה מגבירה arousal.</div></li>
+        </ul>
+      </div>
+      <div class="modal-tip"><strong>שילוב מנצח:</strong> נסיעה באוטו — נגיעה בכוונה בהגה + שיר מהפלייליסט = שני עוגנים במקביל.</div>
+    </div>
+    <div class="modal-action">
+      <button class="btn btn-green" onclick="markDoneFromModal('tool-anchor'); closeModal('modal-anchor')">✓ עשיתי</button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-anchor')">סגור</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════
+// DAILY KNOWLEDGE CURRICULUM (30 days)
+// ══════════════════════════════════════
+const DK_CURRICULUM = [
+  {
+    title: "מה בכלל קורה במוח שלך?",
+    body: `<p>לפני שמבינים DPDR, צריך להבין את המנגנון הבסיסי ביותר. <strong>המוח שלך הוא מכונת חיזוי</strong> — הוא לא "מקבל" את המציאות ישירות, אלא כל הזמן בונה מודל פנימי של הסביבה ובודק אם הקלט החושי תואם את הציפיות.</p>
+<p>בדרך כלל זה עובד בשקט. אתה מסתכל על כוס קפה — המוח מצפה לראות כוס, רואה כוס, הכל מסתדר. <strong>אין תחושת "מאמץ"</strong> בתפיסה הזו כי כל כך רגילה לה.</p>
+<div class="dk-concept"><b>הנקודה החשובה:</b> תחושת "הריאליות" — ההרגשה שהדברים סביבך ממשיים — היא לא קסם. היא <b>פלט של עיבוד</b> שהמוח עושה. כשהעיבוד הזה משתבש, הריאליות מרגישה פחות ממשית.</div>
+<p>DPDR היא בדיוק שיבוש במנגנון הזה. בשלב הזה אתה לא צריך לדעת יותר — רק להבין ש<strong>זה נוירולוגיה, לא "שיגעון"</strong>, ושלמוח יש מנגנון ספציפי שנתקע.</p>`
+  },
+  {
+    title: "הגוף והנפש — מה הקשר בין חרדה ל-DPDR?",
+    body: `<p>עכשיו שאתה יודע שהמוח בונה מודל של המציאות, נוסיף שכבה: <strong>מערכת העצבים האוטונומית</strong>. זו המערכת שמחליטה האם אתה "בטוח" או "בסכנה".</p>
+<p>כשנתפסת סכנה — ממשית או מדומיינת — מופעל מצב <strong>Fight-or-Flight</strong>: קצב לב עולה, נשימה מהירה, שרירים מתמתחים. המוח עובר למצב "הישרדות" ומוריד עדיפות לכל דבר אחר — כולל עיבוד ריאלי של הסביבה.</p>
+<div class="dk-concept"><b>הקשר ל-DPDR:</b> כשמצב Fight-or-Flight נמשך <b>זמן רב מדי</b> — כפי שקורה בחרדה כרונית — המוח עושה משהו מעניין: הוא "מנתק" כחלק מהגנה. זה נקרא <b>dissociation</b> — ניתוק מוגן. DPDR היא הצורה שהניתוק הזה לוקח.</div>
+<p>לכן <strong>הפחתת arousal כרוני</strong> היא הדרך הראשית לטפל ב-DPDR — לא להילחם בתחושת הניתוק ישירות, אלא לטפל בשורש: המערכת שנמצאת במצב כוננות מתמיד.</p>`
+  },
+  {
+    title: "הקנאביס והמוח — מה קרה בדיוק?",
+    body: `<p>הקנאביס שלך הוא כנראה <strong>הטריגר המקורי</strong> של ה-DPDR. כדי להבין למה, צריך להכיר את מערכת האנדוקנבינואידים.</p>
+<p>למוח יש מערכת פנימית של "קנבינואידים עצמיים" — מולקולות כמו <strong>anandamide</strong> ו-2-AG — שמווסתות מצב רוח, זיכרון, ותפיסה. THC (החומר הפעיל בקנאביס) <strong>חוטף</strong> את הקולטנים האלו, CB1 ו-CB2, ומציף אותם בגירוי הרבה יותר חזק מהרגיל.</p>
+<div class="dk-concept"><b>מה קורה כשזה חוזר?</b> המוח מגיב בהורדת רגישות הקולטנים — <b>downregulation</b>. לאחר שימוש חוזר, אפילו כשעוברים ל-0 THC, המערכת מוצאת את עצמה עם פחות קולטנים פעילים מהרגיל. זה יכול להשאיר חלון של חודשים שבהם ויסות הרגש והתפיסה פגוע.</div>
+<p>הבשורה הטובה: <strong>downregulation הוא הפיך</strong>. עם גמילה ממושכת, הקולטנים מתאוששים. ה"זכרון" של המוח לויסות תקין חוזר. זה לוקח זמן — אבל זה קורה.</p>`
+  },
+  {
+    title: "Hyperarousal — למה המצב נמשך?",
+    body: `<p>אחרי שמבינים את הטריגר, שאלה טובה היא: <strong>למה ה-DPDR נמשכת שנים?</strong> הרי הפסקת לקחת קנאביס לפני זמן רב. הקנאביס כבר לא בגוף.</p>
+<p>התשובה היא <strong>hyperarousal כרוני</strong> — מצב שבו מערכת העצבים למדה להיות ב"כוננות גבוהה" כברירת מחדל, גם ללא סיבה חיצונית. זה קורה כי המוח הוא <strong>מכונת למידה</strong> — הוא מרגיש שהיה מסוכן (גל DPDR פאניקה), ומתכונן שלא לאפשר לזה לקרות שוב.</p>
+<div class="dk-concept"><b>הלולאה שנוצרת:</b><br>
+גל DPDR → פחד מגל הבא → קשב מוגבר לתחושות גוף → גילוי "ניתוק" → גל DPDR חדש.<br>
+זו <b>self-fulfilling loop</b> — ה-DPDR ניזונה מהפחד מ-DPDR עצמה.</div>
+<p>זה מסביר מדוע הכלי הכי חשוב הוא <strong>לא לבדוק</strong> אם אתה מרגיש DPDR כרגע. כל בדיקה מזינה את הלולאה.</p>`
+  },
+  {
+    title: "המוח שלך בגל — מה קורה ברמה הנוירולוגית?",
+    body: `<p>בגל DPDR פעיל, שלושה אזורי מוח במוקד:</p>
+<p><strong>האמיגדלה</strong> — מרכז ה"אזעקה" הרגשית. בגל DPDR, האמיגדלה שולחת סיגנלי סכנה גם כשאין סכנה אמיתית. זה מה שמרגיש כמו פאניקה מסיבה לא ברורה.</p>
+<p><strong>ה-Prefrontal Cortex (PFC)</strong> — אזור ה"שליטה הרציונלית". אחראי על ויסות האמיגדלה ועל תחושת "אני קיים וממשי". ב-DPDR כרונית, ה-PFC מאבד קצת מיכולת הויסות הזו — זה מסביר את הירידה הקוגניטיבית שאתה חש.</p>
+<div class="dk-concept"><b>האינסולה:</b> אזור שמעבד מידע מהגוף ("איך הגוף שלי מרגיש?"). ב-DPDR, האינסולה פחות פעילה — זה בדיוק מה שיוצר תחושת ניתוק מהגוף. כלי Grounding פיזיים כמו לחץ גופני וטמפרטורה <b>מפעילים ישירות את האינסולה</b>.</div>
+<p>זה מסביר למה הכלים שנבחרו עבורך עובדים — כל כלי מכוון לאחד מהמנגנונים האלו.</p>`
+  },
+  {
+    title: "שינה ו-DPDR — הקשר העמוק",
+    body: `<p>שמת לב שה-DPDR שלך הרבה יותר חזקה אחרי לילה גרוע. זה לא מקרי — <strong>שינה ו-DPDR קשורים ישירות ברמה הביולוגית</strong>.</p>
+<p>בשינה, המוח עושה שני דברים קריטיים: <strong>ניקוי גלימפטי</strong> (הסרת פסולת נוירולוגית, כולל תוצרי לוואי של stress hormones), ו<strong>עיבוד רגשי</strong> (שלב ה-REM מעבד חוויות יום קודם ומפחית את הטעינה הרגשית שלהן).</p>
+<div class="dk-concept"><b>מה קורה בחסך שינה?</b> האמיגדלה הופכת <b>40% יותר ריאקטיבית</b> (Walker, 2017) — מגיבה חזק יותר לגירויים ניטרליים. ה-PFC, שמווסת אותה, פחות יעיל. התוצאה: hyperarousal גבוה יותר, DPDR חזקה יותר.</div>
+<p>לכן שמירת שינה ב-21:00 היא <strong>לא עניין של משמעת בלבד</strong> — זה ממש טיפול. כל לילה של שינה טובה מפחית את ה-baseline arousal של היום הבא.</p>`
+  },
+  {
+    title: "מה זה Dissociation — הספקטרום המלא",
+    body: `<p>DPDR היא חלק ממשפחה גדולה יותר הנקראת <strong>dissociation</strong> — תהליכי ניתוק מנטלי. זה חשוב להבין כי זה עוזר לדעדמות.</p>
+<p>בקצה האחד של הספקטרום: <strong>daydreaming</strong> — חלום בהקיץ, פחות נוכחות. כולם עושים את זה. בקצה השני: הפרעות דיסוציאטיביות קשות כמו DID. <strong>DPDR נמצאת ממש באמצע הספקטרום</strong> — לא קצה כלל.</p>
+<div class="dk-concept"><b>אחוזים:</b> כ-<b>74%</b> מהאוכלוסייה חוותה אפיזודה חולפת של DPDR פעם אחת בחיים. כ-<b>2%</b> סובלים מ-DPDR כרונית כמו שלך. זה לא נדיר — זה מתועד מאוד.</div>
+<p>הניתוק שאתה חווה הוא <strong>מנגנון הגנה אבולוציוני</strong>. כשמשהו מאיים מאוד ואי אפשר לברוח, המוח "יוצא" כדי להגן. הבעיה היא לא שהמנגנון קיים — הבעיה היא שהוא נדלק בסיטואציות שלא מצריכות הגנה.</p>`
+  },
+  {
+    title: "Cortisol — הורמון הלחץ ותפקידו",
+    body: `<p>הגיע הזמן להכיר את <strong>cortisol</strong> — ההורמון שהכי קשור ל-DPDR שלך.</p>
+<p>Cortisol הוא הורמון הלחץ העיקרי. בבוקר הוא עולה (Cortisol Awakening Response — CAR) ועוזר לקום ולהתמקד. לאורך היום הוא אמור לרדת. <strong>בחרדה כרונית ו-DPDR, הוא נשאר גבוה כל היום</strong>.</p>
+<div class="dk-concept"><b>מה עושה cortisol גבוה לאורך זמן?</b><br>
+— מחליש את ה-PFC (פחות שליטה רציונלית)<br>
+— מגביר ריאקטיביות של האמיגדלה<br>
+— פוגע בהיפוקמפוס (זיכרון וסנסציות גוף)<br>
+— מפריע לשינה (מונע ירידה לשינה עמוקה)</div>
+<p>כמה מהדברים שעשינו כבר מכוונים לcortisol: <strong>שינה מוקדמת</strong> (cortisol יורד לפני חצות בעיקר), <strong>ספורט Zone 2</strong> (מפחית cortisol בסיסי לאורך זמן), ו<strong>נשימה 4-6</strong> (מפעיל vagus nerve שמנגד לcortisol).</p>`
+  },
+  {
+    title: "Vagus Nerve — המפתח להרגעה",
+    body: `<p>בשיעור הקודם הזכרנו את ה-<strong>vagus nerve</strong> — עצב הוואגוס. עכשיו נלמד אותו לעומק כי הוא אחד הכלים החזקים שיש לך.</p>
+<p>עצב הוואגוס הוא עצב הפאראסימפתטי הגדול ביותר — מחבר מוח, לב, ריאות ומעיים. הוא האחראי על <strong>rest-and-digest</strong> — הנגדי ל-fight-or-flight. כשהוא פעיל, קצב לב יורד, שרירים נרגעים, וויסות רגשי משתפר.</p>
+<div class="dk-concept"><b>Vagal tone:</b> ה"כוח" של הוואגוס נמדד ב-Heart Rate Variability (HRV). HRV גבוה = vagal tone טוב = יכולת ויסות טובה יותר. אנשים עם DPDR כרונית לרוב מראים <b>HRV נמוך יותר</b>.</div>
+<p>כיצד מפעילים את הוואגוס? <strong>נשיפה ארוכה מהשאיפה</strong> (לכן נשימה 4-6 ולא 4-4), <strong>מים קרים על הפנים</strong> (גירוי עצב הוואגוס ישירות), <strong>שירה</strong>, ו<strong>ספורט אירובי קבוע</strong> — כל אלו מחזקים vagal tone לאורך זמן.</p>`
+  },
+  {
+    title: "BDNF — מה הוא ולמה ספורט זה טיפול",
+    body: `<p>עד כה הבנו שיש בעיה ב-arousal. עכשיו נדבר על <strong>פתרון ביולוגי</strong> שיש לך ממש ביד.</p>
+<p><strong>BDNF — Brain-Derived Neurotrophic Factor</strong> — הוא חלבון שהמוח מייצר שנקרא לעיתים "דשן למוח". הוא אחראי על יצירת קשרים עצביים חדשים, שיקום של מסלולים שנפגעו, ושיפור ויסות רגשי.</p>
+<div class="dk-concept"><b>האפקט של ספורט:</b> פעילות אירובית ב-Zone 2 (60-70% מהדופק המקסימלי) מגבירה BDNF ב-<b>200-300%</b> לאחר 20-30 דקות. זה לא קורה בכוח גבוה (weights בלבד) — ספציפית בעצימות אירובית בינונית.</div>
+<p>BDNF בפרטיקולר מחזק את <strong>ה-PFC וההיפוקמפוס</strong> — שני האזורים שנחלשים ב-DPDR. לכן Zone 2 שלוש פעמים בשבוע הוא לא "המלצה בריאותית כללית" — זה <strong>טיפול ממוקד</strong> במה שנפגע.</p>`
+  },
+  {
+    title: "CBT ל-DPDR — הגישה של Hunter & Phillips",
+    body: `<p>עד עכשיו למדנו את הביולוגיה. עכשיו הגישה הטיפולית המרכזית — <strong>Cognitive Behavioural Therapy for Depersonalisation</strong> של Hunter & Phillips (2003).</p>
+<p>הגישה מבוססת על הבנה אחת מרכזית: <strong>DPDR מתמשכת בגלל מה שאנחנו עושים בתגובה אליה</strong>, לא בגלל הגורם המקורי. ספציפית: קשב מוגבר לתחושות הניתוק, ניסיון לבדוק ולנטר, והתנגדות לתחושה — כולם מזינים את הלולאה.</p>
+<div class="dk-concept"><b>שני ציוויים מרכזיים:</b><br>
+1. <b>Attention retraining</b> — אימון הקשב לצאת החוצה (כלי ה-Grounding שאתה כבר עושה).<br>
+2. <b>Acceptance</b> — לאפשר לגל DPDR לעבור בלי להגיב — לא להתנגד ולא לנסות לעצור אותו.</div>
+<p>הפרוטוקול הזה מציג שיפור ב-<strong>70-80% מהמטופלים</strong> בטיפול מלא. כשתגיע לפסיכיאטר — זה בדיוק מה שכדאי לבקש ממנו.</p>`
+  },
+  {
+    title: "Acceptance — למה להיאבק זה מחמיר",
+    body: `<p>המושג <strong>acceptance</strong> בהקשר של DPDR הוא אחד הכי קשה להפנמה, אבל גם אחד הכי חשובים.</p>
+<p>האינסטינקט הטבעי בגל DPDR: להילחם בתחושה, לנסות להוציא אותה, לחזור לנורמל. אבל כל ניסיון כזה מאשר לאמיגדלה שיש <strong>דבר שצריך לפחד ממנו</strong> — ומגביר arousal.</p>
+<div class="dk-concept"><b>מחשבה ניסיונית:</b> נסה כרגע <em>לא</em> לחשוב על ספח ורוד. לא מצליח? כי הנחייה "אל תחשוב על X" מחייבת לבדוק אם אתה חושב על X. כך עובד גם "אל תרגיש DPDR".</div>
+<p>Acceptance לא אומר "לאהוב" את ה-DPDR. זה אומר: <strong>"אני מרגיש את זה, זה לא נעים, וזה גם לא מסוכן. אני ממשיך."</strong> כשאתה מפסיק להגיב לגל — הגל מאבד את ה"דלק" שלו ומתחיל להיחלש.</p>`
+  },
+  {
+    title: "Proprioception — מדוע הגוף מרגיש רחוק",
+    body: `<p>תחושת "הגוף שלי לא שייך לי" — ה-<strong>depersonalisation</strong> בפרט — קשורה למערכת שנקראת <strong>proprioception</strong>.</p>
+<p>Proprioception היא החוש השישי: תחושת מיקום הגוף במרחב, משקל, ותנועה. זה מה שמאפשר לך לגעת באף עם עיניים עצומות. מידע ה-proprioception מגיע מ<strong>מפרקים, שרירים, ועור</strong> — ועולה לאינסולה במוח.</p>
+<div class="dk-concept"><b>למה ב-DPDR?</b> כשהאינסולה פחות פעילה (כפי שראינו), עיבוד מידע ה-proprioception נחלש. הגוף ממשיך לשלוח אותות — אבל המוח מעבד אותם פחות. <b>התוצאה: תחושת ניתוק מהגוף.</b></div>
+<p>לכן כלי <strong>לחץ גופני</strong> ו<strong>טמפרטורה</strong> עובדים — הם מציפים את האינסולה בקלט חושי עצים שקשה להתעלם ממנו. הגוף ממש "מתקשר" חזרה.</p>`
+  },
+  {
+    title: "דה-ראליזציה לעומת דה-פרסונליזציה — ההבדל",
+    body: `<p>לרוב משתמשים ב-DPDR כמושג אחד, אבל יש <strong>שני מרכיבים נפרדים</strong> שיכולים להופיע ביחד או לחוד:</p>
+<p><strong>Depersonalisation (DP)</strong> — ניתוק <em>מהגוף ומהעצמי</em>. תחושה ש"אני מסתכל על עצמי מבחוץ", שהידיים לא שלי, שאני רובוט. מרכיב עיקרי: אינסולה + תחושת proprioception חלשה.</p>
+<p><strong>Derealisation (DR)</strong> — ניתוק <em>מהסביבה</em>. העולם מרגיש כמו סרט, ערפלי, שטוח, לא ממשי. מרכיב עיקרי: cortex הוויזואלי + עיבוד תפיסתי.</p>
+<div class="dk-concept"><b>השאלה בשבילך:</b> מה חזק יותר אצלך — ניתוק מהגוף, ניתוק מהסביבה, או שניהם? ההבנה הזו עוזרת לבחור כלים: DP → לחץ גופני + proprioception. DR → Grounding חיצוני + תיאור סביבה.</div>`
+  },
+  {
+    title: "Mindfulness — מה מתאים ל-DPDR ומה לא",
+    body: `<p>Mindfulness הפך לאחת ההמלצות הנפוצות ביותר לחרדה. אבל ב-DPDR, <strong>לא כל מיינדפולנס שווה</strong> — חלקו יכול אפילו להחמיר.</p>
+<p><strong>מה לא לעשות:</strong> מיינדפולנס "body scan" (לשים לב לתחושות גוף מבפנים), מדיטציה ממוקדת נשימה, ותשומת לב לתחושות פנימיות בכלל — אלו מגבירים קשב פנימה, אל אותו ניתוק שממנו רוצים לצאת.</p>
+<div class="dk-concept"><b>מה כן:</b> מיינדפולנס <b>חיצוני</b> בלבד — Open Monitoring Meditation. במקום "מה אני מרגיש?", השאלה היא "מה קיים מחוצה לי?". תיאור פשוט של הסביבה: צלילים, צבעים, תנועות. <b>ללא הערכה, ללא בדיקה פנימית.</b></div>
+<p>המחקר על CBT ל-DPDR (Hunter et al.) מדגיש שהכלי המיינדפולנס המותאם הוא <strong>Attentional Training</strong> — אימון הקשב החוצה. זה בדיוק מה שנקרא כאן "מיינדפולנס חיצוני".</p>`
+  },
+  {
+    title: "הורמוני שינה — מלטונין, קורטיזול, וחלון ה-2 שעות",
+    body: `<p>עכשיו נחבר בין השינה המוקדמת שלך לביולוגיה של שינה ו-DPDR.</p>
+<p>שעתיים לפני השינה המתוכננת, הגוף מתחיל ב<strong>Dim Light Melatonin Onset (DLMO)</strong> — הפרשת מלטונין. אצלך, אם ישנה ב-21:30, ה-DLMO מתחיל בערך ב-19:30. <strong>אור כחול ממסכים מפריע ישירות לתהליך הזה</strong>.</p>
+<p>במקביל, <strong>cortisol</strong> צריך להיות נמוך בלילה. כשהוא גבוה בלילה (סטרס, מסכים, גירוי), השינה העמוקה נפגעת. שינה עמוקה היא בדיוק השלב שבו מתבצע הניקוי הגלימפטי שדיברנו עליו.</p>
+<div class="dk-concept"><b>לגביך ספציפית:</b> המלטונין ב-5mg שלך הוא מינון פרמקולוגי — גבוה פי 5-10 ממינון פיזיולוגי. מינונים כאלה יכולים לדכא את ייצור המלטונין הטבעי לאורך זמן. <b>0.5-1mg</b> מחקה את ה-DLMO הטבעי ויעיל לא פחות.</div>
+<p>שינוי אחד שכדאי לנסות: <strong>לנסות להוריד בהדרגה ל-1mg</strong>. זה לא יקטין את יעילות השינה — רק יאפשר למוח לשמור על ייצור פנימי תקין.</p>`
+  },
+  {
+    title: "Attentional Bias — למה ה-DPDR מוצאת אותך",
+    body: `<p>למה ב-פקולטה, אוטובוס, ומקומות עם אנשים ה-DPDR מחמירה? זה לא רק ה"גירוי" — יש תהליך קוגניטיבי ספציפי.</p>
+<p><strong>Attentional Bias</strong> — הטיית קשב — הוא תופעה שבה מוח בחרדה כרוני מחפש באופן אוטומטי איומים. בדיוק כמו שאם קנית מכונית אדומה, פתאום אתה רואה מכוניות אדומות בכל מקום — <strong>המוח מחפש מה שהוא חושש ממנו</strong>.</p>
+<div class="dk-concept"><b>אצלך:</b> המוח למד לחפש סימנים של "DPDR מתחילה" — תחושות גוף מסוימות, תחושת ערפל, תחושה שהסביבה "מרגישה אחרת". ברגע שמוצא — <b>מגביר arousal</b>, וזה יוצר בדיוק את מה שחיפש.</div>
+<p>הכלי: <strong>Attentional Retraining</strong> — מה שה-Grounding עושה. כל פעם שמחזיר קשב לחוץ, מאמן את המוח להפסיק לחפש פנימה. זה אימון של ממש — תוצאות אחרי שבועות, לא ימים.</p>`
+  },
+  {
+    title: "תזונה ו-DPDR — מה אוכלים משפיע?",
+    body: `<p>קשה לדבר על DPDR בלי לדבר על תזונה — כי מה שמזין את המוח משפיע ישירות על יכולת הוויסות.</p>
+<p><strong>גלוקוז ויציבות רמת הסוכר:</strong> המוח צורך ~20% מהאנרגיה של הגוף. ירידות חדות ברמת הסוכר (אחרי ארוחה עשירה בפחמימות פשוטות, או פשוט לא אכילה) מגבירות cortisol ו-arousal. <strong>עם Atent XR שמדכא תיאבון</strong>, זה סיכון ריאלי אצלך.</p>
+<div class="dk-concept"><b>Omega-3 EPA+DHA:</b> מרכיב קריטי לממברנות נוירונים ולתפקוד סינפטי. מחסור קשור לדכאון, חרדה, וירידה קוגניטיבית — כל אלו גורמי סיכון ל-DPDR. 2-3g ליום (לאחר בדיקת דם) הוא אחד מהתוספים עם הצדקה הכי חזקה.</div>
+<p><strong>המלצה מיידית:</strong> לוודא שאכלת ארוחת בוקר לפני ה-Atent — גם אם לא ממש רעב. ירידת סוכר + ADHD medication + hyperarousal = שלישייה שיכולה לפתוח גל DPDR.</p>`
+  },
+  {
+    title: "חרדה ו-DPDR — ביצה ותרנגולת",
+    body: `<p>שאלה שנשאלת הרבה: <strong>DPDR גורמת לחרדה, או חרדה גורמת ל-DPDR?</strong> התשובה היא שניהם — ולהבין את זה חשוב.</p>
+<p>DPDR יכולה להיות תוצר של חרדה (כפי שראינו — Fight-or-flight → ניתוק), אבל היא גם יוצרת חרדה עצמאית: "מה אם לא אחזור לעצמי?", "מה אם זה ממשיך לנצח?". <strong>הפחד מה-DPDR הוא לא פחות מזיק מה-DPDR עצמה.</strong></p>
+<div class="dk-concept"><b>מה זה אומר טיפולית?</b> לטפל רק בחרדה לא יספיק — צריך גם לטפל ישירות בלולאת ה-DPDR. ולטפל רק ב-DPDR בלי להתמודד עם החרדה הבסיסית גם לא יספיק. הגישה המלאה עוסקת <b>בשניהם במקביל</b>.</div>
+<p>לכן הפסיכיאטר שתגיע אליו צריך להיות מודע לשני המרכיבים. אם מציעים לך טיפול תרופתי לחרדה בלבד בלי להתייחס לדינמיקה הספציפית של DPDR — כדאי לבקש גם CBT ממוקד.</p>`
+  },
+  {
+    title: "הסביבה הפיזית — מה סביבך משפיע",
+    body: `<p>גורם שלעיתים מתעלמים ממנו: <strong>הסביבה הפיזית</strong> משפיעה על רמת ה-arousal, ודרכה על ה-DPDR.</p>
+<p><strong>תאורה:</strong> אור חזק וכחול (כמו פלורסנט בפקולטה) מגביר cortisol וכוננות. בבית, בשעות הערב — אור חם ועמום (3000K ומטה) מעביר את המוח למצב "ערב".</p>
+<p><strong>רעש:</strong> סביבות עם רעש לא צפוי (פתאומי) מגבירות arousal. אוזניות עם מוסיקה יציבה ומוכרת בסביבות כאלו — לא להתבדד, אלא ליצור סביבה אקוסטית צפויה.</p>
+<div class="dk-concept"><b>חדר שינה:</b> טמפרטורה 18-20°C, חושך מלא, ללא מסכים — לא המלצות נוחות, אלא תנאים ביולוגיים. המוח לא נכנס לשינה עמוקה ב-24°C. <b>כל מעלה מעל 20°C פוגעת בשינה עמוקה.</b></div>
+<p>שיפור קטן בסביבה הפיזית — למשל להוסיף מנורת ערב חמה לחדר — הוא שינוי קל עם אפקט מצטבר לאורך זמן.</p>`
+  },
+  {
+    title: "קשר חברתי — למה זה טיפולי",
+    body: `<p>אחד הכלים הכי מוזנחים בטיפול ב-DPDR הוא גם אחד הכי פשוטים: <strong>קשר חברתי אמיתי</strong>.</p>
+<p>הסיבה ביולוגית: ביחד עם בני אדם, המוח מפריש <strong>oxytocin</strong> — הורמון שמפחית arousal ישירות, ומגביר את הפעילות של מערכת הפרסימפתטית. זה לא "מרגיש טוב" בלבד — זה שינוי כימי מדיד.</p>
+<div class="dk-concept"><b>הפרדוקס של DPDR:</b> כשמרגישים ניתוק, הנטייה הטבעית היא להתבודד — "אם כבר לא ממשי, למה לנסות לתקשר?". אבל בדיוק בגלל זה קשר חברתי עוזר: הוא <b>כופה</b> נוכחות חיצונית ותגובה רגשית, שניהם נוגדי-DPDR.</div>
+<p>לא צריך שיחות עמוקות על DPDR — גם שיחה קלה, לצחוק ביחד, סתם לשבת עם מישהו — כולם עובדים. <strong>גם ה"ריאליות" של מישהו אחר מחברת.</strong></p>`
+  },
+  {
+    title: "תסמינים קוגניטיביים — מה קורה לחשיבה?",
+    body: `<p>ה-DPDR שלך מלווה בתסמינים קוגניטיביים — <strong>ירידה בזיכרון, חדות, ריכוז, מהירות חשיבה</strong>. בואו נבין מה קורה.</p>
+<p>המוח ב-hyperarousal כרוני עובד ב"מצב חירום" — <strong>רוחב פס מוגבל</strong>. משאבים מוקצים לזיהוי איומים ולפעולה מהירה, לא לעיבוד עמוק, זיכרון עבודה, ויצירתיות. זה הגיוני אבולוציונית — כשנמר רודף אחריך, לא זמן לחשוב עמוק.</p>
+<div class="dk-concept"><b>ה-PFC בחרדה:</b> ה-Prefrontal Cortex (פונקציות ניהוליות, זיכרון עבודה, קבלת החלטות) הוא הכי רגיש לcortisol. <b>cortisol גבוה = PFC פחות יעיל</b>. לכן הקוגניציה סובלת בדיוק כשהכי צריך אותה — בסטרס.</div>
+<p>הבשורה הטובה: שיפור ב-arousal → שיפור קוגניטיבי. זה לא בעיה נפרדת לפתור — זה <strong>symptom שייעלם ביחד עם שיפור ה-DPDR</strong>. Zone 2 ושינה טובה הם שני הכלים הכי ישירים.</p>`
+  },
+  {
+    title: "Interoception — ושינויים בחוש הגוף",
+    body: `<p>מושג מרכזי שחוזר הרבה בספרות ה-DPDR: <strong>interoception</strong> — היכולת לתפוס תחושות פנימיות מהגוף (דופק, נשימה, רעב, כאב, חום).</p>
+<p>מחקרים מראים שאנשים עם DPDR מדווחים על <strong>ירידה ב-interoceptive accuracy</strong> — פחות יכולת לזהות ולתאר תחושות גוף. זה עולה בקנה אחד עם ה"ניתוק מהגוף" — פחות מידע גופני = פחות תחושת ממשות.</p>
+<div class="dk-concept"><b>מעניין:</b> מחקרים מראים שגם לקות interoceptive קיימת ב-ADHD — כלומר שניך חולקים בסיס נוירולוגי חלקי. Methylphenidate (האטנט שלך) משפיע על interoception, וזה יכול להסביר חלקית את ההשפעה על DPDR.</div>
+<p>שיפור interoception: ספורט (מגביר מודעות לדופק ונשימה), טמפרטורה (גירוי חד של חוש הגוף), ו<strong>Interoceptive Exposure</strong> — חשיפה מדורגת לתחושות גוף בסביבה בטוחה — טכניקה שפסיכולוג מיומן יכול להנחות.</p>`
+  },
+  {
+    title: "הרשת ה-Default Mode — מוח שלא עושה כלום",
+    body: `<p>גורם מעניין ב-DPDR שנחקר בשנים האחרונות: <strong>Default Mode Network (DMN)</strong> — רשת מוחית שפעילה כשאנחנו "לא עושים כלום" — חולמים, מהרהרים, חושבים על עצמנו.</p>
+<p>ה-DMN אחראי ל<strong>sense of self</strong> — תחושת הזהות העצמית, הרצף בין עבר להווה לעתיד. הוא גם אחראי לחשיבה על "אני" ועל "אחרים". ב-DPDR, ה-DMN מראה <strong>פעילות לא תקינה</strong> — לפעמים יתר פעילות, לפעמים תת-פעילות.</p>
+<div class="dk-concept"><b>הקשר המעניין:</b> גלילה בסושיאל מדיה ו"מחשבות נודדות" כרוניות <b>מגבירות DMN</b>. ספורט, שיחה עם אנשים, וmindfulness חיצוני <b>מפחיתים אותו</b>. כלומר — רובריקת "לא לגלול לפני שינה" עובדת גם דרך המנגנון הזה.</div>`
+  },
+  {
+    title: "תרופות ו-DPDR — מה הרופאים נותנים?",
+    body: `<p>שאלה שבוודאי עלתה: <strong>האם יש תרופה ל-DPDR?</strong> תשובה כנה: לא בדיוק, אבל יש כלים.</p>
+<p>אין תרופה שאושרה ספציפית ל-DPDR. הגישה התרופתית מתמקדת ב<strong>הפחתת hyperarousal והפרעות נלוות:</strong></p>
+<p><strong>SSRI/SNRI</strong> (כמו Sertraline, Escitalopram) — עוזרים לחרדה ולדכאון הנלווים, ובאופן עקיף מפחיתים arousal. לא ישירות ל-DPDR, אבל לעיתים מסייעים.</p>
+<div class="dk-concept"><b>מה לגבי Methylphenidate (האטנט שלך)?</b> ממצאים מחקריים מעורבים: אצל חלק מסייע (משפר PFC וויסות), אצל אחרים עלול להגביר arousal ו-DPDR. <b>כדאי לדון עם הפסיכיאטר על ההשפעה הספציפית אצלך.</b></div>
+<p>הקונסנזוס הנוכחי: <strong>CBT ל-DPDR + טיפול בהפרעות נלוות (חרדה/דכאון)</strong> יעיל יותר מטיפול תרופתי בלבד. התרופה, אם ניתנת, עובדת כ"גלגל עזר" שמאפשר ל-CBT להיות יעיל יותר.</p>`
+  },
+  {
+    title: "Video-EEG — למה זה קריטי בשבילך",
+    body: `<p>בואו נדבר על ה-Video-EEG שטרם תואמת — ולמה זה עדיפות ראשונה.</p>
+<p>ה-EEG הראשון שלך הראה <strong>חשד לפעילות טמפורלית</strong>. האונה הטמפורלית אחראית, בין השאר, על <strong>עיבוד תפיסתי, זיכרון, ותחושת זהות עצמית</strong> — שלושת הדברים הפגועים ב-DPDR שלך.</p>
+<div class="dk-concept"><b>Temporal Lobe Epilepsy (TLE):</b> אחד הסימפטומים הקלאסיים של TLE הוא — <b>DPDR</b>. אוריות טמפורליות יכולות להתבטא כ"dreamy states", תחושת déjà vu, וניתוק מהמציאות. ה-EEG השני שהיה תקין לא שולל זאת לחלוטין — video-EEG עם מוניטורינג ממושך הוא הסטנדרט לאבחון.</div>
+<p>זה לא אומר שיש לך אפילפסיה — אבל <strong>חייבים לשלול את זה</strong> לפני שממשיכים לגישה הנוירופסיכולוגית בלבד. אם יש פעילות טמפורלית — הטיפול שונה לגמרי.</p>`
+  },
+  {
+    title: "רוטינה יומית — למה הסדר מרגיע",
+    body: `<p>אחת ההמלצות הפחות "מסעירות" אבל הכי יעילות: <strong>רוטינה יומית קבועה</strong>. יש לה בסיס ביולוגי אמיתי.</p>
+<p>המוח בחרדה כרונית פועל ב"מצב ערנות" — מנסה לנבא איומים. <strong>חוסר ודאות מגביר arousal</strong>. רוטינה קבועה עושה ההפך: יוצרת סביבה שהמוח יכול "לנבא" בקלות — מה קורה בשעה 7:00, מה ב-8:30, מה אחרי האוכל.</p>
+<div class="dk-concept"><b>ממצא נוירולוגי:</b> מוח בסביבה צפויה מוריד את הfiring rate של האמיגדלה. פחות "סריקת איומים" כי כבר "יודע" מה הולך לקרות. ל-ADHD (שיש לך) זה עוד יותר קריטי — מוח ADHD נאבק עם צפייה, וסדר חיצוני מפצה על כך.</div>
+<p>הרוטינה שכבר יש לך (קימה 5:30-6:00, שינה 21:00) היא <strong>עוגן ראשון מצוין</strong>. להוסיף: ארוחות בשעות קבועות, ספורט באותה שעה בשבוע, ועוגן קצר בסוף יום (כמה דקות של מיינדפולנס חיצוני).</p>`
+  },
+  {
+    title: "מדידה ומעקב — למה לנטר?",
+    body: `<p>עכשיו שיש לך 25 ימים של ידע — בוא נדבר על <strong>מדידה</strong>. כי בלי מדידה, קשה לדעת מה עוזר.</p>
+<p>DPDR "מרגישה" קבועה — כי כשאנחנו בתוכה, קשה לתפוס שינויים קטנים. אבל עם מדדים קבועים לאורך שבועות, <strong>דפוסים מתגלים</strong>: ה-DPDR חזקה יותר בימים מסוימים? אחרי פחות שינה? אחרי אכילה לא טובה?</p>
+<div class="dk-concept"><b>מה למדוד:</b><br>
+— DPDR ממוצע יומי (1-10)<br>
+— שעות שינה<br>
+— האם הייתה פעילות גופנית<br>
+— האם הייתה ארוחה לפני Atent<br>
+— עוצמת Grounding (האם נעשה?)<br>
+<b>אחרי חודשיים, תוכל לראות מה הכי מגדיל את ה-DPDR ומה מפחית.</b></div>
+<p>הלוח "מעקב שבועי" כאן בפלטפורמה הוא כלי מצוין לכך. השמירה השבועית, מספר שבועות ברצף, תיצור את הדפוס הזה.</p>`
+  },
+  {
+    title: "שיפור — מה נראה כמו התאוששות?",
+    body: `<p>שאלה חשובה שאנשים עם DPDR שואלים: <strong>איך נראה שיפור? מה אמורים לצפות?</strong></p>
+<p>שיפור ב-DPDR לא נראה כמו "מתג שנדלק" — זה לא "יום אחד פשוט הפסיק". זה תהליך הדרגתי שנראה כך: <strong>הגלים הופכים קצרים יותר, ובין הגלים יש רגעים יותר ארוכים של נוכחות.</strong></p>
+<p>שלבי ההתאוששות הטיפוסיים: ראשית — <strong>הגלים פחות מפחידים</strong> (Acceptance מתחיל לעבוד). אחר כך — <strong>הגלים פחות תכופים</strong>. לאחר מכן — <strong>הגלים פחות עזים</strong>. לבסוף — <strong>baseline נמוך יותר</strong>.</p>
+<div class="dk-concept"><b>ציפיות ריאליות:</b> עם טיפול מלא (CBT + שינויי אורח חיים), מחקרי Hunter & Phillips מראים שיפור משמעותי תוך <b>3-6 חודשים</b>. לאחר 4 שנות DPDR כרונית, הציר זמן עשוי להיות ארוך יותר — אבל כיוון הוא <b>לחלוטין ריאלי</b>.</div>`
+  },
+  {
+    title: "מה הלאה — סיכום הנסיעה",
+    body: `<p>סיימת 30 יום של ידע בסיסי על DPDR. עברת מ"מה קורה לי?" ל<strong>הבנה עמוקה של המנגנון הביולוגי, הפסיכולוגי, והטיפולי</strong>.</p>
+<p>סיכום הדברים המרכזיים:</p>
+<p><strong>1. DPDR היא נוירולוגיה, לא "שיגעון"</strong> — מנגנון הגנה שנתקע ב-hyperarousal כרוני.</p>
+<p><strong>2. הלולאה מזינה את עצמה</strong> — פחד מ-DPDR → בדיקה → גל. הכלי: acceptance + attention retraining.</p>
+<p><strong>3. כלי הגוף עובדים</strong> — טמפרטורה, לחץ, Zone 2 — כולם בדיוק מכוונים לאינסולה ול-PFC.</p>
+<div class="dk-concept"><b>הצעדים הבאים:</b><br>
+— Video-EEG (לשלול אפילפסיה טמפורלית)<br>
+— פסיכיאטר + CBT ממוקד ל-DPDR<br>
+— Zone 2 ×3/שבוע, שינה קבועה, Grounding יומי<br>
+<b>כל צעד שעשית עד כאן כבר בנה בסיס. ממשיכים.</b></div>
+<p>הרובריקה הזו תתחיל מחדש עם יום 1 — כי חזרה על ידע מגבש אותו. בפעם השנייה, הדברים יתחברו אחרת.</p>`
+  }
+];
+
+// ── DK STATE ──
+const DK_START = new Date('2026-06-12'); // Day 1 reference date
+let dkReadDays = {};
+
+function getDkDayIndex() {
+  const today = new Date();
+  const diff = Math.floor((today - DK_START) / (1000*60*60*24));
+  return ((diff % DK_CURRICULUM.length) + DK_CURRICULUM.length) % DK_CURRICULUM.length;
+}
+
+let dkCurrentIndex = getDkDayIndex();
+
+function renderDK(idx) {
+  const item = DK_CURRICULUM[idx];
+  const dayNum = idx + 1;
+  document.getElementById('dk-day-badge').textContent = 'יום ' + dayNum;
+  document.getElementById('dk-title').textContent = item.title;
+  document.getElementById('dk-body').innerHTML = item.body;
+  const wordCount = item.body.replace(/<[^>]*>/g,'').trim().split(/\s+/).filter(Boolean).length;
+  const mins = Math.max(1, Math.round(wordCount / 200));
+  document.getElementById('dk-read-time-val').textContent = mins + ' דק׳';
+  const pct = Math.round(((idx + 1) / DK_CURRICULUM.length) * 100);
+  document.getElementById('dk-prog-bar').style.width = pct + '%';
+  document.getElementById('dk-prog-label').textContent = (idx + 1) + ' / ' + DK_CURRICULUM.length;
+  const isRead = !!dkReadDays[idx];
+  const btn = document.getElementById('dk-read-btn');
+  btn.textContent = isRead ? '✓ נקרא' : 'סימון כנקרא';
+  btn.className = 'dk-read-badge ' + (isRead ? 'read' : 'unread');
+}
+
+function markRead() {
+  dkReadDays[dkCurrentIndex] = true;
+  const btn = document.getElementById('dk-read-btn');
+  btn.textContent = '✓ נקרא';
+  btn.className = 'dk-read-badge read';
+}
+
+function dkNav(dir) {
+  dkCurrentIndex = ((dkCurrentIndex + dir) + DK_CURRICULUM.length) % DK_CURRICULUM.length;
+  renderDK(dkCurrentIndex);
+}
+
+// ── TAB SWITCHING ──
+function switchTab(name, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  if (btn) btn.classList.add('active');
+}
+
+// METER
+const mColors = {
+  dpdr:['#4f8ef7','#f6a623','#e05c5c'],
+  cog:['#e05c5c','#f6a623','#3ecf8e'],
+  sleep:['#e05c5c','#f6a623','#3ecf8e'],
+  pain:['#3ecf8e','#f6a623','#e05c5c']
+};
+function pickColor(arr, v, max) {
+  const t = v/max;
+  return t < 0.4 ? arr[0] : t < 0.7 ? arr[1] : arr[2];
+}
+function updateMeter(id, val) {
+  const el = document.getElementById(id+'-val');
+  el.textContent = val;
+  el.style.color = pickColor(mColors[id], parseFloat(val), 10);
+}
+
+// TASKS
+function toggleTask(el) {
+  el.classList.toggle('done');
+  el.querySelector('.task-check').textContent = el.classList.contains('done') ? '✓' : '';
+}
+
+// TOOL DONE
+function markDone(id) {
+  document.getElementById(id).classList.toggle('done');
+}
+function markDoneFromModal(id) {
+  document.getElementById(id).classList.add('done');
+}
+
+// MODAL
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+  document.body.style.overflow = '';
+}
+function overlayClose(e, id) {
+  if (e.target.classList.contains('modal-overlay')) closeModal(id);
+}
+
+// GROUNDING
+let gStep = 0;
+function goGrounding54321() {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-grounding').classList.add('active');
+  document.querySelectorAll('.tab')[1].classList.add('active');
+  gStep = 0; updateGrounding();
+}
+function nextGrounding() {
+  gStep++;
+  if (gStep >= 5) { finishGrounding(); return; }
+  updateGrounding();
+}
+function updateGrounding() {
+  for (let i=0;i<5;i++) {
+    document.getElementById('gs'+i).classList.toggle('active', i===gStep);
+    document.getElementById('gd'+i).classList.toggle('done', i<=gStep);
+  }
+}
+function finishGrounding() {
+  document.getElementById('grounding-box').innerHTML =
+    '<div style="text-align:center;padding:32px 16px">' +
+    '<div style="font-size:52px;margin-bottom:12px">✅</div>' +
+    '<div style="font-size:18px;font-weight:600;margin-bottom:8px">כל הכבוד!</div>' +
+    '<div style="font-size:13px;color:var(--muted);margin-bottom:20px">סיימת את תרגיל העיגון החושי.</div>' +
+    '<button class="btn btn-ghost" onclick="location.reload()">לתרגיל שוב</button>' +
+    '</div>';
+  markDoneFromModal('tool-54321');
+}
+
+// BREATHING
+let breathTimer = null, bPhase = 0, bCycle = 0;
+const bPhases = [{name:'שאף עמוק...',dur:4000,cls:'expanding'},{name:'נשוף לאט...',dur:6000,cls:'shrinking'}];
+function goBreath() {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-grounding').classList.add('active');
+  document.querySelectorAll('.tab')[1].classList.add('active');
+  startBreath();
+}
+function startBreath() {
+  stopBreath(); bPhase = 0; bCycle = 0; nextBreathPhase();
+}
+function nextBreathPhase() {
+  const p = bPhases[bPhase];
+  const c = document.getElementById('breathe-circle');
+  const l = document.getElementById('breathe-label');
+  const cnt = document.getElementById('breathe-count');
+  if (!c) return;
+  c.className = 'breathe-circle ' + p.cls;
+  c.textContent = p.name;
+  if (bPhase === 0) bCycle++;
+  l.textContent = bPhase === 0 ? 'שאיפה — 4 שניות' : 'נשיפה — 6 שניות';
+  cnt.textContent = 'מחזור ' + bCycle + ' / 5';
+  if (bCycle > 5 && bPhase === 1) {
+    stopBreath();
+    c.className = 'breathe-circle';
+    c.textContent = '✓';
+    l.textContent = 'מעולה!';
+    markDoneFromModal('tool-breath');
+    return;
+  }
+  breathTimer = setTimeout(() => { bPhase = (bPhase+1)%2; nextBreathPhase(); }, p.dur);
+}
+function stopBreath() { if (breathTimer) { clearTimeout(breathTimer); breathTimer=null; } }
+
+// INIT DAILY KNOWLEDGE
+renderDK(dkCurrentIndex);
+
+// WEEK DATE
+const now = new Date();
+const wd = document.getElementById('week-date');
+if (wd) wd.textContent = now.toLocaleDateString('he-IL',{day:'numeric',month:'long',year:'numeric'});
+
+// SAVE WEEK
+let weeks = [];
+function saveWeek() {
+  const entry = {
+    date: now.toLocaleDateString('he-IL',{day:'numeric',month:'short'}),
+    dpdr: document.getElementById('lDpdr').value,
+    cog: document.getElementById('lCog').value,
+    sleep: document.getElementById('lSleep').value,
+    ground: document.getElementById('lGround').value,
+    cardio: document.getElementById('lCardio').value,
+  };
+  weeks.unshift(entry);
+  renderHistory();
+  const btn = document.getElementById('save-btn');
+  btn.textContent = '✓ נשמר';
+  btn.style.background = 'var(--green)';
+  btn.style.color = '#0e1117';
+  setTimeout(() => { btn.textContent='שמור'; btn.style.background=''; btn.style.color=''; }, 1500);
+}
+function dpdrBg(v) { return v<=3?'rgba(62,207,142,.15)':v<=6?'rgba(246,166,35,.15)':'rgba(224,92,92,.15)'; }
+function dpdrColor(v) { return v<=3?'var(--green)':v<=6?'var(--amber)':'var(--red)'; }
+function renderHistory() {
+  const h = document.getElementById('log-history');
+  h.innerHTML = weeks.map(w =>
+    '<div class="history-row">' +
+    '<div>' +
+    '<div style="font-size:13px;font-weight:600">' + w.date + '</div>' +
+    '<div class="history-week">DPDR: ' + w.dpdr + ' · קוג׳: ' + w.cog + ' · שינה: ' + w.sleep + 'ש׳ · עיגון: ' + w.ground + '/7 · Zone2: ' + w.cardio + '</div>' +
+    '</div>' +
+    '<div class="history-score" style="background:' + dpdrBg(+w.dpdr) + ';color:' + dpdrColor(+w.dpdr) + '">' + w.dpdr + '</div>' +
+    '</div>'
+  ).join('');
+}
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(()=>{});
+  });
+}
+</script>
+</body>
+</html>
