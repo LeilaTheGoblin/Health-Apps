@@ -608,7 +608,7 @@ function renderDayPills() {
   const today = todayKey();
   DAYS.forEach(dk => {
     const day = PROGRAM[dk];
-    const hasLog = Object.keys(LOGS).some(k => k.startsWith(today) && k.endsWith(dk));
+    const hasLog = Object.keys(LOGS).some(k => k.startsWith(today) && k.endsWith(dk) && LOGS[k] && LOGS[k].savedAt);
     const pill = el("div","day-pill");
     pill.innerHTML = `<div class="pill-label" style="color:${dk===selectedDay?day.color:"#6B7280"}">${day.label}${hasLog?" ✓":""}</div><div class="pill-sub">${day.tag.split(" · ")[0]}</div>`;
     if (dk===selectedDay) { pill.style.background=day.color+"22"; pill.style.borderColor=day.color; }
@@ -738,6 +738,9 @@ function renderWorkoutContent() {
   };
   container.appendChild(saveBtn);
 }
+
+// One-time cleanup of phantom/unsaved logs on load (offline-safe; cloudPull also re-cleans after merge)
+if(typeof cleanupLogs==="function" && cleanupLogs()) _writeLS(SK.logs, LOGS);
 
 // Init workout tab
 renderDayPills();
@@ -1560,11 +1563,32 @@ function _mergeWeekly(localArr, cloudArr){
 let _pushTimer=null, _pulling=false;
 function _scheduleCloudPush(){ clearTimeout(_pushTimer); _pushTimer=setTimeout(cloudPush, 1500); }
 
+// A log "counts" only if the user pressed Save (savedAt), or it's today's in-progress log with real data.
+function _logHasData(l){
+  if(!l) return false;
+  if(l.pain||l.energy) return true;
+  if(l.notes && String(l.notes).trim()) return true;
+  for(const ex in (l.exercises||{})){
+    const e=l.exercises[ex]; const s=(e&&e.sets)||{};
+    for(const i in s){ if(parseFloat(s[i].weight)>0 || parseInt(s[i].reps)>0) return true; }
+    if(e && e.meta && e.meta.pain) return true;
+  }
+  return false;
+}
+function _logKeep(l){ return !!(l && (l.savedAt || (l.date===todayKey() && _logHasData(l)))); }
+// Removes phantom entries (viewed-but-never-saved days, and past unsaved workouts). Mutates LOGS.
+function cleanupLogs(){
+  let changed=false;
+  for(const k in LOGS){ if(!_logKeep(LOGS[k])){ delete LOGS[k]; changed=true; } }
+  return changed;
+}
+
 async function cloudPush(){
   if(_pulling) return;
   _syncBadge("syncing");
   try{
-    const body=[{ id:ROW_ID, payload:{ logs:LOGS, weekly:WEEKLY, rehab:REHAB },
+    const cleanLogs={}; for(const k in LOGS){ if(_logKeep(LOGS[k])) cleanLogs[k]=LOGS[k]; }
+    const body=[{ id:ROW_ID, payload:{ logs:cleanLogs, weekly:WEEKLY, rehab:REHAB },
                   updated_at:new Date().toISOString(), updated_by:"app" }];
     const r=await fetch(`${SUPA_URL}/rest/v1/workout_data`, { method:"POST",
       headers:Object.assign({}, SUPA_HEADERS, { Prefer:"resolution=merge-duplicates,return=minimal" }),
@@ -1582,6 +1606,7 @@ async function cloudPull(){
       if(p.logs)   LOGS   = _mergeByKey(LOGS,   p.logs,  _pickLog);
       if(p.rehab)  REHAB  = _mergeByKey(REHAB,  p.rehab, _pickRehab);
       if(p.weekly) WEEKLY = _mergeWeekly(WEEKLY, p.weekly);
+      cleanupLogs();
       _writeLS(SK.logs,LOGS); _writeLS(SK.rehab,REHAB); _writeLS(SK.weekly,WEEKLY);
       if(typeof renderDayPills==="function") renderDayPills();
       if(typeof renderWorkoutContent==="function") renderWorkoutContent();
