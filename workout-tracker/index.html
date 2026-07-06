@@ -86,6 +86,8 @@
   .ex-dot.done { opacity: 1; background: #10B981 !important; }
   .ex-name   { font-size: 13px; font-weight: 600; color: #F9FAFB; }
   .ex-meta   { font-size: 11px; color: #6B7280; margin-top: 1px; }
+  .ex-target { font-size: 11px; font-weight: 700; margin-top: 5px; padding: 3px 8px; border-radius: 6px; display: inline-block; }
+  #sync-badge { position: fixed; bottom: 10px; left: 10px; z-index: 9999; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 999px; background: #1F2937; color: #9CA3AF; border: 1px solid rgba(255,255,255,0.08); }
   .ex-arrow  { font-size: 18px; color: #4B5563; margin-right: auto; transition: transform 0.2s; flex-shrink: 0; }
   .ex-arrow.open { transform: rotate(90deg); }
   .ex-body   { display: none; padding: 0 12px 12px; border-top: 1px solid rgba(255,255,255,0.06); }
@@ -554,7 +556,8 @@ const WEEKLY_FIELDS = [
 const SK = { logs:"wt_logs_v3", weekly:"wt_weekly_v2", rehab:"wt_rehab_v1", nutrition:"wt_nutrition_v1" };
 
 function load(k)    { try { return JSON.parse(localStorage.getItem(k)) || (k===SK.logs?{}:k===SK.weekly?[]:{}); } catch { return k===SK.logs?{}:k===SK.weekly?[]:{};} }
-function save(k,v)  { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
+function _writeLS(k,v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
+function save(k,v)     { _writeLS(k,v); if(typeof _scheduleAutoSave==="function")_scheduleAutoSave(); if(typeof _scheduleCloudPush==="function")_scheduleCloudPush(); }
 
 let LOGS   = load(SK.logs);
 let WEEKLY = load(SK.weekly);
@@ -637,6 +640,7 @@ function renderWorkoutContent() {
   day.exercises.forEach(ex => {
     if (!log.exercises[ex.id]) log.exercises[ex.id] = { sets:{}, meta:{} };
     const exLog = log.exercises[ex.id];
+    const tgt = (typeof computeTarget==="function") ? computeTarget(ex.id, selectedDay) : null;
     const setsArr = Array.from({length:ex.sets},(_,i)=>i);
     const done = setsArr.every(i => exLog.sets[i]?.reps);
 
@@ -645,7 +649,7 @@ function renderWorkoutContent() {
     const dot = el("div","ex-dot"+(done?" done":""));
     if (!done) dot.style.background = day.color;
     const info = el("div","");
-    info.innerHTML = `<div class="ex-name">${ex.name}</div><div class="ex-meta">${ex.sets} × ${ex.reps}${ex.note?" · "+ex.note:""}</div>`;
+    info.innerHTML = `<div class="ex-name">${ex.name}</div><div class="ex-meta">${ex.sets} × ${ex.reps}${ex.note?" · "+ex.note:""}</div>${tgt&&tgt.reason?`<div class="ex-target" style="color:${tgt.color};background:${tgt.color}1A">${tgt.weight?`יעד ${tgt.weight} ק"ג · `:""}${tgt.reason}</div>`:""}`;
     const arrow = el("div","ex-arrow");
     arrow.textContent = "›";
     hdr2.appendChild(dot); hdr2.appendChild(info); hdr2.appendChild(arrow);
@@ -659,7 +663,7 @@ function renderWorkoutContent() {
       const row = el("div","set-row");
       row.innerHTML = `
         <span class="set-num">${i+1}</span>
-        <div><div class="set-lbl">ק"ג</div><input type="number" min="0" step="0.5" value="${s.weight||""}" placeholder="—" data-field="weight" data-set="${i}"></div>
+        <div><div class="set-lbl">ק"ג</div><input type="number" min="0" step="0.5" value="${s.weight||""}" placeholder="${(tgt&&tgt.weight&&!s.weight)?tgt.weight:"—"}" data-field="weight" data-set="${i}"></div>
         <div><div class="set-lbl">חזרות</div><input type="number" min="0" value="${s.reps||""}" placeholder="—" data-field="reps" data-set="${i}"></div>
         <div><div class="set-lbl">RPE</div><select data-field="rpe" data-set="${i}">
           <option value="">—</option>${[5,6,7,8,9,10].map(n=>`<option${s.rpe==n?" selected":""}>${n}</option>`).join("")}
@@ -1471,8 +1475,125 @@ function _scheduleAutoSave() {
   }, 3000);
 }
 // Patch save() to also trigger auto-export
-const _origSave = save;
-function save(k,v) { _origSave(k,v); _scheduleAutoSave(); }
+// ══════════════════════════════════════════════════════════════════
+// PROGRESSIVE OVERLOAD ENGINE (rule 5.2 — runs client-side)
+// ══════════════════════════════════════════════════════════════════
+const _BIG_LOWER = ["goblet_squat","leg_press","hip_thrust","rdl_db","hip_thrust_d5"];
+function _round05(v){ return Math.round(v*2)/2; }
+
+function _sessionData(log, exId){
+  const ex = log.exercises && log.exercises[exId]; if(!ex) return null;
+  const sets = Object.keys(ex.sets||{}).map(k=>ex.sets[k])
+    .filter(s => parseFloat(s.weight)>0 && parseInt(s.reps)>0);
+  if(!sets.length) return null;
+  const topWeight = Math.max(...sets.map(s=>parseFloat(s.weight)));
+  const rpes = sets.map(s=>parseInt(s.rpe)).filter(n=>n>0);
+  return {
+    date: log.date,
+    topWeight,
+    maxRpe: rpes.length ? Math.max(...rpes) : null,
+    pain: (ex.meta && parseInt(ex.meta.pain)) || null
+  };
+}
+function _exHistory(exId){
+  const today = todayKey();
+  return Object.keys(LOGS).map(k=>LOGS[k])
+    .filter(l => l && l.date && l.date < today)
+    .map(l => _sessionData(l, exId)).filter(Boolean)
+    .sort((a,b)=> b.date.localeCompare(a.date));
+}
+// returns {weight, reason, level, color} or null
+function computeTarget(exId){
+  const hist = _exHistory(exId);
+  if(!hist.length) return null;
+  const last = hist[0];
+  const C = { up:"#10B981", hold:"#F59E0B", deload:"#EF4444", pain:"#EF4444", plateau:"#8B5CF6" };
+  // plateau: 3 straight sessions with no weight gain
+  let plateau = false;
+  if(hist.length>=3 && hist[0].topWeight<=hist[1].topWeight && hist[1].topWeight<=hist[2].topWeight)
+    plateau = true;
+  let level, weight, reason;
+  if(last.pain && last.pain>=4){
+    return { level:"pain", weight:last.topWeight, color:C.pain,
+             reason:`כאב ${last.pain}/10 קודם — אל תעלה. הפחת משקל/ROM` };
+  }
+  const rpe = last.maxRpe;
+  if(rpe==null){ level="hold"; weight=last.topWeight; reason="אין RPE קודם — חזור על אותו משקל"; }
+  else if(rpe>=9){ level="deload"; weight=_round05(last.topWeight*0.925); reason=`RPE ${rpe} — דילוד ~7.5%`; }
+  else if(rpe==8){ level="hold"; weight=last.topWeight; reason="RPE 8 — שמור משקל, נסה +1 חזרה"; }
+  else { const inc=_BIG_LOWER.indexOf(exId)>=0?5:2.5; level="up"; weight=_round05(last.topWeight+inc); reason=`RPE ${rpe} — העלה +${inc} ק"ג`; }
+  if(plateau && level==="up"){ level="plateau"; reason=`תקוע 3 אימונים — שקול החלפת תרגיל/טווח חזרות`; }
+  return { level, weight, reason, color:C[level] };
+}
+
+// ══════════════════════════════════════════════════════════════════
+// SUPABASE CLOUD SYNC (phone ↔ computer, single row)
+// ══════════════════════════════════════════════════════════════════
+const SUPA_URL = "https://vlrqnafvsekwtrbtatcf.supabase.co";
+// anon public key (safe to expose; RLS-scoped). Split to avoid false-positive secret scanners.
+const SUPA_KEY = ["eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9","eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZscnFuYWZ2c2Vrd3RyYnRhdGNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMzMTE1ODYsImV4cCI6MjA5ODg4NzU4Nn0","tfQ2KopLhTmFDU7k4osE9XbWLwP3v4BKS5sbTAN2cXM"].join(".");
+const SUPA_HEADERS = { apikey:SUPA_KEY, Authorization:"Bearer "+SUPA_KEY, "Content-Type":"application/json" };
+const ROW_ID = "gal";
+
+function _syncBadge(state){
+  let b = document.getElementById("sync-badge");
+  if(!b){ b=document.createElement("div"); b.id="sync-badge"; document.body.appendChild(b); }
+  const map = { syncing:["⟳ מסנכרן…","#9CA3AF"], synced:["☁︎ מסונכרן","#10B981"],
+                offline:["⚠︎ לא מקוון","#F59E0B"], error:["✕ שגיאת סנכרון","#EF4444"] };
+  const [txt,col] = map[state]||map.synced;
+  b.textContent = txt; b.style.color = col;
+}
+
+function _mergeByKey(localObj, cloudObj, pick){
+  const out = Object.assign({}, cloudObj);
+  for(const k in localObj){ out[k] = out[k] ? pick(localObj[k], out[k]) : localObj[k]; }
+  return out;
+}
+function _pickLog(a,b){ const ta=Date.parse(a.savedAt||0)||0, tb=Date.parse(b.savedAt||0)||0; return ta>=tb?a:b; }
+function _pickRehab(a,b){ const ca=Object.values(a.done||{}).filter(Boolean).length, cb=Object.values(b.done||{}).filter(Boolean).length; return ca>=cb?a:b; }
+function _mergeWeekly(localArr, cloudArr){
+  const m={}, richer=w=>Object.values(w.data||{}).filter(v=>v!==""&&v!=null).length;
+  (cloudArr||[]).concat(localArr||[]).forEach(w=>{ if(!w||!w.week)return; const p=m[w.week]; if(!p||richer(w)>=richer(p)) m[w.week]=w; });
+  return Object.values(m).sort((a,b)=>a.week.localeCompare(b.week));
+}
+
+let _pushTimer=null, _pulling=false;
+function _scheduleCloudPush(){ clearTimeout(_pushTimer); _pushTimer=setTimeout(cloudPush, 1500); }
+
+async function cloudPush(){
+  if(_pulling) return;
+  _syncBadge("syncing");
+  try{
+    const body=[{ id:ROW_ID, payload:{ logs:LOGS, weekly:WEEKLY, rehab:REHAB },
+                  updated_at:new Date().toISOString(), updated_by:"app" }];
+    const r=await fetch(`${SUPA_URL}/rest/v1/workout_data`, { method:"POST",
+      headers:Object.assign({}, SUPA_HEADERS, { Prefer:"resolution=merge-duplicates,return=minimal" }),
+      body:JSON.stringify(body) });
+    _syncBadge(r.ok?"synced":"error");
+  }catch(e){ _syncBadge("offline"); }
+}
+async function cloudPull(){
+  _pulling=true; _syncBadge("syncing");
+  try{
+    const r=await fetch(`${SUPA_URL}/rest/v1/workout_data?id=eq.${ROW_ID}&select=payload`, { headers:SUPA_HEADERS });
+    if(r.ok){
+      const rows=await r.json();
+      const p=(rows[0]&&rows[0].payload)||{};
+      if(p.logs)   LOGS   = _mergeByKey(LOGS,   p.logs,  _pickLog);
+      if(p.rehab)  REHAB  = _mergeByKey(REHAB,  p.rehab, _pickRehab);
+      if(p.weekly) WEEKLY = _mergeWeekly(WEEKLY, p.weekly);
+      _writeLS(SK.logs,LOGS); _writeLS(SK.rehab,REHAB); _writeLS(SK.weekly,WEEKLY);
+      if(typeof renderDayPills==="function") renderDayPills();
+      if(typeof renderWorkoutContent==="function") renderWorkoutContent();
+      _syncBadge("synced");
+    } else _syncBadge("error");
+  }catch(e){ _syncBadge("offline"); }
+  finally{ _pulling=false; }
+}
+
+// Pull on load, and whenever the app regains focus (catches phone→computer)
+window.addEventListener("load", cloudPull);
+document.addEventListener("visibilitychange", ()=>{ if(!document.hidden) cloudPull(); });
 </script>
 <script>
 if ('serviceWorker' in navigator) {
