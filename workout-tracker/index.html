@@ -95,11 +95,12 @@
 
   /* ── SET ROW ── */
   .set-row {
-    display: grid; grid-template-columns: 22px 1fr 1fr 65px 1fr;
-    gap: 5px; align-items: center; margin-bottom: 4px;
-    padding: 5px 6px; border-radius: 6;
+    display: grid; grid-template-columns: 15px 1fr 1fr 46px 1.05fr 28px;
+    gap: 4px; align-items: end; margin-bottom: 4px;
+    padding: 5px 6px;
     background: rgba(255,255,255,0.03); border-radius: 6px;
   }
+  .set-row.set-done { background: rgba(16,185,129,0.09); }
   .set-num  { font-size: 10px; color: #6B7280; font-weight: 700; }
   .set-lbl  { font-size: 9px; color: #6B7280; margin-bottom: 2px; }
   .set-row input, .set-row select {
@@ -109,6 +110,49 @@
     outline: none; font-family: inherit;
   }
   .set-row select { background: rgba(20,20,30,0.95); }
+  .set-done-btn {
+    height: 30px; border-radius: 5px; cursor: pointer; user-select: none;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 800; color: #4B5563;
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
+  }
+  .set-done-btn.on { background: #10B981; color: #fff; border-color: #10B981; }
+
+  /* ── WORKOUT HEADER + TIMER ── */
+  .wk-hdr { margin-bottom: 14px; }
+  .wk-hdr-top { display: flex; align-items: flex-start; justify-content: space-between; padding: 10px 0 8px; }
+  .wk-title { font-size: 20px; font-weight: 800; color: #F9FAFB; }
+  .wk-sub   { font-size: 12px; margin-top: 2px; }
+  .wk-timer-row { display: flex; align-items: center; gap: 10px; justify-content: space-between; }
+  .wk-dur { font-size: 13px; font-weight: 700; color: #9CA3AF; }
+  .wk-dur #wk-timer-disp { color: #10B981; font-variant-numeric: tabular-nums; }
+  .wk-btn { border: none; border-radius: 8px; color: #fff; font-size: 13px; font-weight: 700; padding: 9px 16px; cursor: pointer; font-family: inherit; }
+  .wk-btn.end { background: #EF4444; }
+
+  /* ── CURRENT / CORE / DONE-TOGGLE / CUE ── */
+  .ex-card.current { border-color: rgba(96,165,250,0.55); box-shadow: 0 0 0 1px rgba(96,165,250,0.35) inset; }
+  .cur-tag { font-size: 9px; font-weight: 700; color: #93C5FD; background: rgba(96,165,250,0.18); padding: 1px 6px; border-radius: 999px; margin-right: 6px; vertical-align: middle; }
+  .ex-card.core-card { border-right: 3px solid #8B5CF6; }
+  .ex-done-toggle {
+    width: 24px; height: 24px; border-radius: 6px; flex-shrink: 0; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; color: #fff;
+    background: rgba(255,255,255,0.06); border: 1.5px solid rgba(255,255,255,0.2);
+  }
+  .ex-done-toggle.on { background: #10B981; border-color: #10B981; }
+  .ex-cue { font-size: 12px; color: #D1D5DB; line-height: 1.65; margin: 10px 0 6px; background: rgba(255,255,255,0.03); border-radius: 7px; padding: 8px 10px; border-right: 2px solid #06B6D4; }
+  .ex-cue .cue-label { display: block; margin-bottom: 3px; }
+
+  /* ── REST TIMER (floating) ── */
+  #rest-timer {
+    position: fixed; left: 50%; transform: translateX(-50%); bottom: 46px; z-index: 10000;
+    display: none; align-items: center; gap: 12px;
+    background: #111827; border: 1px solid rgba(16,185,129,0.5); border-radius: 999px;
+    padding: 8px 14px; box-shadow: 0 6px 24px rgba(0,0,0,0.5);
+  }
+  #rest-timer .rt-name { font-size: 11px; color: #9CA3AF; font-weight: 600; }
+  #rest-timer .rt-time { font-size: 20px; font-weight: 800; color: #10B981; font-variant-numeric: tabular-nums; min-width: 52px; text-align: center; }
+  #rest-timer .rt-add { font-size: 11px; font-weight: 700; color: #93C5FD; cursor: pointer; padding: 3px 7px; border: 1px solid rgba(96,165,250,0.4); border-radius: 999px; }
+  #rest-timer .rt-x { font-size: 11px; font-weight: 700; color: #EF4444; cursor: pointer; }
 
   /* ── SCALE ROW ── */
   .scale-row { display: flex; gap: 4px; flex-wrap: wrap; }
@@ -448,67 +492,77 @@
 // ══════════════════════════════════════════════════════════════════
 // DATA — PROGRAM
 // ══════════════════════════════════════════════════════════════════
+// Core block (McGill anti-flexion/rotation — בטוח לבלט דיסק + עוזר להיפרלורדוזה). ids ייחודיים לכל יום.
+function _core(sfx){ return [
+  { id:"dead_bug"+sfx,   name:"Dead Bug",           sets:3, reps:"8/צד",      rest:45, core:true, note:"anti-extension · McGill", cue:"שכב גב, גב תחתון צמוד לרצפה לכל אורך התנועה. ידיים ישרות למעלה, ברכיים 90°. הורד יד ורגל נגדיות לאט תוך נשיפה — בלי שהגב יתקמר. אם הגב מתרומם, קצר את הטווח. מלמד הטיית אגן אחורית שמפחיתה לורדוזה." },
+  { id:"side_plank"+sfx, name:"Side Plank (McGill)", sets:3, reps:"20-30ש/צד", rest:45, core:true, note:"anti-lateral-flexion", cue:"מרפק מתחת לכתף, גוף בקו ישר מכתף לקרסול. הרם אגן וסחוט core+גלוט. אל תיפול קדימה/אחורה. סטים קצרים חוזרים עדיפים על החזקה אחת ארוכה. עומס גזירה נמוך על הדיסק." },
+  { id:"pallof"+sfx,     name:"Pallof Press",        sets:3, reps:"10/צד",     rest:45, core:true, note:"anti-rotation", cue:"גומייה/כבל בגובה חזה מהצד. דחוף ידיים ישר קדימה והחזק שנייה, התנגד לסיבוב הגוף. אגן ניטרלי, בלי לקמר גב תחתון. שולט בייצוב הליבה בזמן תנועת גפיים." }
+]; }
 const PROGRAM = {
   day1: {
     label: "Push", tag: "חזה · כתפיים · טריצפס", color: "#EF4444",
     exercises: [
-      { id: "db_flat_bench",   name: "DB Flat Bench Press",   sets: 4, reps: "8-10",  note: "RPE 7-8 — לא לכישלון" },
-      { id: "db_incline",      name: "DB Incline Press",      sets: 3, reps: "10-12", note: "30-45° — בטוח על כתף" },
-      { id: "ohp_seated",      name: "Seated DB OHP",         sets: 3, reps: "8-10",  note: "בישיבה — מוריד עומס על עמ\"ש" },
-      { id: "lateral_raise",   name: "Lateral Raise",         sets: 3, reps: "12-15", note: "תנועה איטית, לא נדנוד" },
-      { id: "tricep_pushdown", name: "Tricep Pushdown",       sets: 3, reps: "12-15", note: "Cable / Band" },
-      { id: "overhead_ext",    name: "Overhead Tricep Ext.",  sets: 2, reps: "12-15", note: "DB / Cable" }
+      { id: "db_flat_bench",   name: "DB Flat Bench Press",   sets: 4, reps: "8-10",  rest:180, note: "RPE 7-8 — לא לכישלון", cue:"שכמות אחורה ולמטה, כלואות לספסל לכל אורך הסט. הורד לצדי החזה בשליטה, מרפקים ~45° מהגוף (לא מפושקים). דחוף בקשת קלה. שליטה בירידה, לא ליפול." },
+      { id: "db_incline",      name: "DB Incline Press",      sets: 3, reps: "10-12", rest:120, note: "30-45° — בטוח על כתף", cue:"ספסל 30-45°. שכמות מכונסות. דחיפה לכיוון החזה העליון, לא לכיוון הפנים. ללא כאב קדמי בכתף — אם יש, הורד זווית/משקל." },
+      { id: "ohp_seated",      name: "Seated DB OHP",         sets: 3, reps: "8-10",  rest:150, note: "בישיבה — מוריד עומס על עמ\"ש", cue:"גב נשען, core נעול, בלי קשת מותנית. דחוף מעל הראש בלי לכווץ כתפיים לאוזניים. ירידה מבוקרת עד גובה אוזן." },
+      { id: "lateral_raise",   name: "Lateral Raise",         sets: 3, reps: "12-15", rest:60,  note: "תנועה איטית, לא נדנוד", cue:"מרפק מוביל, כמו למזוג מים. עד גובה כתף בלבד. עלייה איטית, ירידה 2-3 שניות. בלי מומנטום מהגב." },
+      { id: "tricep_pushdown", name: "Tricep Pushdown",       sets: 3, reps: "12-15", rest:60,  note: "Cable / Band", cue:"מרפקים צמודים לגוף וקבועים. פשוט מרפק עד יישור מלא, סחיטה בסוף. רק האמה זזה." },
+      { id: "overhead_ext",    name: "Overhead Tricep Ext.",  sets: 2, reps: "12-15", rest:60,  note: "DB / Cable", cue:"מרפקים קרובים לראש וקבועים. הורד מאחורי הראש עד מתיחה בטריצפס, יישר למעלה. לא לפתוח מרפקים החוצה." }
     ]
   },
   day2: {
     label: "Pull", tag: "גב · ביצפס", color: "#8B5CF6",
     exercises: [
-      { id: "pullup",           name: "Pull-Up (מתח)",          sets: 3, reps: "6-10",  note: "אחיזה ניטרלית/סופינציה, ROM מלא בשליטה. עצור מיד באי-סימטריה בשכמה ימין או כאב חד. Assisted/גומייה אם RPE>8" },
-      { id: "lat_pulldown",     name: "Lat Pulldown",           sets: 3, reps: "8-10",  note: "משלים למתח — הימנע מכיפוף מוגזם של צוואר" },
-      { id: "chest_supp_row",   name: "Chest-Supported DB Row", sets: 3, reps: "10-12", note: "מועדף — מוריד עומס על עמ\"ש" },
-      { id: "seated_cable_row", name: "Seated Cable Row",       sets: 3, reps: "10-12", note: "שכמות צמודות בסיום" },
-      { id: "face_pull",        name: "Face Pull",              sets: 3, reps: "15-20", note: "חשוב לשכמה — ROM מלא" },
-      { id: "db_curl",          name: "DB Bicep Curl",          sets: 3, reps: "10-12", note: "" },
-      { id: "hammer_curl",      name: "Hammer Curl",            sets: 2, reps: "12",    note: "Brachialis + Brachioradialis" }
+      { id: "pullup",           name: "Pull-Up (מתח)",          sets: 3, reps: "6-10",  rest:150, note: "אחיזה ניטרלית/סופינציה", cue:"אחיזה ניטרלית/סופינציה. התחל במשיכת שכמות למטה (depression) לפני כיפוף מרפק. ROM מלא בשליטה, בלי נדנוד. עצור מיד באי-סימטריה בשכמה ימין או כאב חד. Assisted/גומייה אם RPE>8." },
+      { id: "lat_pulldown",     name: "Lat Pulldown",           sets: 3, reps: "8-10",  rest:120, note: "משלים למתח", cue:"חזה מעט מורם, משוך את המוט לחלק העליון של החזה עם מרפקים למטה. שכמות נמשכות למטה-אחורה. הימנע מכיפוף מוגזם של הצוואר לאחור." },
+      { id: "chest_supp_row",   name: "Chest-Supported DB Row", sets: 3, reps: "10-12", rest:120, note: "מועדף — מוריד עומס על עמ\"ש", cue:"חזה נתמך על ספסל משופע — מבטל עומס על הגב התחתון. משוך מרפקים אחורה לצד הגוף, סחוט שכמות בסוף. בלי לסובב את הגו." },
+      { id: "seated_cable_row", name: "Seated Cable Row",       sets: 3, reps: "10-12", rest:120, note: "שכמות צמודות בסיום", cue:"גב זקוף וניטרלי (לא להתנדנד מהמותן). משוך לכיוון הבטן, מרפקים צמודים, סחוט שכמות בסוף. חזרה מבוקרת עם מתיחה קלה." },
+      { id: "face_pull",        name: "Face Pull",              sets: 3, reps: "15-20", rest:45,  note: "חשוב לשכמה — ROM מלא", cue:"כבל/גומייה בגובה עיניים. משוך לכיוון המצח, מרפקים גבוהים מהכתפיים, סיים עם ידיים במצב W. החזק שנייה. קריטי לבריאות השכמה." },
+      { id: "db_curl",          name: "DB Bicep Curl",          sets: 3, reps: "10-12", rest:60,  note: "", cue:"מרפקים צמודים לצד הגוף וקבועים. סופינציה (סיבוב כף היד) בעלייה. בלי לנדנד מהכתף/גב. ירידה איטית." },
+      { id: "hammer_curl",      name: "Hammer Curl",            sets: 2, reps: "12",    rest:60,  note: "Brachialis + Brachioradialis", cue:"אחיזה ניטרלית (אגרוף כמו פטיש). מרפקים קבועים. עלייה מבוקרת, בלי מומנטום." }
     ]
   },
   day3: {
     label: "Legs", tag: "קוואד · גלוטאוס · המסטרינג", color: "#3B82F6",
     exercises: [
-      { id: "goblet_squat",  name: "Goblet Squat",          sets: 4, reps: "8-10",  note: "DB/KC — ללא ברבל על עמ\"ש" },
-      { id: "bulgarian_ss",  name: "Bulgarian Split Squat", sets: 3, reps: "8/צד",  note: "DB בכל יד — עומס סימטרי" },
-      { id: "leg_press",     name: "Leg Press",             sets: 3, reps: "10-12", note: "גב צמוד למשענת לאורך כל הסט" },
-      { id: "leg_curl",      name: "Leg Curl",              sets: 3, reps: "10-12", note: "Seated / Lying" },
-      { id: "hip_thrust",    name: "Hip Thrust (DB/Plate)", sets: 3, reps: "10-12", note: "ספסל + משקל על ירכיים" },
-      { id: "calf_raise",    name: "Standing Calf Raise",   sets: 3, reps: "15",    note: "" }
+      { id: "goblet_squat",  name: "Goblet Squat",          sets: 4, reps: "8-10",  rest:180, note: "DB/KC — ללא ברבל על עמ\"ש", cue:"החזק משקל אנכי מול החזה. core נעול, גב ניטרלי (לא לקמר/לעגל). רד עד שהירכיים מקבילות אם נוח, ברכיים בכיוון האצבעות. עלייה דרך העקבים." },
+      { id: "bulgarian_ss",  name: "Bulgarian Split Squat", sets: 3, reps: "8/צד",  rest:150, note: "DB בכל יד — עומס סימטרי", cue:"רגל אחורית על ספסל. גו זקוף, רד ישר למטה על הרגל הקדמית. ברך קדמית מעל האצבעות. DB בכל יד לעומס סימטרי ופחות עומס על עמ\"ש." },
+      { id: "leg_press",     name: "Leg Press",             sets: 3, reps: "10-12", rest:150, note: "גב צמוד למשענת", cue:"גב תחתון וישבן צמודים למשענת לכל אורך הסט — קריטי לבלט הדיסק. אל תרד עמוק מדי אם האגן מתגלגל. דחוף דרך העקבים, בלי לנעול ברכיים בכוח." },
+      { id: "leg_curl",      name: "Leg Curl",              sets: 3, reps: "10-12", rest:90,  note: "Seated / Lying", cue:"כיווץ מלא של ההמסטרינג, החזקה קצרה בסוף. ירידה איטית ומבוקרת. אגן צמוד לכרית, בלי להרים." },
+      { id: "hip_thrust",    name: "Hip Thrust (DB/Plate)", sets: 3, reps: "10-12", rest:120, note: "דגש גלוטאוס", cue:"גב עליון על ספסל, סנטר מקורב לחזה. דחוף דרך העקבים, סחוט גלוטאוס בסוף עד קו ישר ברך-ירך-כתף — לא לקמר גב תחתון (זו הטעות הנפוצה). החזק שנייה." },
+      { id: "calf_raise",    name: "Standing Calf Raise",   sets: 3, reps: "15",    rest:60,  note: "", cue:"ROM מלא — מתיחה למטה עד עלייה מקסימלית על הבהונות. החזקה שנייה למעלה, ירידה איטית." }
     ]
   },
   day4: {
     label: "Upper", tag: "עליון · נפח · חזרה על קבוצות", color: "#F59E0B",
     exercises: [
-      { id: "db_bench_u",      name: "DB Bench Press",     sets: 3, reps: "10-12", note: "נפח — RPE 6-7" },
-      { id: "cable_row_u",     name: "Cable Row / DB Row", sets: 3, reps: "10-12", note: "" },
-      { id: "ohp_seated_u",    name: "Seated DB OHP",      sets: 3, reps: "10-12", note: "קל יותר מיום Push" },
-      { id: "pullup_u",        name: "Pull-Up (מתח)",      sets: 3, reps: "8-10",  note: "נפח קל, RPE 6-7. שליטה שכמתית מלאה, בלי הרמת/כיווץ כתף. Assisted אם צריך — עצור באי-סימטריה" },
-      { id: "lat_pull_u",      name: "Lat Pulldown",       sets: 2, reps: "10-12", note: "משלים, קל" },
-      { id: "lateral_raise_u", name: "Lateral Raise",      sets: 3, reps: "15",    note: "סופר-סט אפשרי עם Face Pull" },
-      { id: "face_pull_u",     name: "Face Pull",          sets: 3, reps: "15-20", note: "חשוב — מונע אסימטריה שכמה" },
-      { id: "curl_u",          name: "Curl (בחירה)",       sets: 2, reps: "12",    note: "DB / Cable / EZ Bar" },
-      { id: "tricep_u",        name: "Tricep (בחירה)",     sets: 2, reps: "12",    note: "" }
+      { id: "db_bench_u",      name: "DB Bench Press",     sets: 3, reps: "10-12", rest:120, note: "נפח — RPE 6-7", cue:"נפח קל יותר מיום Push. שכמות כלואות, מרפקים ~45°. דגש על שליטה וכיווץ, לא על משקל מקסימלי." },
+      { id: "cable_row_u",     name: "Cable Row / DB Row", sets: 3, reps: "10-12", rest:120, note: "", cue:"גב ניטרלי. משוך מרפקים אחורה, סחוט שכמות. אם DB Row — יד אחת, ברך וכף יד על ספסל, גב מקביל לרצפה." },
+      { id: "ohp_seated_u",    name: "Seated DB OHP",      sets: 3, reps: "10-12", rest:120, note: "קל יותר מיום Push", cue:"בישיבה עם משענת, core נעול, בלי קשת מותנית. דחיפה מבוקרת, בלי לכווץ כתפיים לאוזניים." },
+      { id: "pullup_u",        name: "Pull-Up (מתח)",      sets: 3, reps: "8-10",  rest:120, note: "נפח קל, RPE 6-7", cue:"depression שכמות תחילה, ROM מלא בשליטה. בלי הרמת/כיווץ כתף. Assisted אם צריך. עצור באי-סימטריה בשכמה ימין." },
+      { id: "lat_pull_u",      name: "Lat Pulldown",       sets: 2, reps: "10-12", rest:90,  note: "משלים, קל", cue:"משלים קל למתח. מרפקים למטה, שכמות נמשכות למטה-אחורה, בלי כיפוף צוואר." },
+      { id: "lateral_raise_u", name: "Lateral Raise",      sets: 3, reps: "15",    rest:60,  note: "סופר-סט עם Face Pull", cue:"מרפק מוביל, עד גובה כתף, בלי מומנטום. אפשר סופר-סט עם Face Pull." },
+      { id: "face_pull_u",     name: "Face Pull",          sets: 3, reps: "15-20", rest:45,  note: "חשוב — מונע אסימטריה שכמה", cue:"בגובה עיניים, מרפקים גבוהים, סיים ב-W. החזק שנייה. חשוב לאיזון השכמה הימנית." },
+      { id: "curl_u",          name: "Curl (בחירה)",       sets: 2, reps: "12",    rest:60,  note: "DB / Cable / EZ Bar", cue:"מרפקים קבועים, בלי נדנוד. ירידה איטית." },
+      { id: "tricep_u",        name: "Tricep (בחירה)",     sets: 2, reps: "12",    rest:60,  note: "", cue:"מרפקים קבועים, יישור מלא וסחיטה בסוף." }
     ]
   },
   day5: {
     label: "Lower", tag: "אחורי · hinge · גלוטאוס", color: "#10B981",
     exercises: [
-      { id: "rdl_db",        name: "Romanian Deadlift (DB)", sets: 4, reps: "10-12", note: "DB בלבד — גב ישר, לא כיפוף" },
-      { id: "hip_thrust_d5", name: "Hip Thrust (DB/Plate)",  sets: 4, reps: "10-12", note: "דגש על גלוטאוס" },
-      { id: "step_up",       name: "Step-Up (DB)",           sets: 3, reps: "10/צד", note: "" },
-      { id: "leg_curl_d5",   name: "Leg Curl",               sets: 3, reps: "12",    note: "" },
-      { id: "hip_adductor",  name: "Hip Adductor Machine",   sets: 3, reps: "15",    note: "" },
-      { id: "calf_raise_d5", name: "Calf Raise",             sets: 3, reps: "15",    note: "" }
+      { id: "rdl_db",        name: "Romanian Deadlift (DB)", sets: 4, reps: "10-12", rest:180, note: "DB בלבד — hinge, גב ישר", cue:"תנועת hinge מהירך — דחוף אגן אחורה, לא כיפוף מהגב. גב ניטרלי-ישר לחלוטין לכל אורך התנועה (קריטי לבלט הדיסק). DB קרובים לרגליים, ירידה עד מתיחה בהמסטרינג, בלי לעגל גב תחתון." },
+      { id: "hip_thrust_d5", name: "Hip Thrust (DB/Plate)",  sets: 4, reps: "10-12", rest:150, note: "דגש על גלוטאוס", cue:"גב עליון על ספסל, סנטר לחזה. דחוף דרך עקבים, סחוט גלוטאוס עד קו ישר — לא לקמר גב תחתון. החזק שנייה למעלה." },
+      { id: "step_up",       name: "Step-Up (DB)",           sets: 3, reps: "10/צד", rest:120, note: "", cue:"מדרגה בגובה ברך. עלייה דרך העקב של הרגל העליונה, בלי לדחוף מהתחתונה. גו זקוף, שליטה בירידה." },
+      { id: "leg_curl_d5",   name: "Leg Curl",               sets: 3, reps: "12",    rest:90,  note: "", cue:"כיווץ מלא, החזקה קצרה, ירידה איטית. אגן צמוד." },
+      { id: "hip_adductor",  name: "Hip Adductor Machine",   sets: 3, reps: "15",    rest:60,  note: "", cue:"טווח מלא בשליטה, בלי לזרוק את המשקל. כיווץ בסגירה." },
+      { id: "calf_raise_d5", name: "Calf Raise",             sets: 3, reps: "15",    rest:60,  note: "", cue:"ROM מלא, מתיחה למטה ועלייה מקסימלית, החזקה שנייה." }
     ]
   }
 };
+// הזרקת בלוק ה-core לימים הקצרים (1/3/5) — תדירות ~3x/שבוע
+PROGRAM.day1.exercises.push(..._core("1"));
+PROGRAM.day3.exercises.push(..._core("3"));
+PROGRAM.day5.exercises.push(..._core("5"));
 
 const DAYS = ["day1","day2","day3","day4","day5"];
 
@@ -523,7 +577,10 @@ const REHAB_ROUTINE = {
       { id:"r_band_pull_apart",name:"Band Pull-Aparts",       sets:3, reps:"15",             cue:"Band בגובה כתפיים, ידיים ישרות. פרוש לצדדים עד הרחבה מלאה, שכמות מתקרבות. חזר לאט.",                                         why:"Rhomboids + Mid/Lower Trap — מאזן את כיפוף הכתף הקדמי" },
       { id:"r_face_pull",      name:"Face Pull (Band)",       sets:3, reps:"15",             cue:"Band על גובה עיניים. משוך לכיוון הפנים, מרפקים גבוהים מכתפיים, סיים עם ידיים ב-W. החזק שנייה.",                              why:"Posterior Deltoid + External Rotators — קריטי למניעת impingement" },
       { id:"r_prone_ytw",      name:"Prone Y-T-W",            sets:3, reps:"10 כל אות",      cue:"שכב על בטן (מיטה/מזרון). Y = 45° מעל ראש, T = לצדדים, W = מרפקים 90°. תנועה מהשכמה, לא מהיד.",                               why:"Lower + Middle Trap isolation — מוכח ב-systematic reviews לשיקום dyskinesis" },
-      { id:"r_sleeper",        name:"Sleeper Stretch",        sets:2, reps:"30 שניות/צד",   cue:"שכב על הצד הכואב, מרפק 90°. לחץ קדימה על כף היד עד מתיחה אחורית בכתף. לא כאב חד. ⚠️ עצור אם זרמים.",                       why:"Posterior Capsule — נוקשות אחורית תורמת ל-dyskinesis" }
+      { id:"r_sleeper",        name:"Sleeper Stretch",        sets:2, reps:"30 שניות/צד",   cue:"שכב על הצד הכואב, מרפק 90°. לחץ קדימה על כף היד עד מתיחה אחורית בכתף. לא כאב חד. ⚠️ עצור אם זרמים.",                       why:"Posterior Capsule — נוקשות אחורית תורמת ל-dyskinesis" },
+      { id:"r_doorway_pec",    name:"Doorway Pec Stretch",    sets:2, reps:"30 שניות×2",    cue:"עמוד בפתח דלת, אמות על המשקוף במרפק 90°. צעד קדימה עד מתיחה בחזה הקדמי. גב ניטרלי, בלי לקמר. עשה בגובה מרפק בינוני וגבוה.",   why:"פתיחת חזה (Pec minor/major קצרים) — הגורם המרכזי לכתפיים מגולגלות קדימה. פוסטורה #1" },
+      { id:"r_thoracic_ext",   name:"Thoracic Extension",     sets:2, reps:"8-10",          cue:"גליל קצף/קצה כיסא מתחת לגב עליון, ידיים תומכות בעורף. הישען אחורה בעדינות מעל הגליל תוך נשיפה. תנועה בגב עליון בלבד — לא במותני.", why:"יישור גב עליון (T-spine) — מנטרל גיבנת מהטלפון ומאפשר עמידה זקופה. פוסטורה #2" },
+      { id:"r_posture_reset",  name:"Standing Posture Reset", sets:3, reps:"5 נשימות",      cue:"עמוד לקיר: עורף, גב עליון וישבן נוגעים. סנטר אחורה (chin tuck), שכמות למטה-אחורה, אגן ניטרלי (לא לקמר). נשום 5 נשימות. חזור לאורך היום.", why:"מאמן תבנית עמידה זקופה כברירת מחדל — משלב chin tuck (צוואר טכנולוגי) + כיווץ שכמות + אגן ניטרלי" }
     ]
   },
   lower: {
@@ -585,24 +642,54 @@ function el(tag,cls,html) { const e=document.createElement(tag); if(cls)e.classN
 // ══════════════════════════════════════════════════════════════════
 let activeTab = "workout";
 
-document.getElementById("tabs").addEventListener("click", e => {
-  const tab = e.target.dataset.tab;
+function switchTab(tab){
   if (!tab) return;
   document.querySelectorAll(".tab").forEach(t => t.classList.toggle("active", t.dataset.tab===tab));
   document.querySelectorAll(".view").forEach(v => v.classList.toggle("active", v.id==="view-"+tab));
   activeTab = tab;
+  if(typeof UI==="object"){ UI.tab = tab; if(typeof saveUI==="function") saveUI(); }
   if (tab==="rehab")      renderRehab();
   if (tab==="dashboard")  renderDashboard();
   if (tab==="nutrition")  renderNutrition();
   if (tab==="weekly")     renderWeekly();
   if (tab==="history")    renderHistory();
   if (tab==="export")     renderExport();
-});
+}
+document.getElementById("tabs").addEventListener("click", e => { switchTab(e.target.dataset.tab); });
 
 // ══════════════════════════════════════════════════════════════════
 // WORKOUT TAB
 // ══════════════════════════════════════════════════════════════════
-let selectedDay = "day1";
+let UI = (function(){ try{ return JSON.parse(localStorage.getItem("wt_ui_v1"))||{}; }catch{ return {}; } })();
+if(!UI.open) UI.open = {};
+function saveUI(){ try{ localStorage.setItem("wt_ui_v1", JSON.stringify(UI)); }catch{} }
+let selectedDay = (UI.day && PROGRAM[UI.day]) ? UI.day : "day1";
+
+// ── duration + estimate helpers ──
+function fmtDur(sec){ sec=Math.max(0,Math.round(sec)); const m=Math.floor(sec/60), s=sec%60; return m+":"+String(s).padStart(2,"0"); }
+function avgDuration(dayKey){
+  const ds=Object.keys(LOGS).map(k=>LOGS[k]).filter(l=>l&&l.dayKey===dayKey&&l.durationSec>0&&(l.savedAt||l.date===todayKey())).map(l=>l.durationSec);
+  if(!ds.length) return null;
+  return Math.round(ds.reduce((a,b)=>a+b,0)/ds.length);
+}
+
+// ── rest timer (auto-starts when a set is marked done) ──
+let _restInt=null, _restLeft=0;
+function _beep(){ try{ const c=new (window.AudioContext||window.webkitAudioContext)(); const o=c.createOscillator(), g=c.createGain(); o.connect(g); g.connect(c.destination); o.type="sine"; o.frequency.value=880; g.gain.value=0.2; o.start(); setTimeout(()=>{ o.stop(); c.close(); },300); }catch(e){} if(navigator.vibrate) navigator.vibrate([200,90,200]); }
+function _restEl(){ let e=document.getElementById("rest-timer"); if(!e){ e=el("div"); e.id="rest-timer"; document.body.appendChild(e); } return e; }
+function stopRest(){ if(_restInt) clearInterval(_restInt); _restInt=null; const e=document.getElementById("rest-timer"); if(e) e.style.display="none"; }
+function startRest(sec,name){
+  clearInterval(_restInt); _restLeft=sec; const e=_restEl(); e.style.display="flex";
+  const draw=()=>{ e.innerHTML=`<span class="rt-name">מנוחה · ${name||""}</span><span class="rt-time">${fmtDur(_restLeft)}</span><span class="rt-add">+30</span><span class="rt-x">דלג ✕</span>`; e.querySelector(".rt-x").onclick=stopRest; e.querySelector(".rt-add").onclick=()=>{ _restLeft+=30; draw(); }; };
+  draw();
+  _restInt=setInterval(()=>{ _restLeft--; if(_restLeft<=0){ _beep(); stopRest(); } else draw(); },1000);
+}
+
+// ── workout timer ──
+function _curLog(){ return LOGS[todayKey()+"_"+selectedDay]; }
+function startWorkoutTimer(){ const l=_curLog(); if(!l)return; l.startedAt=new Date().toISOString(); delete l.endedAt; delete l.durationSec; save(SK.logs,LOGS); renderWorkoutContent(); }
+function endWorkoutTimer(){ const l=_curLog(); if(!l||!l.startedAt)return; l.endedAt=new Date().toISOString(); l.durationSec=Math.round((Date.parse(l.endedAt)-Date.parse(l.startedAt))/1000); save(SK.logs,LOGS); renderWorkoutContent(); }
+setInterval(()=>{ const l=_curLog(); const d=document.getElementById("wk-timer-disp"); if(d&&l&&l.startedAt&&!l.endedAt) d.textContent=fmtDur((Date.now()-Date.parse(l.startedAt))/1000); },1000);
 
 function renderDayPills() {
   const container = document.getElementById("day-pills");
@@ -611,10 +698,11 @@ function renderDayPills() {
   DAYS.forEach(dk => {
     const day = PROGRAM[dk];
     const hasLog = Object.keys(LOGS).some(k => k.startsWith(today) && k.endsWith(dk) && LOGS[k] && LOGS[k].savedAt);
+    const est = avgDuration(dk);
     const pill = el("div","day-pill");
-    pill.innerHTML = `<div class="pill-label" style="color:${dk===selectedDay?day.color:"#6B7280"}">${day.label}${hasLog?" ✓":""}</div><div class="pill-sub">${day.tag.split(" · ")[0]}</div>`;
+    pill.innerHTML = `<div class="pill-label" style="color:${dk===selectedDay?day.color:"#6B7280"}">${day.label}${hasLog?" ✓":""}</div><div class="pill-sub">${day.tag.split(" · ")[0]}${est?` · ~${Math.round(est/60)}′`:""}</div>`;
     if (dk===selectedDay) { pill.style.background=day.color+"22"; pill.style.borderColor=day.color; }
-    pill.onclick = () => { selectedDay=dk; renderDayPills(); renderWorkoutContent(); };
+    pill.onclick = () => { selectedDay=dk; UI.day=dk; saveUI(); renderDayPills(); renderWorkoutContent(); };
     container.appendChild(pill);
   });
 }
@@ -625,62 +713,77 @@ function renderWorkoutContent() {
   const logKey = today+"_"+selectedDay;
   if (!LOGS[logKey]) LOGS[logKey] = { exercises:{}, notes:"", pain:null, energy:null, dayKey:selectedDay, date:today };
   const log = LOGS[logKey];
+  if(!UI.open[selectedDay]) UI.open[selectedDay] = {};
 
   const container = document.getElementById("workout-content");
   container.innerHTML = "";
 
-  // Header
-  const doneCount = day.exercises.filter(ex => {
-    return Array.from({length:ex.sets},(_,i)=>i).every(i => log.exercises[ex.id]?.sets?.[i]?.reps);
-  }).length;
-  const hdr = el("div","");
-  hdr.style.cssText = "display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;padding:12px 0";
-  hdr.innerHTML = `<div><div style="font-size:20px;font-weight:800;color:#F9FAFB">${day.label}</div><div style="font-size:12px;color:${day.color};margin-top:2px">${day.tag}</div></div><span class="badge">${doneCount}/${day.exercises.length}</span>`;
+  const exDone = ex => { const e=log.exercises[ex.id]; if(e&&e.meta&&e.meta.done) return true; return Array.from({length:ex.sets},(_,i)=>i).every(i => e&&e.sets&&e.sets[i]&&e.sets[i].reps); };
+  const doneCount = day.exercises.filter(exDone).length;
+  const est = avgDuration(selectedDay);
+  const running = log.startedAt && !log.endedAt;
+
+  // Header + workout timer
+  const hdr = el("div","wk-hdr");
+  const timerBtn = running
+    ? `<button class="wk-btn end" onclick="endWorkoutTimer()">■ סיים אימון</button>`
+    : `<button class="wk-btn start" style="background:${day.color}" onclick="startWorkoutTimer()">${log.startedAt?'↻ התחל מחדש':'▶ התחל אימון'}</button>`;
+  const durTxt = log.durationSec ? `⏱ משך: ${fmtDur(log.durationSec)}` : (running ? `⏱ <span id="wk-timer-disp">0:00</span>` : (est?`מוערך ~${Math.round(est/60)} דק'`:"טרם נמדד"));
+  hdr.innerHTML = `<div class="wk-hdr-top"><div><div class="wk-title">${day.label}</div><div class="wk-sub" style="color:${day.color}">${day.tag}</div></div><span class="badge">${doneCount}/${day.exercises.length}</span></div>
+    <div class="wk-timer-row"><div class="wk-dur">${durTxt}</div>${timerBtn}</div>`;
   container.appendChild(hdr);
 
-  // Exercise cards
+  const firstUndone = day.exercises.find(ex=>!exDone(ex));
+
   day.exercises.forEach(ex => {
     if (!log.exercises[ex.id]) log.exercises[ex.id] = { sets:{}, meta:{} };
     const exLog = log.exercises[ex.id];
-    const tgt = (typeof computeTarget==="function") ? computeTarget(ex.id, selectedDay) : null;
+    const tgt = (typeof computeTarget==="function") ? computeTarget(ex.id) : null;
     const setsArr = Array.from({length:ex.sets},(_,i)=>i);
-    const done = setsArr.every(i => exLog.sets[i]?.reps);
+    const done = exDone(ex);
+    const isCurrent = firstUndone && firstUndone.id===ex.id;
+    const isOpen = !!UI.open[selectedDay][ex.id];
 
-    const card = el("div","ex-card"+(done?" done-card":""));
+    const card = el("div","ex-card"+(done?" done-card":"")+(isCurrent?" current":"")+(ex.core?" core-card":""));
     const hdr2 = el("div","ex-header");
-    const dot = el("div","ex-dot"+(done?" done":""));
-    if (!done) dot.style.background = day.color;
-    const info = el("div","");
-    info.innerHTML = `<div class="ex-name">${ex.name}</div><div class="ex-meta">${ex.sets} × ${ex.reps}${ex.note?" · "+ex.note:""}</div>${tgt&&tgt.reason?`<div class="ex-target" style="color:${tgt.color};background:${tgt.color}1A">${tgt.weight?`יעד ${tgt.weight} ק"ג · `:""}${tgt.reason}</div>`:""}`;
-    const arrow = el("div","ex-arrow");
-    arrow.textContent = "›";
-    hdr2.appendChild(dot); hdr2.appendChild(info); hdr2.appendChild(arrow);
+    const dot = el("div","ex-dot"+(done?" done":"")); if(!done) dot.style.background = day.color;
+    const info = el("div",""); info.style.flex="1";
+    const restTxt = ex.rest ? ` · מנוחה ${ex.rest>=60?(Math.round(ex.rest/60*10)/10)+"′":ex.rest+"ש"}` : "";
+    info.innerHTML = `<div class="ex-name">${ex.core?'◆ ':''}${ex.name}${isCurrent?' <span class="cur-tag">נוכחי</span>':''}</div><div class="ex-meta">${ex.sets} × ${ex.reps}${restTxt}${ex.note?" · "+ex.note:""}</div>${tgt&&tgt.reason?`<div class="ex-target" style="color:${tgt.color};background:${tgt.color}1A">${tgt.weight?`יעד ${tgt.weight} ק"ג · `:""}${tgt.reason}</div>`:""}`;
+    const dtoggle = el("div","ex-done-toggle"+(done?" on":"")); dtoggle.textContent = done?"✓":""; dtoggle.title="סמן כבוצע";
+    dtoggle.onclick=(e)=>{ e.stopPropagation(); exLog.meta.done=!(exLog.meta&&exLog.meta.done); save(SK.logs,LOGS); renderWorkoutContent(); };
+    const arrow = el("div","ex-arrow"); arrow.textContent="›"; if(isOpen) arrow.classList.add("open");
+    hdr2.appendChild(dot); hdr2.appendChild(info); hdr2.appendChild(dtoggle); hdr2.appendChild(arrow);
     card.appendChild(hdr2);
 
-    const body = el("div","ex-body");
-    // Sets
+    const body = el("div","ex-body"+(isOpen?" open":""));
+    if(ex.cue){ const c=el("div","ex-cue"); c.innerHTML=`<span class="cue-label">דגשים</span>${ex.cue}`; body.appendChild(c); }
+
     setsArr.forEach(i => {
       if (!exLog.sets[i]) exLog.sets[i] = {};
       const s = exLog.sets[i];
-      const row = el("div","set-row");
+      const row = el("div","set-row"+(s.done?" set-done":""));
       row.innerHTML = `
         <span class="set-num">${i+1}</span>
         <div><div class="set-lbl">ק"ג</div><input type="number" min="0" step="0.5" value="${s.weight||""}" placeholder="${(tgt&&tgt.weight&&!s.weight)?tgt.weight:"—"}" data-field="weight" data-set="${i}"></div>
         <div><div class="set-lbl">חזרות</div><input type="number" min="0" value="${s.reps||""}" placeholder="—" data-field="reps" data-set="${i}"></div>
-        <div><div class="set-lbl">RPE</div><select data-field="rpe" data-set="${i}">
-          <option value="">—</option>${[5,6,7,8,9,10].map(n=>`<option${s.rpe==n?" selected":""}>${n}</option>`).join("")}
-        </select></div>
-        <div><div class="set-lbl">הערה</div><input type="text" value="${s.note||""}" placeholder="כאב/תחושה" data-field="note" data-set="${i}"></div>`;
+        <div><div class="set-lbl">RPE</div><select data-field="rpe" data-set="${i}"><option value="">—</option>${[5,6,7,8,9,10].map(n=>`<option${s.rpe==n?" selected":""}>${n}</option>`).join("")}</select></div>
+        <div><div class="set-lbl">הערה</div><input type="text" value="${s.note||""}" placeholder="כאב/תחושה" data-field="note" data-set="${i}"></div>
+        <div class="set-done-btn${s.done?' on':''}" data-set="${i}" title="בוצע → מנוחה">✓</div>`;
       row.querySelectorAll("input,select").forEach(inp => {
-        inp.addEventListener("change", () => {
-          const si = +inp.dataset.set, f = inp.dataset.field;
-          exLog.sets[si][f] = inp.value;
-          save(SK.logs, LOGS);
-          renderDayPills();
-        });
+        inp.addEventListener("change", () => { const si=+inp.dataset.set, f=inp.dataset.field; exLog.sets[si][f]=inp.value; save(SK.logs,LOGS); renderDayPills(); });
       });
+      const db=row.querySelector(".set-done-btn");
+      db.onclick=()=>{ const si=+db.dataset.set; exLog.sets[si].done=!exLog.sets[si].done; save(SK.logs,LOGS); const on=exLog.sets[si].done; db.classList.toggle("on",on); row.classList.toggle("set-done",on); if(on && ex.rest) startRest(ex.rest, ex.name); };
       body.appendChild(row);
     });
+
+    // General exercise note (before pain scale)
+    const exNoteLbl=el("div","field-label"); exNoteLbl.textContent="הערה כללית לתרגיל";
+    body.appendChild(exNoteLbl);
+    const exNoteTa=el("textarea"); exNoteTa.rows=2; exNoteTa.placeholder="טכניקה, תחושה, התאמות..."; exNoteTa.value=(exLog.meta&&exLog.meta.note)||"";
+    exNoteTa.addEventListener("input",()=>{ exLog.meta.note=exNoteTa.value; save(SK.logs,LOGS); });
+    body.appendChild(exNoteTa);
 
     // Pain scale
     const painLbl = el("div","field-label"); painLbl.textContent = "כאב בתרגיל (1-10)";
@@ -690,12 +793,12 @@ function renderWorkoutContent() {
       const btn = el("div","scale-btn"+(exLog.meta.pain===n?" sel":""));
       if(exLog.meta.pain===n) btn.style.background = scaleColor(n,"low");
       btn.textContent = n;
-      btn.onclick = () => { exLog.meta.pain=n; save(SK.logs,LOGS); body.querySelectorAll(".scale-row")[0].querySelectorAll(".scale-btn").forEach((b,idx)=>{ b.className="scale-btn"+(idx+1===n?" sel":""); if(idx+1===n)b.style.background=scaleColor(n,"low"); else b.style.background=""; }); };
+      btn.onclick = () => { exLog.meta.pain=n; save(SK.logs,LOGS); painRow.querySelectorAll(".scale-btn").forEach((b,idx)=>{ b.className="scale-btn"+(idx+1===n?" sel":""); b.style.background=idx+1===n?scaleColor(n,"low"):""; }); };
       painRow.appendChild(btn);
     }
     body.appendChild(painRow);
 
-    hdr2.onclick = () => { body.classList.toggle("open"); arrow.classList.toggle("open"); };
+    hdr2.onclick = () => { const nowOpen=body.classList.toggle("open"); arrow.classList.toggle("open",nowOpen); if(nowOpen) UI.open[selectedDay][ex.id]=1; else delete UI.open[selectedDay][ex.id]; saveUI(); };
     card.appendChild(body);
     container.appendChild(card);
   });
@@ -706,8 +809,6 @@ function renderWorkoutContent() {
     <div class="field-label">כאב כללי (1-10)</div><div class="scale-row" id="pain-scale"></div>
     <div class="field-label" style="margin-top:10px">אנרגיה (1-10)</div><div class="scale-row" id="energy-scale"></div>`;
   container.appendChild(sum);
-
-  // Pain & energy scales
   ["pain","energy"].forEach(type => {
     const row = sum.querySelector(`#${type}-scale`);
     const good = type==="pain"?"low":"high";
@@ -715,26 +816,21 @@ function renderWorkoutContent() {
       const btn = el("div","scale-btn"+(log[type]===n?" sel":""));
       if(log[type]===n) btn.style.background = scaleColor(n,good);
       btn.textContent = n;
-      btn.onclick = () => {
-        log[type]=n; save(SK.logs,LOGS);
-        row.querySelectorAll(".scale-btn").forEach((b,idx)=>{ b.className="scale-btn"+(idx+1===n?" sel":""); if(idx+1===n)b.style.background=scaleColor(n,good); else b.style.background=""; });
-      };
+      btn.onclick = () => { log[type]=n; save(SK.logs,LOGS); row.querySelectorAll(".scale-btn").forEach((b,idx)=>{ b.className="scale-btn"+(idx+1===n?" sel":""); b.style.background=idx+1===n?scaleColor(n,good):""; }); };
       row.appendChild(btn);
     }
   });
-
-  // Notes
-  const notesWrap = el("div",""); notesWrap.style.marginTop="10px";
-  const ta = el("textarea",""); ta.rows=2; ta.placeholder="הערות חופשיות..."; ta.value=log.notes||"";
+  const notesWrap = el("div"); notesWrap.style.marginTop="10px";
+  const ta = el("textarea"); ta.rows=2; ta.placeholder="הערות חופשיות על האימון..."; ta.value=log.notes||"";
   ta.addEventListener("input",()=>{ log.notes=ta.value; save(SK.logs,LOGS); });
   notesWrap.appendChild(ta);
   container.appendChild(notesWrap);
 
-  // Save btn
   const saveBtn = el("button","btn"); saveBtn.style.background=day.color; saveBtn.textContent="שמור אימון";
   saveBtn.onclick = () => {
     log.savedAt = new Date().toISOString();
-    save(SK.logs,LOGS);
+    if(log.startedAt && !log.endedAt){ log.endedAt=new Date().toISOString(); log.durationSec=Math.round((Date.parse(log.endedAt)-Date.parse(log.startedAt))/1000); }
+    save(SK.logs,LOGS); renderDayPills();
     saveBtn.textContent="✓ נשמר"; saveBtn.style.background="#10B981";
     setTimeout(()=>{ saveBtn.textContent="שמור אימון"; saveBtn.style.background=day.color; },2500);
   };
@@ -747,6 +843,8 @@ if(typeof cleanupLogs==="function" && cleanupLogs()) _writeLS(SK.logs, LOGS);
 // Init workout tab
 renderDayPills();
 renderWorkoutContent();
+// Restore last-open tab across reloads
+if(UI.tab && UI.tab!=="workout" && document.getElementById("view-"+UI.tab)) switchTab(UI.tab);
 
 // ══════════════════════════════════════════════════════════════════
 // REHAB TAB
