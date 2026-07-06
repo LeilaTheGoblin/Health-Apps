@@ -463,7 +463,8 @@ const PROGRAM = {
   day2: {
     label: "Pull", tag: "גב · ביצפס", color: "#8B5CF6",
     exercises: [
-      { id: "lat_pulldown",     name: "Lat Pulldown",           sets: 4, reps: "8-10",  note: "הימנע מכיפוף מוגזם של צוואר" },
+      { id: "pullup",           name: "Pull-Up (מתח)",          sets: 3, reps: "6-10",  note: "אחיזה ניטרלית/סופינציה, ROM מלא בשליטה. עצור מיד באי-סימטריה בשכמה ימין או כאב חד. Assisted/גומייה אם RPE>8" },
+      { id: "lat_pulldown",     name: "Lat Pulldown",           sets: 3, reps: "8-10",  note: "משלים למתח — הימנע מכיפוף מוגזם של צוואר" },
       { id: "chest_supp_row",   name: "Chest-Supported DB Row", sets: 3, reps: "10-12", note: "מועדף — מוריד עומס על עמ\"ש" },
       { id: "seated_cable_row", name: "Seated Cable Row",       sets: 3, reps: "10-12", note: "שכמות צמודות בסיום" },
       { id: "face_pull",        name: "Face Pull",              sets: 3, reps: "15-20", note: "חשוב לשכמה — ROM מלא" },
@@ -488,7 +489,8 @@ const PROGRAM = {
       { id: "db_bench_u",      name: "DB Bench Press",     sets: 3, reps: "10-12", note: "נפח — RPE 6-7" },
       { id: "cable_row_u",     name: "Cable Row / DB Row", sets: 3, reps: "10-12", note: "" },
       { id: "ohp_seated_u",    name: "Seated DB OHP",      sets: 3, reps: "10-12", note: "קל יותר מיום Push" },
-      { id: "lat_pull_u",      name: "Lat Pulldown",       sets: 3, reps: "10-12", note: "" },
+      { id: "pullup_u",        name: "Pull-Up (מתח)",      sets: 3, reps: "8-10",  note: "נפח קל, RPE 6-7. שליטה שכמתית מלאה, בלי הרמת/כיווץ כתף. Assisted אם צריך — עצור באי-סימטריה" },
+      { id: "lat_pull_u",      name: "Lat Pulldown",       sets: 2, reps: "10-12", note: "משלים, קל" },
       { id: "lateral_raise_u", name: "Lateral Raise",      sets: 3, reps: "15",    note: "סופר-סט אפשרי עם Face Pull" },
       { id: "face_pull_u",     name: "Face Pull",          sets: 3, reps: "15-20", note: "חשוב — מונע אסימטריה שכמה" },
       { id: "curl_u",          name: "Curl (בחירה)",       sets: 2, reps: "12",    note: "DB / Cable / EZ Bar" },
@@ -1038,6 +1040,8 @@ const TRACKABLE_EXERCISES = [
   { id:"hip_thrust",      name:"Hip Thrust" },
   { id:"rdl_db",          name:"Romanian DL" },
   { id:"lat_pulldown",    name:"Lat Pulldown" },
+  { id:"pullup",          name:"Pull-Up (מתח)" },
+  { id:"pullup_u",        name:"Pull-Up (Upper)" },
   { id:"bulgarian_ss",    name:"Bulgarian Split Squat" },
   { id:"face_pull",       name:"Face Pull" },
   { id:"ohp_seated",      name:"Seated DB OHP" },
