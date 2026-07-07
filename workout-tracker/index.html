@@ -87,6 +87,7 @@
   .ex-name   { font-size: 13px; font-weight: 600; color: #F9FAFB; }
   .ex-meta   { font-size: 11px; color: #6B7280; margin-top: 1px; }
   .ex-target { font-size: 11px; font-weight: 700; margin-top: 5px; padding: 3px 8px; border-radius: 6px; display: inline-block; }
+  .ex-equip  { font-size: 11px; color: #93C5FD; margin-top: 3px; }
   #sync-badge { position: fixed; bottom: 10px; left: 10px; z-index: 9999; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 999px; background: #1F2937; color: #9CA3AF; border: 1px solid rgba(255,255,255,0.08); }
   .ex-arrow  { font-size: 18px; color: #4B5563; margin-right: auto; transition: transform 0.2s; flex-shrink: 0; }
   .ex-arrow.open { transform: rotate(90deg); }
@@ -564,6 +565,20 @@ PROGRAM.day1.exercises.push(..._core("1"));
 PROGRAM.day3.exercises.push(..._core("3"));
 PROGRAM.day5.exercises.push(..._core("5"));
 
+// ציוד/אביזר מומלץ לכל תרגיל
+const EQUIP = {
+  db_flat_bench:"משקולות יד + ספסל שטוח", db_incline:"משקולות יד + ספסל משופע 30-45°", ohp_seated:"משקולות יד + ספסל עם משענת",
+  lateral_raise:"משקולות יד", tricep_pushdown:"כבל — צמה (חבל) או מוט ישר", overhead_ext:"משקולת יד / כבל + צמה",
+  pullup:"מתקן מתח (אחיזה ניטרלית אם יש)", lat_pulldown:"מכונת פולי עליון — מוט רחב", chest_supp_row:"משקולות יד + ספסל משופע",
+  seated_cable_row:"כבל — ידית משולשת (V) / מוט", face_pull:"כבל — חבל/צמה בגובה עיניים / גומייה", db_curl:"משקולות יד", hammer_curl:"משקולות יד (אחיזה ניטרלית)",
+  goblet_squat:"משקולת יד אחת / קטלבל", bulgarian_ss:"2 משקולות יד + ספסל", leg_press:"מכונת לג-פרס", leg_curl:"מכונת כפיפת ברכיים",
+  hip_thrust:"מוט/משקולת/פלטה + ספסל", calf_raise:"מכונה / משקולת יד",
+  db_bench_u:"משקולות יד + ספסל", cable_row_u:"כבל (ידית V/מוט) או משקולת יד", ohp_seated_u:"משקולות יד + ספסל", pullup_u:"מתקן מתח",
+  lat_pull_u:"מכונת פולי עליון — מוט", lateral_raise_u:"משקולות יד", face_pull_u:"כבל — חבל/צמה / גומייה", curl_u:"משקולות יד / כבל / מוט EZ", tricep_u:"כבל + צמה/מוט / משקולת יד",
+  rdl_db:"2 משקולות יד", hip_thrust_d5:"מוט/משקולת/פלטה + ספסל", step_up:"2 משקולות יד + מדרגה/סטפ", leg_curl_d5:"מכונת כפיפת ברכיים", hip_adductor:"מכונת אדדוקטור", calf_raise_d5:"מכונה / משקולת יד"
+};
+["1","3","5"].forEach(s=>{ EQUIP["dead_bug"+s]="מזרן — ללא ציוד"; EQUIP["side_plank"+s]="מזרן — משקל גוף"; EQUIP["pallof"+s]="כבל / גומיית התנגדות"; });
+
 const DAYS = ["day1","day2","day3","day4","day5"];
 
 const REHAB_ROUTINE = {
@@ -673,17 +688,22 @@ function avgDuration(dayKey){
   return Math.round(ds.reduce((a,b)=>a+b,0)/ds.length);
 }
 
-// ── rest timer (auto-starts when a set is marked done) ──
-let _restInt=null, _restLeft=0;
+// ── rest timer (timestamp-based → keeps counting while app is closed/locked) ──
+let _restInt=null;
 function _beep(){ try{ const c=new (window.AudioContext||window.webkitAudioContext)(); const o=c.createOscillator(), g=c.createGain(); o.connect(g); g.connect(c.destination); o.type="sine"; o.frequency.value=880; g.gain.value=0.2; o.start(); setTimeout(()=>{ o.stop(); c.close(); },300); }catch(e){} if(navigator.vibrate) navigator.vibrate([200,90,200]); }
 function _restEl(){ let e=document.getElementById("rest-timer"); if(!e){ e=el("div"); e.id="rest-timer"; document.body.appendChild(e); } return e; }
-function stopRest(){ if(_restInt) clearInterval(_restInt); _restInt=null; const e=document.getElementById("rest-timer"); if(e) e.style.display="none"; }
-function startRest(sec,name){
-  clearInterval(_restInt); _restLeft=sec; const e=_restEl(); e.style.display="flex";
-  const draw=()=>{ e.innerHTML=`<span class="rt-name">מנוחה · ${name||""}</span><span class="rt-time">${fmtDur(_restLeft)}</span><span class="rt-add">+30</span><span class="rt-x">דלג ✕</span>`; e.querySelector(".rt-x").onclick=stopRest; e.querySelector(".rt-add").onclick=()=>{ _restLeft+=30; draw(); }; };
-  draw();
-  _restInt=setInterval(()=>{ _restLeft--; if(_restLeft<=0){ _beep(); stopRest(); } else draw(); },1000);
+function stopRest(){ if(_restInt) clearInterval(_restInt); _restInt=null; if(UI.rest){ delete UI.rest; saveUI(); } const e=document.getElementById("rest-timer"); if(e) e.style.display="none"; }
+function _restTick(){
+  if(!UI.rest){ stopRest(); return; }
+  const left=Math.round((UI.rest.endsAt-Date.now())/1000);
+  if(left<=0){ _beep(); stopRest(); return; }
+  const e=_restEl(); e.style.display="flex";
+  e.innerHTML=`<span class="rt-name">מנוחה · ${UI.rest.name||""}</span><span class="rt-time">${fmtDur(left)}</span><span class="rt-add">+30</span><span class="rt-x">דלג ✕</span>`;
+  e.querySelector(".rt-x").onclick=stopRest;
+  e.querySelector(".rt-add").onclick=()=>{ if(UI.rest){ UI.rest.endsAt+=30000; saveUI(); _restTick(); } };
 }
+function startRest(sec,name){ clearInterval(_restInt); UI.rest={ endsAt:Date.now()+sec*1000, name }; saveUI(); _restTick(); _restInt=setInterval(_restTick,1000); }
+function resumeRest(){ if(UI.rest && UI.rest.endsAt>Date.now()){ clearInterval(_restInt); _restTick(); _restInt=setInterval(_restTick,1000); } else if(UI.rest){ stopRest(); } }
 
 // ── workout timer ──
 function _curLog(){ return LOGS[todayKey()+"_"+selectedDay]; }
@@ -697,7 +717,7 @@ function renderDayPills() {
   const today = todayKey();
   DAYS.forEach(dk => {
     const day = PROGRAM[dk];
-    const hasLog = Object.keys(LOGS).some(k => k.startsWith(today) && k.endsWith(dk) && LOGS[k] && LOGS[k].savedAt);
+    const hasLog = !!(UI.cycle && UI.cycle[dk]);
     const est = avgDuration(dk);
     const pill = el("div","day-pill");
     pill.innerHTML = `<div class="pill-label" style="color:${dk===selectedDay?day.color:"#6B7280"}">${day.label}${hasLog?" ✓":""}</div><div class="pill-sub">${day.tag.split(" · ")[0]}${est?` · ~${Math.round(est/60)}′`:""}</div>`;
@@ -749,7 +769,8 @@ function renderWorkoutContent() {
     const dot = el("div","ex-dot"+(done?" done":"")); if(!done) dot.style.background = day.color;
     const info = el("div",""); info.style.flex="1";
     const restTxt = ex.rest ? ` · מנוחה ${ex.rest>=60?(Math.round(ex.rest/60*10)/10)+"′":ex.rest+"ש"}` : "";
-    info.innerHTML = `<div class="ex-name">${ex.core?'◆ ':''}${ex.name}${isCurrent?' <span class="cur-tag">נוכחי</span>':''}</div><div class="ex-meta">${ex.sets} × ${ex.reps}${restTxt}${ex.note?" · "+ex.note:""}</div>${tgt&&tgt.reason?`<div class="ex-target" style="color:${tgt.color};background:${tgt.color}1A">${tgt.weight?`יעד ${tgt.weight} ק"ג · `:""}${tgt.reason}</div>`:""}`;
+    const equip = (typeof EQUIP==="object" && EQUIP[ex.id]) ? EQUIP[ex.id] : "";
+    info.innerHTML = `<div class="ex-name">${ex.core?'◆ ':''}${ex.name}${isCurrent?' <span class="cur-tag">נוכחי</span>':''}</div><div class="ex-meta">${ex.sets} × ${ex.reps}${restTxt}${ex.note?" · "+ex.note:""}</div>${equip?`<div class="ex-equip">🏋️ ${equip}</div>`:""}${tgt&&tgt.reason?`<div class="ex-target" style="color:${tgt.color};background:${tgt.color}1A">${tgt.weight?`יעד ${tgt.weight} ק"ג · `:""}${tgt.reason}</div>`:""}`;
     const dtoggle = el("div","ex-done-toggle"+(done?" on":"")); dtoggle.textContent = done?"✓":""; dtoggle.title="סמן כבוצע";
     dtoggle.onclick=(e)=>{ e.stopPropagation(); exLog.meta.done=!(exLog.meta&&exLog.meta.done); save(SK.logs,LOGS); renderWorkoutContent(); };
     const arrow = el("div","ex-arrow"); arrow.textContent="›"; if(isOpen) arrow.classList.add("open");
@@ -774,7 +795,7 @@ function renderWorkoutContent() {
         inp.addEventListener("change", () => { const si=+inp.dataset.set, f=inp.dataset.field; exLog.sets[si][f]=inp.value; save(SK.logs,LOGS); renderDayPills(); });
       });
       const db=row.querySelector(".set-done-btn");
-      db.onclick=()=>{ const si=+db.dataset.set; exLog.sets[si].done=!exLog.sets[si].done; save(SK.logs,LOGS); const on=exLog.sets[si].done; db.classList.toggle("on",on); row.classList.toggle("set-done",on); if(on && ex.rest) startRest(ex.rest, ex.name); };
+      db.onclick=()=>{ const si=+db.dataset.set; exLog.sets[si].done=!exLog.sets[si].done; const on=exLog.sets[si].done; if(setsArr.every(j=>exLog.sets[j]&&exLog.sets[j].done)) exLog.meta.done=true; save(SK.logs,LOGS); if(on && ex.rest) startRest(ex.rest, ex.name); renderWorkoutContent(); };
       body.appendChild(row);
     });
 
@@ -830,6 +851,10 @@ function renderWorkoutContent() {
   saveBtn.onclick = () => {
     log.savedAt = new Date().toISOString();
     if(log.startedAt && !log.endedAt){ log.endedAt=new Date().toISOString(); log.durationSec=Math.round((Date.parse(log.endedAt)-Date.parse(log.startedAt))/1000); }
+    // rotation checkmark: mark this day done; reset the whole cycle only once all days were completed
+    if(!UI.cycle) UI.cycle={};
+    if(DAYS.every(d=>UI.cycle[d])) UI.cycle={};
+    UI.cycle[selectedDay]=today; saveUI();
     save(SK.logs,LOGS); renderDayPills();
     saveBtn.textContent="✓ נשמר"; saveBtn.style.background="#10B981";
     setTimeout(()=>{ saveBtn.textContent="שמור אימון"; saveBtn.style.background=day.color; },2500);
@@ -845,6 +870,8 @@ renderDayPills();
 renderWorkoutContent();
 // Restore last-open tab across reloads
 if(UI.tab && UI.tab!=="workout" && document.getElementById("view-"+UI.tab)) switchTab(UI.tab);
+// Resume a rest timer that was running when the app was closed
+if(typeof resumeRest==="function") resumeRest();
 
 // ══════════════════════════════════════════════════════════════════
 // REHAB TAB
@@ -1668,12 +1695,13 @@ function _scheduleCloudPush(){ clearTimeout(_pushTimer); _pushTimer=setTimeout(c
 // A log "counts" only if the user pressed Save (savedAt), or it's today's in-progress log with real data.
 function _logHasData(l){
   if(!l) return false;
+  if(l.startedAt) return true;            // a running/finished workout timer counts as real
   if(l.pain||l.energy) return true;
   if(l.notes && String(l.notes).trim()) return true;
   for(const ex in (l.exercises||{})){
     const e=l.exercises[ex]; const s=(e&&e.sets)||{};
-    for(const i in s){ if(parseFloat(s[i].weight)>0 || parseInt(s[i].reps)>0) return true; }
-    if(e && e.meta && e.meta.pain) return true;
+    for(const i in s){ if(parseFloat(s[i].weight)>0 || parseInt(s[i].reps)>0 || s[i].done) return true; }
+    if(e && e.meta && (e.meta.pain || e.meta.done)) return true;
   }
   return false;
 }
@@ -1719,8 +1747,8 @@ async function cloudPull(){
 }
 
 // Pull on load, and whenever the app regains focus (catches phone→computer)
-window.addEventListener("load", cloudPull);
-document.addEventListener("visibilitychange", ()=>{ if(!document.hidden) cloudPull(); });
+window.addEventListener("load", ()=>{ cloudPull(); if(typeof resumeRest==="function") resumeRest(); });
+document.addEventListener("visibilitychange", ()=>{ if(!document.hidden){ cloudPull(); if(typeof resumeRest==="function") resumeRest(); } });
 </script>
 <script>
 if ('serviceWorker' in navigator) {
