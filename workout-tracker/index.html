@@ -114,6 +114,21 @@
   .set-row input.auto-val, .set-row select.auto-val { color: #60A5FA; font-style: italic; border-color: rgba(96,165,250,0.35); }
   .ex-time-actual { font-size: 10px; color: #6B7280; font-weight: 500; margin-right: 4px; }
   .ex-time-est { font-size: 10px; color: #4B5563; font-weight: 400; margin-right: 4px; }
+
+  /* ── WARM-UP ── */
+  .warmup-card { border-radius: 10px; margin-bottom: 10px; overflow: hidden; background: rgba(245,158,11,0.05); border: 1px solid rgba(245,158,11,0.25); padding: 10px 12px; }
+  .warmup-card.done { background: rgba(16,185,129,0.05); border-color: rgba(16,185,129,0.25); }
+  .warmup-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .warmup-title { font-size: 13px; font-weight: 700; color: #F59E0B; }
+  .warmup-card.done .warmup-title { color: #10B981; }
+  .warmup-item { font-size: 11px; color: #D1D5DB; margin-bottom: 4px; line-height: 1.5; }
+  .warmup-item b { color: #F9FAFB; }
+  .warmup-btn {
+    padding: 7px 14px; border-radius: 7px; cursor: pointer; font-size: 12px; font-weight: 700;
+    background: rgba(245,158,11,0.15); border: 1px solid #F59E0B; color: #FBBF24;
+    font-family: inherit; margin-top: 6px; width: 100%; text-align: center;
+  }
+  .warmup-btn.done { background: #10B981; border-color: #10B981; color: #fff; }
   .set-done-btn {
     height: 30px; border-radius: 5px; cursor: pointer; user-select: none;
     display: flex; align-items: center; justify-content: center;
@@ -600,6 +615,13 @@ const EQUIP = {
 ["1","3","5"].forEach(s=>{ EQUIP["dead_bug"+s]="מזרן — ללא ציוד"; EQUIP["side_plank"+s]="מזרן — משקל גוף"; EQUIP["pallof"+s]="כבל / גומיית התנגדות"; });
 
 const DAYS = ["day1","day2","day3","day4","day5"];
+// Same warm-up block for every workout day (5-10 min, medically safe: no axial spine load, shoulder-friendly).
+const WARMUP = [
+  { id:"wu_cardio",   name:"קרדיו קל",          reps:"5 דק' Zone 1-2",  cue:"אופניים/הליכה מהירה — מעלה חום גוף וקצב לב בהדרגה, לפני כל עומס." },
+  { id:"wu_bandpull", name:"Band Pull-Apart",    reps:"15 חזרות",        cue:"פתיחת שכמות והפעלת שרירי גב עליון — קריטי לפני כל תרגיל דחיפה/משיכה." },
+  { id:"wu_catcow",   name:"Cat-Cow",            reps:"10 חזרות",        cue:"ניוד עמ״ש מותני בטוח וללא עומס — מכין את הגב התחתון לתנועה." },
+  { id:"wu_glutebridge", name:"Glute Bridge",    reps:"12 חזרות",        cue:"הפעלת גלוטאוס ויציבות אגן לפני כל תרגיל רגליים/גב תחתון." }
+];
 
 const REHAB_ROUTINE = {
   shoulder: {
@@ -768,16 +790,11 @@ function resumeRest(){ if(UI.rest && UI.rest.endsAt>Date.now()){ clearInterval(_
 // ── workout timer ──
 function _curLog(){ return LOGS[todayKey()+"_"+selectedDay]; }
 function startWorkoutTimer(){
+  // Note: exercise #1's own timing.start is NOT seeded here — it's gated on warm-up completion
+  // (see the warm-up toggle handler in renderWorkoutContent) so the chained per-exercise duration
+  // measurement reflects real training time, not time spent warming up.
   const l=_curLog(); if(!l)return;
   l.startedAt=new Date().toISOString(); delete l.endedAt; delete l.durationSec;
-  const day=PROGRAM[selectedDay];
-  if(day && day.exercises[0]){
-    const firstId=day.exercises[0].id;
-    if(!l.exercises) l.exercises={};
-    if(!l.exercises[firstId]) l.exercises[firstId]={ sets:{}, meta:{} };
-    l.exercises[firstId].meta.timing = l.exercises[firstId].meta.timing || {};
-    if(!l.exercises[firstId].meta.timing.start) l.exercises[firstId].meta.timing.start = l.startedAt;
-  }
   save(SK.logs,LOGS); renderWorkoutContent();
 }
 function endWorkoutTimer(){ const l=_curLog(); if(!l||!l.startedAt)return; l.endedAt=new Date().toISOString(); l.durationSec=Math.round((Date.parse(l.endedAt)-Date.parse(l.startedAt))/1000); save(SK.logs,LOGS); renderWorkoutContent(); }
@@ -803,8 +820,9 @@ function renderWorkoutContent() {
   const day = PROGRAM[selectedDay];
   const today = todayKey();
   const logKey = today+"_"+selectedDay;
-  if (!LOGS[logKey]) LOGS[logKey] = { exercises:{}, notes:"", pain:null, energy:null, dayKey:selectedDay, date:today };
+  if (!LOGS[logKey]) LOGS[logKey] = { exercises:{}, notes:"", pain:null, energy:null, dayKey:selectedDay, date:today, warmup:{done:false} };
   const log = LOGS[logKey];
+  if(!log.warmup) log.warmup = { done:false };
   if(!UI.open[selectedDay]) UI.open[selectedDay] = {};
 
   const container = document.getElementById("workout-content");
@@ -824,6 +842,36 @@ function renderWorkoutContent() {
   hdr.innerHTML = `<div class="wk-hdr-top"><div><div class="wk-title">${day.label}</div><div class="wk-sub" style="color:${day.color}">${day.tag}</div></div><span class="badge">${doneCount}/${day.exercises.length}</span></div>
     <div class="wk-timer-row"><div class="wk-dur">${durTxt}</div>${timerBtn}</div>`;
   container.appendChild(hdr);
+
+  // Warm-up (same block every day) — gates exercise #1's timing.start so the chained per-exercise
+  // duration measurement reflects real training time, not warm-up time.
+  const wu = el("div","warmup-card"+(log.warmup.done?" done":""));
+  wu.innerHTML = `<div class="warmup-hdr"><div class="warmup-title">${log.warmup.done?"✓ חימום בוצע":"🔥 חימום"}</div></div>
+    ${WARMUP.map(w=>`<div class="warmup-item">• <b>${w.name}</b> — ${w.reps}<br><span style="color:#6B7280">${w.cue}</span></div>`).join("")}
+    <div class="warmup-btn${log.warmup.done?' done':''}" id="warmup-toggle">${log.warmup.done?'✓ חימום בוצע — לחץ לביטול':'סמן חימום כבוצע'}</div>`;
+  wu.querySelector("#warmup-toggle").onclick = () => {
+    const turningOn = !log.warmup.done;
+    log.warmup.done = turningOn;
+    const firstEx = day.exercises[0];
+    if(turningOn){
+      log.warmup.completedAt = new Date().toISOString();
+      if(firstEx){
+        if(!log.exercises) log.exercises = {};
+        if(!log.exercises[firstEx.id]) log.exercises[firstEx.id] = { sets:{}, meta:{} };
+        const m = log.exercises[firstEx.id].meta;
+        m.timing = m.timing || {};
+        if(!m.timing.start) m.timing.start = log.warmup.completedAt;   // exercise #1 starts counting *now*, right after warm-up
+      }
+    } else {
+      delete log.warmup.completedAt;
+      // Safe undo: only clear the auto-seeded start if exercise #1 hasn't produced any real data yet.
+      const fLog = firstEx && log.exercises && log.exercises[firstEx.id];
+      const hasRealData = fLog && Object.keys(fLog.sets||{}).some(i => fLog.sets[i] && (fLog.sets[i].reps || fLog.sets[i].weight || fLog.sets[i].done));
+      if(fLog && fLog.meta && fLog.meta.timing && !fLog.meta.timing.end && !hasRealData) delete fLog.meta.timing.start;
+    }
+    save(SK.logs,LOGS); renderWorkoutContent();
+  };
+  container.appendChild(wu);
 
   const firstUndone = day.exercises.find(ex=>!exDone(ex));
 
@@ -1245,6 +1293,10 @@ function renderHistory() {
       if(opening && !detailsBuilt){
         detailsBuilt=true;
         const parts=[];
+        if(log.warmup && log.warmup.done){
+          const wt = log.warmup.completedAt ? new Date(log.warmup.completedAt).toLocaleTimeString("he-IL",{hour:"2-digit",minute:"2-digit"}) : "";
+          parts.push(`<div style="margin-bottom:6px;font-size:11px;color:#F59E0B">🔥 חימום בוצע${wt?` · ${wt}`:""}</div>`);
+        }
         day.exercises.forEach(ex=>{
           const exLog = log.exercises && log.exercises[ex.id]; if(!exLog) return;
           const setsTxt = Object.keys(exLog.sets||{}).sort((a,b)=>a-b).map(kk=>exLog.sets[kk])
