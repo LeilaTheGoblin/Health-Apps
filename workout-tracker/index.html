@@ -648,6 +648,10 @@ const WEEKLY_FIELDS = [
 // STORAGE — localStorage
 // ══════════════════════════════════════════════════════════════════
 const SK = { logs:"wt_logs_v3", weekly:"wt_weekly_v2", rehab:"wt_rehab_v1", nutrition:"wt_nutrition_v1" };
+// Declared early (not just where used) — computeTarget() runs during the very first render, before the
+// script reaches the "PROGRESSIVE OVERLOAD ENGINE" section further down, so a later `const` here would
+// be in its temporal dead zone and throw the moment real history exists.
+const _BIG_LOWER = ["goblet_squat","leg_press","hip_thrust","rdl_db","hip_thrust_d5"];
 
 function load(k)    { try { return JSON.parse(localStorage.getItem(k)) || (k===SK.logs?{}:k===SK.weekly?[]:{}); } catch { return k===SK.logs?{}:k===SK.weekly?[]:{};} }
 function _writeLS(k,v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
@@ -1841,7 +1845,6 @@ function _scheduleAutoSave() {
 // ══════════════════════════════════════════════════════════════════
 // PROGRESSIVE OVERLOAD ENGINE (rule 5.2 — runs client-side)
 // ══════════════════════════════════════════════════════════════════
-const _BIG_LOWER = ["goblet_squat","leg_press","hip_thrust","rdl_db","hip_thrust_d5"];
 function _round05(v){ return Math.round(v*2)/2; }
 
 function _sessionData(log, exId){
