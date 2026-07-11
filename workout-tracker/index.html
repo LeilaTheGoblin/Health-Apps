@@ -111,6 +111,9 @@
     outline: none; font-family: inherit;
   }
   .set-row select { background: rgba(20,20,30,0.95); }
+  .set-row input.auto-val, .set-row select.auto-val { color: #60A5FA; font-style: italic; border-color: rgba(96,165,250,0.35); }
+  .ex-time-actual { font-size: 10px; color: #6B7280; font-weight: 500; margin-right: 4px; }
+  .ex-time-est { font-size: 10px; color: #4B5563; font-weight: 400; margin-right: 4px; }
   .set-done-btn {
     height: 30px; border-radius: 5px; cursor: pointer; user-select: none;
     display: flex; align-items: center; justify-content: center;
@@ -483,6 +486,23 @@
       <div style="font-size:10px;color:#374151;margin-top:8px;text-align:center">
         בפעם הראשונה: בחר שמירה בתיקיית הפרויקט (Projects/Fitness). לאחר מכן — שמירה אוטומטית בכל שינוי.
       </div>
+
+      <!-- Background push notifications (ntfy.sh) for the rest timer -->
+      <div class="info-box" style="margin-top:18px">
+        <div class="info-title">🔔 התראות רקע לטיימר מנוחה</div>
+        <div class="info-text" id="ntfy-instructions">
+          מבוסס על השירות החינמי <b>ntfy.sh</b>. מתקינים את אפליקציית "ntfy" (חינם, App Store), עושים מנוי (Subscribe) לנושא שמופיע למטה, ומאשרים התראות. מרגע ההתחלה, בכל טיימר מנוחה תישלח התראה מתוזמנת שתגיע גם אם האפליקציה הזו סגורה או המסך נעול.<br><br>
+          <b>מגבלה ידועה:</b> אם משנים זמן מנוחה (+30 / דלג) — ההתראה שכבר תוזמנה עלולה עדיין להגיע במועד המקורי; אפשר פשוט להתעלם ממנה.
+        </div>
+      </div>
+      <div class="mode-toggle" style="margin-bottom:8px">
+        <div class="mode-btn" id="ntfy-off-btn">כבוי</div>
+        <div class="mode-btn" id="ntfy-on-btn">פעיל</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+        <input type="text" id="ntfy-topic-inp" readonly style="flex:1;font-family:monospace;font-size:12px">
+        <button class="btn" id="ntfy-copy-btn" style="width:auto;margin-top:0;padding:8px 14px;background:#1F2937;color:#9CA3AF;font-size:12px">העתק נושא</button>
+      </div>
     </div>
   </div>
 
@@ -687,12 +707,43 @@ function avgDuration(dayKey){
   if(!ds.length) return null;
   return Math.round(ds.reduce((a,b)=>a+b,0)/ds.length);
 }
+// ── per-exercise timing (chained: first exercise starts at workout-start, each next exercise
+//    starts when the previous exercise's post-last-set rest ends/is skipped; ends when its own
+//    last set is marked done) ──
+function _exSessionDuration(l, exId){
+  const e = l && l.exercises && l.exercises[exId];
+  const t = e && e.meta && e.meta.timing;
+  if(t && t.start && t.end){ const s=(Date.parse(t.end)-Date.parse(t.start))/1000; if(s>0) return Math.round(s); }
+  return null;
+}
+function avgExDuration(exId){
+  const today=todayKey();
+  const durs=Object.keys(LOGS).map(k=>LOGS[k]).filter(l=>l&&l.savedAt&&l.date<today).map(l=>_exSessionDuration(l,exId)).filter(v=>v>0);
+  if(!durs.length) return null;
+  return Math.round(durs.reduce((a,b)=>a+b,0)/durs.length);
+}
+function _startExTiming(exId){
+  const l=_curLog(); if(!l) return;
+  if(!l.exercises) l.exercises={};
+  if(!l.exercises[exId]) l.exercises[exId]={ sets:{}, meta:{} };
+  const m=l.exercises[exId].meta;
+  m.timing = m.timing||{};
+  if(!m.timing.start) m.timing.start = new Date().toISOString();
+  save(SK.logs,LOGS);
+  if(typeof renderWorkoutContent==="function") renderWorkoutContent();
+}
 
 // ── rest timer (timestamp-based → keeps counting while app is closed/locked) ──
 let _restInt=null;
 function _beep(){ try{ const c=new (window.AudioContext||window.webkitAudioContext)(); const o=c.createOscillator(), g=c.createGain(); o.connect(g); g.connect(c.destination); o.type="sine"; o.frequency.value=880; g.gain.value=0.2; o.start(); setTimeout(()=>{ o.stop(); c.close(); },300); }catch(e){} if(navigator.vibrate) navigator.vibrate([200,90,200]); }
 function _restEl(){ let e=document.getElementById("rest-timer"); if(!e){ e=el("div"); e.id="rest-timer"; document.body.appendChild(e); } return e; }
-function stopRest(){ if(_restInt) clearInterval(_restInt); _restInt=null; if(UI.rest){ delete UI.rest; saveUI(); } const e=document.getElementById("rest-timer"); if(e) e.style.display="none"; }
+function stopRest(){
+  if(_restInt) clearInterval(_restInt); _restInt=null;
+  let nextExId=null;
+  if(UI.rest){ nextExId=UI.rest.nextExId||null; delete UI.rest; saveUI(); }
+  const e=document.getElementById("rest-timer"); if(e) e.style.display="none";
+  if(nextExId) _startExTiming(nextExId);   // rest over (naturally or skipped) → chain to the next exercise
+}
 function _restTick(){
   if(!UI.rest){ stopRest(); return; }
   const left=Math.round((UI.rest.endsAt-Date.now())/1000);
@@ -702,12 +753,29 @@ function _restTick(){
   e.querySelector(".rt-x").onclick=stopRest;
   e.querySelector(".rt-add").onclick=()=>{ if(UI.rest){ UI.rest.endsAt+=30000; saveUI(); _restTick(); } };
 }
-function startRest(sec,name){ clearInterval(_restInt); UI.rest={ endsAt:Date.now()+sec*1000, name }; saveUI(); _restTick(); _restInt=setInterval(_restTick,1000); }
+function startRest(sec,name,nextExId){
+  clearInterval(_restInt);
+  UI.rest={ endsAt:Date.now()+sec*1000, name, nextExId: nextExId||null };
+  saveUI(); _restTick(); _restInt=setInterval(_restTick,1000);
+  if(typeof _scheduleNtfy==="function") _scheduleNtfy(sec, "מנוחה הסתיימה", name?`חזרה ל${name}`:"זמן לחזור לסט הבא");
+}
 function resumeRest(){ if(UI.rest && UI.rest.endsAt>Date.now()){ clearInterval(_restInt); _restTick(); _restInt=setInterval(_restTick,1000); } else if(UI.rest){ stopRest(); } }
 
 // ── workout timer ──
 function _curLog(){ return LOGS[todayKey()+"_"+selectedDay]; }
-function startWorkoutTimer(){ const l=_curLog(); if(!l)return; l.startedAt=new Date().toISOString(); delete l.endedAt; delete l.durationSec; save(SK.logs,LOGS); renderWorkoutContent(); }
+function startWorkoutTimer(){
+  const l=_curLog(); if(!l)return;
+  l.startedAt=new Date().toISOString(); delete l.endedAt; delete l.durationSec;
+  const day=PROGRAM[selectedDay];
+  if(day && day.exercises[0]){
+    const firstId=day.exercises[0].id;
+    if(!l.exercises) l.exercises={};
+    if(!l.exercises[firstId]) l.exercises[firstId]={ sets:{}, meta:{} };
+    l.exercises[firstId].meta.timing = l.exercises[firstId].meta.timing || {};
+    if(!l.exercises[firstId].meta.timing.start) l.exercises[firstId].meta.timing.start = l.startedAt;
+  }
+  save(SK.logs,LOGS); renderWorkoutContent();
+}
 function endWorkoutTimer(){ const l=_curLog(); if(!l||!l.startedAt)return; l.endedAt=new Date().toISOString(); l.durationSec=Math.round((Date.parse(l.endedAt)-Date.parse(l.startedAt))/1000); save(SK.logs,LOGS); renderWorkoutContent(); }
 setInterval(()=>{ const l=_curLog(); const d=document.getElementById("wk-timer-disp"); if(d&&l&&l.startedAt&&!l.endedAt) d.textContent=fmtDur((Date.now()-Date.parse(l.startedAt))/1000); },1000);
 
@@ -756,9 +824,12 @@ function renderWorkoutContent() {
   const firstUndone = day.exercises.find(ex=>!exDone(ex));
 
   day.exercises.forEach(ex => {
-    if (!log.exercises[ex.id]) log.exercises[ex.id] = { sets:{}, meta:{} };
+    const isNewExLog = !log.exercises[ex.id];
+    if (isNewExLog) log.exercises[ex.id] = { sets:{}, meta:{} };
     const exLog = log.exercises[ex.id];
-    const tgt = (typeof computeTarget==="function") ? computeTarget(ex.id) : null;
+    const tgt = (typeof computeSetTargets==="function") ? computeSetTargets(ex.id, ex.sets) : null;
+    // Snapshot the plan for this exercise once per log (kept even if the user later edits the actual values) — used to judge "success" in history.
+    if(isNewExLog){ exLog.meta.plan = tgt ? tgt.sets.map(s=>({weight:s.weight,reps:s.reps,rpe:s.rpe})) : null; }
     const setsArr = Array.from({length:ex.sets},(_,i)=>i);
     const done = exDone(ex);
     const isCurrent = firstUndone && firstUndone.id===ex.id;
@@ -770,7 +841,10 @@ function renderWorkoutContent() {
     const info = el("div",""); info.style.flex="1";
     const restTxt = ex.rest ? ` · מנוחה ${ex.rest>=60?(Math.round(ex.rest/60*10)/10)+"′":ex.rest+"ש"}` : "";
     const equip = (typeof EQUIP==="object" && EQUIP[ex.id]) ? EQUIP[ex.id] : "";
-    info.innerHTML = `<div class="ex-name">${ex.core?'◆ ':''}${ex.name}${isCurrent?' <span class="cur-tag">נוכחי</span>':''}</div><div class="ex-meta">${ex.sets} × ${ex.reps}${restTxt}${ex.note?" · "+ex.note:""}</div>${equip?`<div class="ex-equip">🏋️ ${equip}</div>`:""}${tgt&&tgt.reason?`<div class="ex-target" style="color:${tgt.color};background:${tgt.color}1A">${tgt.weight?`יעד ${tgt.weight} ק"ג · `:""}${tgt.reason}</div>`:""}`;
+    const sessDur = (typeof _exSessionDuration==="function") ? _exSessionDuration(log, ex.id) : null;
+    const avgDur = (!sessDur && typeof avgExDuration==="function") ? avgExDuration(ex.id) : null;
+    const timeTxt = sessDur ? `<span class="ex-time-actual">⏱ ${fmtDur(sessDur)}</span>` : (avgDur ? `<span class="ex-time-est">≈${fmtDur(avgDur)} משוער</span>` : "");
+    info.innerHTML = `<div class="ex-name">${ex.core?'◆ ':''}${ex.name}${isCurrent?' <span class="cur-tag">נוכחי</span>':''}${timeTxt}</div><div class="ex-meta">${ex.sets} × ${ex.reps}${restTxt}${ex.note?" · "+ex.note:""}</div>${equip?`<div class="ex-equip">🏋️ ${equip}</div>`:""}${tgt&&tgt.reason?`<div class="ex-target" style="color:${tgt.color};background:${tgt.color}1A">${tgt.weight?`יעד ${tgt.weight} ק"ג · `:""}${tgt.reason}</div>`:""}`;
     const dtoggle = el("div","ex-done-toggle"+(done?" on":"")); dtoggle.textContent = done?"✓":""; dtoggle.title="סמן כבוצע";
     dtoggle.onclick=(e)=>{ e.stopPropagation(); exLog.meta.done=!(exLog.meta&&exLog.meta.done); save(SK.logs,LOGS); renderWorkoutContent(); };
     const arrow = el("div","ex-arrow"); arrow.textContent="›"; if(isOpen) arrow.classList.add("open");
@@ -781,21 +855,62 @@ function renderWorkoutContent() {
     if(ex.cue){ const c=el("div","ex-cue"); c.innerHTML=`<span class="cue-label">דגשים</span>${ex.cue}`; body.appendChild(c); }
 
     setsArr.forEach(i => {
-      if (!exLog.sets[i]) exLog.sets[i] = {};
+      if (!exLog.sets[i]) {
+        exLog.sets[i] = {};
+        // Pre-fill weight/reps/RPE from the progressive-overload target — editable, tagged as auto so it renders in a distinct color.
+        const st = tgt && tgt.sets && tgt.sets[i];
+        if(st){
+          const auto = {};
+          if(st.weight!=null){ exLog.sets[i].weight = st.weight; auto.weight = true; }
+          if(st.reps!=null){ exLog.sets[i].reps = st.reps; auto.reps = true; }
+          if(st.rpe!=null){ exLog.sets[i].rpe = st.rpe; auto.rpe = true; }
+          if(Object.keys(auto).length) exLog.sets[i].auto = auto;
+        }
+      }
       const s = exLog.sets[i];
+      const isAuto = s.auto || {};
       const row = el("div","set-row"+(s.done?" set-done":""));
       row.innerHTML = `
         <span class="set-num">${i+1}</span>
-        <div><div class="set-lbl">ק"ג</div><input type="number" min="0" step="0.5" value="${s.weight||""}" placeholder="${(tgt&&tgt.weight&&!s.weight)?tgt.weight:"—"}" data-field="weight" data-set="${i}"></div>
-        <div><div class="set-lbl">חזרות</div><input type="number" min="0" value="${s.reps||""}" placeholder="—" data-field="reps" data-set="${i}"></div>
-        <div><div class="set-lbl">RPE</div><select data-field="rpe" data-set="${i}"><option value="">—</option>${[5,6,7,8,9,10].map(n=>`<option${s.rpe==n?" selected":""}>${n}</option>`).join("")}</select></div>
+        <div><div class="set-lbl">ק"ג</div><input type="number" min="0" step="0.5" value="${s.weight||""}" placeholder="—" class="${isAuto.weight?'auto-val':''}" data-field="weight" data-set="${i}"></div>
+        <div><div class="set-lbl">חזרות</div><input type="number" min="0" value="${s.reps||""}" placeholder="—" class="${isAuto.reps?'auto-val':''}" data-field="reps" data-set="${i}"></div>
+        <div><div class="set-lbl">RPE</div><select data-field="rpe" data-set="${i}" class="${isAuto.rpe?'auto-val':''}"><option value="">—</option>${[5,6,7,8,9,10].map(n=>`<option${s.rpe==n?" selected":""}>${n}</option>`).join("")}</select></div>
         <div><div class="set-lbl">הערה</div><input type="text" value="${s.note||""}" placeholder="כאב/תחושה" data-field="note" data-set="${i}"></div>
         <div class="set-done-btn${s.done?' on':''}" data-set="${i}" title="בוצע → מנוחה">✓</div>`;
       row.querySelectorAll("input,select").forEach(inp => {
-        inp.addEventListener("change", () => { const si=+inp.dataset.set, f=inp.dataset.field; exLog.sets[si][f]=inp.value; save(SK.logs,LOGS); renderDayPills(); });
+        inp.addEventListener("change", () => {
+          const si=+inp.dataset.set, f=inp.dataset.field;
+          exLog.sets[si][f]=inp.value;
+          // Once the user touches a field it stops being "auto" — mark manual and drop the distinct color immediately (no full re-render, keeps focus/scroll stable).
+          if(f==="weight"||f==="reps"||f==="rpe"){
+            exLog.sets[si].auto = exLog.sets[si].auto||{};
+            exLog.sets[si].auto[f]=false;
+            inp.classList.remove("auto-val");
+          }
+          save(SK.logs,LOGS); renderDayPills();
+        });
       });
       const db=row.querySelector(".set-done-btn");
-      db.onclick=()=>{ const si=+db.dataset.set; exLog.sets[si].done=!exLog.sets[si].done; const on=exLog.sets[si].done; if(setsArr.every(j=>exLog.sets[j]&&exLog.sets[j].done)) exLog.meta.done=true; save(SK.logs,LOGS); if(on && ex.rest) startRest(ex.rest, ex.name); renderWorkoutContent(); };
+      db.onclick=()=>{
+        const si=+db.dataset.set;
+        exLog.sets[si].done=!exLog.sets[si].done;
+        const on=exLog.sets[si].done;
+        const allDone = setsArr.every(j=>exLog.sets[j]&&exLog.sets[j].done);
+        if(allDone) exLog.meta.done=true;
+        let nextExId=null;
+        if(on && allDone){
+          // last set of this exercise just finished → stamp its end time and figure out what comes next in the chain
+          exLog.meta.timing = exLog.meta.timing||{};
+          if(!exLog.meta.timing.end) exLog.meta.timing.end = new Date().toISOString();
+          const idx = day.exercises.findIndex(e=>e.id===ex.id);
+          const nextEx = day.exercises[idx+1];
+          if(nextEx) nextExId = nextEx.id;
+        }
+        save(SK.logs,LOGS);
+        if(on && ex.rest) startRest(ex.rest, ex.name, nextExId);
+        else if(on && nextExId) _startExTiming(nextExId);   // last set done, no rest defined → chain immediately
+        renderWorkoutContent();
+      };
       body.appendChild(row);
     });
 
@@ -814,7 +929,12 @@ function renderWorkoutContent() {
       const btn = el("div","scale-btn"+(exLog.meta.pain===n?" sel":""));
       if(exLog.meta.pain===n) btn.style.background = scaleColor(n,"low");
       btn.textContent = n;
-      btn.onclick = () => { exLog.meta.pain=n; save(SK.logs,LOGS); painRow.querySelectorAll(".scale-btn").forEach((b,idx)=>{ b.className="scale-btn"+(idx+1===n?" sel":""); b.style.background=idx+1===n?scaleColor(n,"low"):""; }); };
+      btn.onclick = () => {
+        const clear = exLog.meta.pain===n;   // clicking the already-selected value un-sets it
+        exLog.meta.pain = clear ? null : n;
+        save(SK.logs,LOGS);
+        painRow.querySelectorAll(".scale-btn").forEach((b,idx)=>{ const sel=!clear&&idx+1===n; b.className="scale-btn"+(sel?" sel":""); b.style.background=sel?scaleColor(n,"low"):""; });
+      };
       painRow.appendChild(btn);
     }
     body.appendChild(painRow);
@@ -837,7 +957,12 @@ function renderWorkoutContent() {
       const btn = el("div","scale-btn"+(log[type]===n?" sel":""));
       if(log[type]===n) btn.style.background = scaleColor(n,good);
       btn.textContent = n;
-      btn.onclick = () => { log[type]=n; save(SK.logs,LOGS); row.querySelectorAll(".scale-btn").forEach((b,idx)=>{ b.className="scale-btn"+(idx+1===n?" sel":""); b.style.background=idx+1===n?scaleColor(n,good):""; }); };
+      btn.onclick = () => {
+        const clear = log[type]===n;
+        log[type] = clear ? null : n;
+        save(SK.logs,LOGS);
+        row.querySelectorAll(".scale-btn").forEach((b,idx)=>{ const sel=!clear&&idx+1===n; b.className="scale-btn"+(sel?" sel":""); b.style.background=sel?scaleColor(n,good):""; });
+      };
       row.appendChild(btn);
     }
   });
@@ -979,9 +1104,9 @@ function renderWeekly() {
         if(data[field.id]===n) btn.style.background=scaleColor(n,field.good);
         btn.textContent=n;
         btn.onclick=()=>{
-          data[field.id]=n; updateWeekly(week,data);
-          row.querySelectorAll(".scale-btn").forEach((b,idx)=>{ b.className="scale-btn"+(idx+1===n?" sel":""); b.style.background=idx+1===n?scaleColor(n,field.good):""; });
-          if(field.id==="smoking"&&n) {} // not applicable
+          const clear = data[field.id]===n;
+          data[field.id]=clear?null:n; updateWeekly(week,data);
+          row.querySelectorAll(".scale-btn").forEach((b,idx)=>{ const sel=!clear&&idx+1===n; b.className="scale-btn"+(sel?" sel":""); b.style.background=sel?scaleColor(n,field.good):""; });
         };
         row.appendChild(btn);
       }
@@ -997,12 +1122,15 @@ function renderWeekly() {
           btn.style.color=opt.v?"#EF4444":"#10B981";
         }
         btn.onclick=()=>{
-          data[field.id]=opt.v; updateWeekly(week,data);
-          document.getElementById("smoking-alert").style.display=opt.v?"block":"none";
+          const clear = data[field.id]===opt.v;
+          data[field.id]=clear?null:opt.v; updateWeekly(week,data);
+          document.getElementById("smoking-alert").style.display=(!clear&&opt.v)?"block":"none";
           row.querySelectorAll(".bool-btn").forEach(b=>{ b.style.background="rgba(255,255,255,0.05)"; b.style.borderColor="rgba(255,255,255,0.08)"; b.style.color="#6B7280"; });
-          btn.style.background=opt.v?"rgba(239,68,68,0.2)":"rgba(16,185,129,0.2)";
-          btn.style.borderColor=opt.v?"#EF4444":"#10B981";
-          btn.style.color=opt.v?"#EF4444":"#10B981";
+          if(!clear){
+            btn.style.background=opt.v?"rgba(239,68,68,0.2)":"rgba(16,185,129,0.2)";
+            btn.style.borderColor=opt.v?"#EF4444":"#10B981";
+            btn.style.color=opt.v?"#EF4444":"#10B981";
+          }
         };
         row.appendChild(btn);
       });
@@ -1025,6 +1153,43 @@ function updateWeekly(week,data){ const f=WEEKLY.filter(w=>w.week!==week); f.pus
 // ══════════════════════════════════════════════════════════════════
 // HISTORY TAB
 // ══════════════════════════════════════════════════════════════════
+// Did the exercise hit its planned weight/reps target (snapshotted in exLog.meta.plan when the log was created)?
+// RPE is intentionally ignored per protocol — only weight+reps matter for "success". Returns true/false, or null if there was no target to judge against (e.g. first-ever session).
+function _exSuccess(exLog){
+  const plan = exLog && exLog.meta && exLog.meta.plan;
+  if(!plan) return null;
+  const sets = exLog.sets||{};
+  let judged=false, ok=true;
+  plan.forEach((p,i)=>{
+    if(!p || p.weight==null) return;   // nothing to judge for this set
+    judged=true;
+    const s=sets[i];
+    const w=s?parseFloat(s.weight)||0:0, r=s?parseInt(s.reps)||0:0;
+    const reqReps = p.reps!=null ? parseInt(p.reps) : 0;
+    if(!(w>=parseFloat(p.weight) && r>=reqReps)) ok=false;
+  });
+  return judged ? ok : null;
+}
+// Completion/success/duration stats for one saved log — used in the history list.
+function workoutStats(log){
+  const day=PROGRAM[log.dayKey]; if(!day) return null;
+  let totalSets=0, doneSets=0, judgedEx=0, successEx=0;
+  day.exercises.forEach(ex=>{
+    totalSets += ex.sets;
+    const exLog = log.exercises && log.exercises[ex.id];
+    const sets = (exLog && exLog.sets) || {};
+    for(let i=0;i<ex.sets;i++){ if(sets[i] && sets[i].reps) doneSets++; }
+    const succ = _exSuccess(exLog);
+    if(succ!=null){ judgedEx++; if(succ) successEx++; }
+  });
+  return {
+    pctSets: totalSets ? Math.round(doneSets/totalSets*100) : 0,
+    doneSets, totalSets,
+    pctSuccess: judgedEx ? Math.round(successEx/judgedEx*100) : null,
+    duration: log.durationSec || null
+  };
+}
+
 function renderHistory() {
   // Weekly table
   const weeks=[...WEEKLY].sort((a,b)=>b.week.localeCompare(a.week)).slice(0,8);
@@ -1053,18 +1218,41 @@ function renderHistory() {
     hw.style.marginBottom="20px";
   }
 
-  // Workouts
+  // Workouts — only sessions the user actually pressed "שמור אימון" on (savedAt). Just viewing/opening a day must never create a history entry.
   const hw2=document.getElementById("history-workouts");
   hw2.innerHTML=`<div class="eyebrow" style="color:#6B7280;margin-bottom:8px">אימונים אחרונים</div>`;
-  const sorted=Object.entries(LOGS).sort((a,b)=>b[0].localeCompare(a[0])).slice(0,20);
+  const sorted=Object.entries(LOGS).filter(([,l])=>l&&l.savedAt).sort((a,b)=>b[0].localeCompare(a[0])).slice(0,20);
   if(!sorted.length){ hw2.innerHTML+="<div style='color:#4B5563;text-align:center;padding:24px'>עדיין אין אימונים</div>"; return; }
   sorted.forEach(([k,log])=>{
     const day=PROGRAM[log.dayKey]; if(!day)return;
-    const card=el("div","wlog-card"); card.style.borderRight=`3px solid ${day.color}44`;
+    const st=workoutStats(log);
+    const card=el("div","wlog-card"); card.style.borderRight=`3px solid ${day.color}44`; card.style.cursor="pointer";
     card.innerHTML=`<div style="display:flex;justify-content:space-between;margin-bottom:4px">
       <div><div style="font-size:12px;font-weight:700;color:${day.color}">${day.label} — ${day.tag}</div><div style="font-size:11px;color:#6B7280;margin-top:1px">${log.date}</div></div>
       <div style="text-align:right">${log.pain?`<div style="font-size:11px;color:${scaleColor(log.pain,"low")}">כאב ${log.pain}/10</div>`:""}${log.energy?`<div style="font-size:11px;color:#3B82F6">אנרגיה ${log.energy}/10</div>`:""}</div>
-    </div>${log.notes?`<div style="font-size:11px;color:#9CA3AF;font-style:italic">"${log.notes}"</div>`:""}`;
+    </div>${log.notes?`<div style="font-size:11px;color:#9CA3AF;font-style:italic">"${log.notes}"</div>`:""}
+    ${st?`<div style="font-size:11px;color:#6B7280;margin-top:5px">בוצע ${st.pctSets}% מהאימון (${st.doneSets}/${st.totalSets} סטים)${st.pctSuccess!=null?` · הצלחה ${st.pctSuccess}%`:""}${st.duration?` · ⏱ ${fmtDur(st.duration)}`:""}</div>`:""}
+    <div class="wlog-details" style="display:none;margin-top:8px;border-top:1px solid rgba(255,255,255,0.06);padding-top:8px"></div>`;
+    const detailsEl = card.querySelector(".wlog-details");
+    let detailsBuilt=false;
+    card.addEventListener("click", ()=>{
+      const opening = detailsEl.style.display==="none";
+      detailsEl.style.display = opening?"block":"none";
+      if(opening && !detailsBuilt){
+        detailsBuilt=true;
+        const parts=[];
+        day.exercises.forEach(ex=>{
+          const exLog = log.exercises && log.exercises[ex.id]; if(!exLog) return;
+          const setsTxt = Object.keys(exLog.sets||{}).sort((a,b)=>a-b).map(kk=>exLog.sets[kk])
+            .filter(s=>s.reps||s.weight)
+            .map(s=>`${s.weight||"?"}ק"ג×${s.reps||"?"}${s.rpe?` RPE${s.rpe}`:""}`).join(" · ");
+          const dur = (typeof _exSessionDuration==="function") ? _exSessionDuration(log, ex.id) : null;
+          if(!setsTxt && !dur) return;
+          parts.push(`<div style="margin-bottom:6px"><div style="font-size:11px;font-weight:700;color:#D1D5DB">${ex.name}${dur?` <span style="font-weight:400;color:#6B7280">· ⏱ ${fmtDur(dur)}</span>`:""}</div><div style="font-size:11px;color:#6B7280">${setsTxt||"—"}</div></div>`);
+        });
+        detailsEl.innerHTML = parts.join("") || `<div style="font-size:11px;color:#4B5563">אין נתוני תרגילים לאימון הזה</div>`;
+      }
+    });
     hw2.appendChild(card);
   });
 }
@@ -1090,7 +1278,7 @@ function buildSummary() {
     });
     lines.push("");
   }
-  const workouts=Object.entries(LOGS).sort((a,b)=>b[0].localeCompare(a[0])).slice(0,14);
+  const workouts=Object.entries(LOGS).filter(([,l])=>l&&l.savedAt).sort((a,b)=>b[0].localeCompare(a[0])).slice(0,14);
   if(workouts.length){
     lines.push("## אימונים אחרונים");
     workouts.forEach(([,log])=>{
@@ -1112,6 +1300,30 @@ function buildSummary() {
   lines.push("## שיקום — 7 ימים אחרונים");
   last7.forEach(d=>{ const r=REHAB["rehab_"+d]; const cnt=r?allItems.filter(i=>r.done?.[i.id]).length:0; lines.push(`  - ${d}: ${cnt}/${allItems.length}${r?.notes?" — "+r.notes:""}`); });
   return lines.join("\n");
+}
+
+// ══════════════════════════════════════════════════════════════════
+// BACKGROUND PUSH (ntfy.sh) — real alerts for the rest timer even when
+// the app/phone is closed or locked. Client-only: schedules a delayed
+// push via ntfy's "Delay" header; the free ntfy iOS app must be
+// subscribed to the topic to actually receive it.
+// ══════════════════════════════════════════════════════════════════
+function _ntfyTopic(){
+  let t = localStorage.getItem("wt_ntfy_topic");
+  if(!t){ t = "wt-gal-" + Math.random().toString(36).slice(2,10); localStorage.setItem("wt_ntfy_topic", t); }
+  return t;
+}
+function _ntfyEnabled(){ return localStorage.getItem("wt_ntfy_on")==="1"; }
+function _setNtfyEnabled(on){ localStorage.setItem("wt_ntfy_on", on?"1":"0"); }
+async function _scheduleNtfy(seconds, title, message){
+  if(!_ntfyEnabled()) return;
+  try{
+    await fetch("https://ntfy.sh/"+_ntfyTopic(), {
+      method:"POST",
+      headers:{ "Title": title, "Priority":"high", "Tags":"stopwatch", "Delay": Math.max(1,Math.round(seconds))+"s" },
+      body: message||""
+    });
+  }catch(e){ /* offline/blocked — silent, the in-app timer still works when the app is open */ }
 }
 
 function renderExport() {
@@ -1140,6 +1352,25 @@ function renderExport() {
       document.getElementById("export-preview").select();
       document.execCommand("copy");
     });
+  };
+
+  // Background push (ntfy) settings
+  const topicInp = document.getElementById("ntfy-topic-inp");
+  const onBtn = document.getElementById("ntfy-on-btn"), offBtn = document.getElementById("ntfy-off-btn");
+  topicInp.value = _ntfyTopic();
+  const refreshNtfyBtns = () => {
+    const on = _ntfyEnabled();
+    onBtn.classList.toggle("active", on);
+    offBtn.classList.toggle("active", !on);
+  };
+  refreshNtfyBtns();
+  onBtn.onclick = () => { _setNtfyEnabled(true); refreshNtfyBtns(); };
+  offBtn.onclick = () => { _setNtfyEnabled(false); refreshNtfyBtns(); };
+  document.getElementById("ntfy-copy-btn").onclick = (e) => {
+    navigator.clipboard.writeText(topicInp.value).then(()=>{
+      const b=e.currentTarget; const orig=b.textContent;
+      b.textContent="✓ הועתק"; setTimeout(()=>{ b.textContent=orig; },2000);
+    }).catch(()=>{ topicInp.select(); document.execCommand("copy"); });
   };
 }
 
@@ -1630,9 +1861,24 @@ function _sessionData(log, exId){
 function _exHistory(exId){
   const today = todayKey();
   return Object.keys(LOGS).map(k=>LOGS[k])
-    .filter(l => l && l.date && l.date < today)
+    .filter(l => l && l.date && l.date < today && l.savedAt)   // only sessions the user actually saved count as history
     .map(l => _sessionData(l, exId)).filter(Boolean)
     .sort((a,b)=> b.date.localeCompare(a.date));
+}
+// Raw sets object {0:{weight,reps,rpe,...},...} from the most recent *saved* past session that has real data for exId.
+function _lastSessionSets(exId){
+  const today = todayKey();
+  const cands = Object.keys(LOGS).map(k=>LOGS[k])
+    .filter(l => l && l.date && l.date < today && l.savedAt)
+    .sort((a,b)=> b.date.localeCompare(a.date));
+  for(const l of cands){
+    const e = l.exercises && l.exercises[exId];
+    if(e && e.sets){
+      const hasData = Object.keys(e.sets).some(k => parseFloat(e.sets[k].weight)>0 || parseInt(e.sets[k].reps)>0);
+      if(hasData) return e.sets;
+    }
+  }
+  return null;
 }
 // returns {weight, reason, level, color} or null
 function computeTarget(exId){
@@ -1656,6 +1902,25 @@ function computeTarget(exId){
   else { const inc=_BIG_LOWER.indexOf(exId)>=0?5:2.5; level="up"; weight=_round05(last.topWeight+inc); reason=`RPE ${rpe} — העלה +${inc} ק"ג`; }
   if(plateau && level==="up"){ level="plateau"; reason=`תקוע 3 אימונים — שקול החלפת תרגיל/טווח חזרות`; }
   return { level, weight, reason, color:C[level] };
+}
+// Per-set targets (weight/reps/RPE) for pre-filling the set rows of the NEXT session.
+// Returns { level, color, reason, weight, sets:[{weight,reps,rpe}, ...] } or null if no history yet.
+function computeSetTargets(exId, numSets){
+  const tgt = computeTarget(exId);
+  if(!tgt) return null;
+  const lastSets = _lastSessionSets(exId);
+  const sets = [];
+  for(let i=0;i<numSets;i++){
+    const ls = lastSets && lastSets[i];
+    let rpe = null;
+    if(tgt.level==="pain")        rpe = null;                       // no RPE push when in a pain-flag state
+    else if(tgt.level==="deload") rpe = 6;
+    else if(tgt.level==="hold")   rpe = (ls && parseInt(ls.rpe)) || 8;
+    else                          rpe = 7;                          // up / plateau
+    const reps = (ls && ls.reps) ? ls.reps : null;
+    sets.push({ weight: tgt.weight!=null?tgt.weight:null, reps, rpe });
+  }
+  return { level:tgt.level, color:tgt.color, reason:tgt.reason, weight:tgt.weight, sets };
 }
 
 // ══════════════════════════════════════════════════════════════════
