@@ -1305,12 +1305,22 @@ function _weightEntryForWeek(sundayKey){
   const dates = weekDatesSunday(sundayKey);
   return WEIGHT.find(w=>dates.includes(w.date)) || null;
 }
-function _saveWeightForWeek(sundayKey, value){
+// fallbackDate: used only when creating a brand-new entry for a week that has none yet — defaults to
+// today (correct when editing the current week), but history-edit passes the week's own Sunday date so a
+// new entry for a PAST week doesn't get miscategorized under whatever week "today" happens to fall in.
+function _saveWeightForWeek(sundayKey, value, fallbackDate){
   const dates = weekDatesSunday(sundayKey);
   const existing = WEIGHT.find(w=>dates.includes(w.date));
   if (existing) { existing.value = value; existing.savedAt = new Date().toISOString(); }
-  else WEIGHT.push({ date: todayKey(), value, savedAt: new Date().toISOString() });
+  else WEIGHT.push({ date: fallbackDate || todayKey(), value, savedAt: new Date().toISOString() });
   save(SK.weight, WEIGHT);
+}
+// Every calendar week that has EITHER a weekly-metrics entry OR a weight entry — a week where the user
+// only logged weight (and touched nothing else in the weekly tab) would otherwise never surface in history.
+function _weekUnion(){
+  const s = new Set(WEEKLY.map(w=>w.week));
+  WEIGHT.forEach(w=>{ if(w && w.date) s.add(weekLabelSunday(w.date)); });
+  return [...s].sort((a,b)=>b.localeCompare(a));
 }
 // Objective, computed summary for the Sun-Sat week starting at sundayKey — sleep/water averages,
 // workout count, rehab days done/missed. Days after "today" are excluded from the rehab done/missed count.
@@ -1479,24 +1489,89 @@ function workoutStats(log){
   };
 }
 
+// Inline edit form for one week's manually-entered metrics (weight, back_pain, protein_avg, overall_feeling).
+// Appended into `container` (a <td colspan>); calls onSaved() after the user presses save.
+function _buildWeekEditForm(container, week, onSaved){
+  container.innerHTML = "";
+  const wEntry = _weightEntryForWeek(week);
+  const savedEntry = WEEKLY.find(w=>w.week===week);
+  const data = Object.assign({}, savedEntry ? savedEntry.data : {});
+  let weightVal = wEntry ? wEntry.value : "";
+
+  const wrap = el("div",""); wrap.style.cssText = "display:flex;flex-direction:column;gap:8px;padding:8px 2px 4px";
+
+  const wItem = el("div","weekly-item");
+  wItem.innerHTML = `<div class="weekly-header"><div class="weekly-label">משקל</div><div class="weekly-unit">ק"ג</div></div>`;
+  const wInp = document.createElement("input");
+  wInp.type="number"; wInp.step="0.1"; wInp.min="0"; wInp.value=weightVal; wInp.placeholder="הזן משקל";
+  wInp.oninput = () => { weightVal = wInp.value; };
+  wItem.appendChild(wInp);
+  wrap.appendChild(wItem);
+
+  function scaleField(label, unit, field, good){
+    const item = el("div","weekly-item");
+    item.innerHTML = `<div class="weekly-header"><div class="weekly-label">${label}</div><div class="weekly-unit">${unit}</div></div>`;
+    const row = el("div","scale-row");
+    for(let n=1;n<=10;n++){
+      const btn = el("div","scale-btn"+(data[field]===n?" sel":""));
+      if(data[field]===n) btn.style.background=scaleColor(n,good);
+      btn.textContent=n;
+      btn.onclick=()=>{
+        const clear = data[field]===n;
+        data[field]=clear?null:n;
+        row.querySelectorAll(".scale-btn").forEach((b,idx)=>{ const sel=!clear&&idx+1===n; b.className="scale-btn"+(sel?" sel":""); b.style.background=sel?scaleColor(n,good):""; });
+      };
+      row.appendChild(btn);
+    }
+    item.appendChild(row);
+    return item;
+  }
+  wrap.appendChild(scaleField("כאב גב","/10","back_pain","low"));
+
+  const protItem = el("div","weekly-item");
+  protItem.innerHTML = `<div class="weekly-header"><div class="weekly-label">חלבון ממוצע</div><div class="weekly-unit">גרם</div></div>`;
+  const protInp = document.createElement("input");
+  protInp.type="number"; protInp.step="0.1"; protInp.min="0"; protInp.value=data.protein_avg||""; protInp.placeholder="הזן ערך";
+  protInp.oninput = () => { data.protein_avg = protInp.value; };
+  protItem.appendChild(protInp);
+  wrap.appendChild(protItem);
+
+  wrap.appendChild(scaleField("תחושה כללית השבוע","/10","overall_feeling","high"));
+
+  const saveBtn = document.createElement("button");
+  saveBtn.className="btn"; saveBtn.style.background="#3B82F6"; saveBtn.textContent="שמור שינויים";
+  saveBtn.onclick = () => {
+    if (weightVal!=="" && weightVal!=null) _saveWeightForWeek(week, weightVal, week);
+    updateWeekly(week, data);
+    saveBtn.textContent="✓ נשמר"; saveBtn.style.background="#10B981";
+    setTimeout(()=>{ if(typeof onSaved==="function") onSaved(); }, 500);
+  };
+  wrap.appendChild(saveBtn);
+
+  container.appendChild(wrap);
+}
+
 function renderHistory() {
-  // Weekly table
-  const weeks=[...WEEKLY].sort((a,b)=>b.week.localeCompare(a.week)).slice(0,8);
+  // Weekly table — union of weeks that have manual metrics AND weeks that have only a weight entry,
+  // so a week logged with just a weight can still be found and edited.
+  const weekKeys=_weekUnion().slice(0,12);
   const hw=document.getElementById("history-weekly");
   hw.innerHTML="";
-  if(weeks.length>0){
+  if(weekKeys.length>0){
     hw.innerHTML=`<div class="eyebrow" style="color:#6B7280;margin-bottom:8px">מדדים שבועיים</div>`;
     const wrap=el("div","overflow-x");
     const tbl=document.createElement("table"); tbl.className="hist-table";
-    tbl.innerHTML=`<thead><tr>${["שבוע","⚖️","כאב","חלבון","תחושה","שינה","מים","אימונים","שיקום"].map(h=>`<th>${h}</th>`).join("")}</tr></thead>`;
+    tbl.innerHTML=`<thead><tr>${["שבוע","⚖️","כאב","חלבון","תחושה","שינה","מים","אימונים","שיקום",""].map(h=>`<th>${h}</th>`).join("")}</tr></thead>`;
     const tbody=document.createElement("tbody");
-    weeks.forEach(w=>{
-      const d=w.data;
-      const wEntry=_weightEntryForWeek(w.week);
-      const s=_weekObjectiveSummary(w.week);
+    weekKeys.forEach(week=>{
+      const wRec=WEEKLY.find(w=>w.week===week);
+      const d=wRec?wRec.data:{};
+      const wEntry=_weightEntryForWeek(week);
+      const s=_weekObjectiveSummary(week);
       const c=(v,g)=>!v?"#4B5563":scaleColor(v,g);
-      tbody.innerHTML+=`<tr>
-        <td style="color:#9CA3AF;text-align:right;padding:6px 8px;font-size:10px">${w.week}</td>
+      const row=document.createElement("tr");
+      row.innerHTML=`
+        <td style="color:#9CA3AF;text-align:right;padding:6px 8px;font-size:10px">${week}</td>
         <td style="color:#D1D5DB">${wEntry?wEntry.value:"—"}</td>
         <td style="color:${c(d.back_pain,"low")}">${d.back_pain||"—"}</td>
         <td style="color:#D1D5DB">${d.protein_avg||"—"}</td>
@@ -1505,7 +1580,27 @@ function renderHistory() {
         <td style="color:#9CA3AF">${s.avgWater!=null?s.avgWater:"—"}</td>
         <td style="color:#9CA3AF">${s.workoutCount}</td>
         <td style="color:#9CA3AF">${s.rehabDone}/${s.rehabDone+s.rehabMissed}</td>
-      </tr>`;
+        <td></td>
+      `;
+      const editCell = row.lastElementChild;
+      const editBtn = el("div","");
+      editBtn.textContent="✏️";
+      editBtn.style.cssText="cursor:pointer;font-size:13px;text-align:center;opacity:0.75";
+      editCell.appendChild(editBtn);
+      tbody.appendChild(row);
+
+      const editRow=document.createElement("tr");
+      editRow.style.display="none";
+      const editTd=document.createElement("td");
+      editTd.colSpan=10;
+      editRow.appendChild(editTd);
+      tbody.appendChild(editRow);
+
+      editBtn.onclick=()=>{
+        const opening = editRow.style.display==="none";
+        editRow.style.display = opening?"table-row":"none";
+        if(opening) _buildWeekEditForm(editTd, week, renderHistory);
+      };
     });
     tbl.appendChild(tbody); wrap.appendChild(tbl); hw.appendChild(wrap);
     hw.style.marginBottom="20px";
@@ -1564,16 +1659,17 @@ function buildSummary() {
   lines.push("# DATA SNAPSHOT — מנטור בריאותי");
   lines.push(`> יוצא: ${todayKey()}`);
   lines.push("");
-  const weeks=[...WEEKLY].sort((a,b)=>b.week.localeCompare(a.week)).slice(0,8);
-  if(weeks.length){
+  const weekKeysExp=_weekUnion().slice(0,8);
+  if(weekKeysExp.length){
     lines.push("## מדדים שבועיים (שבוע קלנדרי, ראשון–שבת)");
     lines.push("| שבוע | משקל | כאב גב | חלבון | תחושה כללית | ממוצע שינה | ממוצע מים | אימונים | שיקום |");
     lines.push("|------|------|--------|-------|--------------|------------|-----------|---------|-------|");
-    weeks.forEach(w=>{
-      const d=w.data;
-      const wEntry=_weightEntryForWeek(w.week);
-      const s=_weekObjectiveSummary(w.week);
-      lines.push(`| ${w.week} | ${wEntry?wEntry.value:"—"} | ${d.back_pain||"—"}/10 | ${d.protein_avg||"—"}g | ${d.overall_feeling||"—"}/10 | ${s.avgSleep!=null?s.avgSleep:"—"} | ${s.avgWater!=null?s.avgWater:"—"} | ${s.workoutCount} | ${s.rehabDone}/${s.rehabDone+s.rehabMissed} |`);
+    weekKeysExp.forEach(week=>{
+      const wRec=WEEKLY.find(w=>w.week===week);
+      const d=wRec?wRec.data:{};
+      const wEntry=_weightEntryForWeek(week);
+      const s=_weekObjectiveSummary(week);
+      lines.push(`| ${week} | ${wEntry?wEntry.value:"—"} | ${d.back_pain||"—"}/10 | ${d.protein_avg||"—"}g | ${d.overall_feeling||"—"}/10 | ${s.avgSleep!=null?s.avgSleep:"—"} | ${s.avgWater!=null?s.avgWater:"—"} | ${s.workoutCount} | ${s.rehabDone}/${s.rehabDone+s.rehabMissed} |`);
     });
     lines.push("");
   }
