@@ -679,6 +679,64 @@ const SK = { logs:"wt_logs_v3", weekly:"wt_weekly_v2", rehab:"wt_rehab_v1", nutr
 // script reaches the "PROGRESSIVE OVERLOAD ENGINE" section further down, so a later `const` here would
 // be in its temporal dead zone and throw the moment real history exists.
 const _BIG_LOWER = ["goblet_squat","leg_press","hip_thrust","rdl_db","hip_thrust_d5"];
+// Same reasoning as _BIG_LOWER above: the "restore last active tab" logic near the bottom of the script
+// (UI.tab restore on load) can call switchTab("dashboard") → renderDashboard() → getAggregateStrengthData()
+// synchronously during initial script execution, before a later-declared const would be initialized.
+// Declaring TRACKABLE_EXERCISES here (not down near the dashboard code) avoids that TDZ trap.
+const TRACKABLE_EXERCISES = [
+  { id:"db_flat_bench",   name:"DB Bench Press" },
+  { id:"goblet_squat",    name:"Goblet Squat" },
+  { id:"hip_thrust",      name:"Hip Thrust" },
+  { id:"rdl_db",          name:"Romanian DL" },
+  { id:"lat_pulldown",    name:"Lat Pulldown" },
+  { id:"pullup",          name:"Pull-Up (מתח)" },
+  { id:"pullup_u",        name:"Pull-Up (Upper)" },
+  { id:"bulgarian_ss",    name:"Bulgarian Split Squat" },
+  { id:"face_pull",       name:"Face Pull" },
+  { id:"ohp_seated",      name:"Seated DB OHP" },
+  { id:"chest_supp_row",  name:"Chest-Supported Row" },
+  { id:"leg_press",       name:"Leg Press" },
+  { id:"hip_thrust_d5",   name:"Hip Thrust (D5)" },
+  { id:"db_bench_u",      name:"DB Bench (Upper)" },
+];
+// Same TDZ reasoning — used by the dashboard's chart config, reachable from the same early auto-restore path.
+const CHART_GRID = "rgba(255,255,255,0.06)";
+const CHART_TICK = "#6B7280";
+const CHART_FONT = { family:"-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif", size:11 };
+// Same TDZ reasoning — used by renderNutrition(), reachable if UI.tab was "nutrition" on last visit.
+const NUTRITION_PLAN = {
+  breakfast: {
+    id:"breakfast", label:"☀️ בוקר (קלה — Atent XR)",
+    color:"#F59E0B", note:"תיאבון מדוכא — ארוחה קטנה וקלה לעיכול",
+    items:[
+      { id:"b_shake",   name:"שייק חלבון Whey 30g",    protein:30, cal:150, note:"עם חצי בננה / חלב" },
+      { id:"b_yogurt",  name:"יוגורט יווני 170g",       protein:17, cal:100, note:"0–2% שומן" },
+      { id:"b_cottage", name:"גבינת קוטג' 200g",        protein:22, cal:130, note:"5% שומן" },
+      { id:"b_eggs",    name:"ביצים מקושקשות ×3",       protein:18, cal:210, note:"עם 1 כפית שמן" },
+    ]
+  },
+  lunch: {
+    id:"lunch", label:"☁️ צהריים (קלה)",
+    color:"#3B82F6", note:"ארוחת ביניים — השיאבון עדיין פעיל",
+    items:[
+      { id:"l_shake",   name:"שייק חלבון Whey 30g",    protein:30, cal:150, note:"" },
+      { id:"l_tuna",    name:"טונה פחית 85g",           protein:20, cal:130, note:"+ לחם שיפון" },
+      { id:"l_chicken", name:"חזה עוף מבושל 150g",      protein:35, cal:165, note:"" },
+      { id:"l_bar",     name:"חטיף חלבון",              protein:20, cal:200, note:"לפי מותג" },
+    ]
+  },
+  dinner: {
+    id:"dinner", label:"🌙 ערב (גדולה)",
+    color:"#10B981", note:"הארוחה העיקרית — עיקר החלבון היומי",
+    items:[
+      { id:"d_chicken", name:"חזה עוף 300g",            protein:70, cal:330, note:"+ ירקות מאודים" },
+      { id:"d_salmon",  name:"סלמון 200g",              protein:40, cal:380, note:"" },
+      { id:"d_beef",    name:"בשר טחון רזה 200g",       protein:44, cal:360, note:"90% רזה" },
+      { id:"d_turkey",  name:"חזה הודו 300g",           protein:67, cal:300, note:"" },
+      { id:"d_eggs_leg",name:"ביצים ×4 + עדשות 150g",  protein:35, cal:380, note:"combo צמחוני" },
+    ]
+  }
+};
 
 function load(k)    { try { return JSON.parse(localStorage.getItem(k)) || (k===SK.logs?{}:k===SK.weekly?[]:k===SK.weight?[]:{}); } catch { return k===SK.logs?{}:k===SK.weekly?[]:k===SK.weight?[]:{};} }
 function _writeLS(k,v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
@@ -1616,30 +1674,9 @@ function updateExportPreview(){
 // ══════════════════════════════════════════════════════════════════
 // DASHBOARD TAB
 // ══════════════════════════════════════════════════════════════════
-const CHART_GRID = "rgba(255,255,255,0.06)";
-const CHART_TICK = "#6B7280";
-const CHART_FONT = { family:"-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif", size:11 };
-
 let weightChartInst   = null;
 let strengthChartInst = null;
 let strMode = "avg"; // "avg" | "ex"
-
-const TRACKABLE_EXERCISES = [
-  { id:"db_flat_bench",   name:"DB Bench Press" },
-  { id:"goblet_squat",    name:"Goblet Squat" },
-  { id:"hip_thrust",      name:"Hip Thrust" },
-  { id:"rdl_db",          name:"Romanian DL" },
-  { id:"lat_pulldown",    name:"Lat Pulldown" },
-  { id:"pullup",          name:"Pull-Up (מתח)" },
-  { id:"pullup_u",        name:"Pull-Up (Upper)" },
-  { id:"bulgarian_ss",    name:"Bulgarian Split Squat" },
-  { id:"face_pull",       name:"Face Pull" },
-  { id:"ohp_seated",      name:"Seated DB OHP" },
-  { id:"chest_supp_row",  name:"Chest-Supported Row" },
-  { id:"leg_press",       name:"Leg Press" },
-  { id:"hip_thrust_d5",   name:"Hip Thrust (D5)" },
-  { id:"db_bench_u",      name:"DB Bench (Upper)" },
-];
 
 /* helpers */
 function sessionMaxWeight(log, exId) {
@@ -1815,40 +1852,6 @@ function renderDashboard() {
 // ══════════════════════════════════════════════════════════════════
 // NUTRITION TAB
 // ══════════════════════════════════════════════════════════════════
-const NUTRITION_PLAN = {
-  breakfast: {
-    id:"breakfast", label:"☀️ בוקר (קלה — Atent XR)",
-    color:"#F59E0B", note:"תיאבון מדוכא — ארוחה קטנה וקלה לעיכול",
-    items:[
-      { id:"b_shake",   name:"שייק חלבון Whey 30g",    protein:30, cal:150, note:"עם חצי בננה / חלב" },
-      { id:"b_yogurt",  name:"יוגורט יווני 170g",       protein:17, cal:100, note:"0–2% שומן" },
-      { id:"b_cottage", name:"גבינת קוטג' 200g",        protein:22, cal:130, note:"5% שומן" },
-      { id:"b_eggs",    name:"ביצים מקושקשות ×3",       protein:18, cal:210, note:"עם 1 כפית שמן" },
-    ]
-  },
-  lunch: {
-    id:"lunch", label:"☁️ צהריים (קלה)",
-    color:"#3B82F6", note:"ארוחת ביניים — השיאבון עדיין פעיל",
-    items:[
-      { id:"l_shake",   name:"שייק חלבון Whey 30g",    protein:30, cal:150, note:"" },
-      { id:"l_tuna",    name:"טונה פחית 85g",           protein:20, cal:130, note:"+ לחם שיפון" },
-      { id:"l_chicken", name:"חזה עוף מבושל 150g",      protein:35, cal:165, note:"" },
-      { id:"l_bar",     name:"חטיף חלבון",              protein:20, cal:200, note:"לפי מותג" },
-    ]
-  },
-  dinner: {
-    id:"dinner", label:"🌙 ערב (גדולה)",
-    color:"#10B981", note:"הארוחה העיקרית — עיקר החלבון היומי",
-    items:[
-      { id:"d_chicken", name:"חזה עוף 300g",            protein:70, cal:330, note:"+ ירקות מאודים" },
-      { id:"d_salmon",  name:"סלמון 200g",              protein:40, cal:380, note:"" },
-      { id:"d_beef",    name:"בשר טחון רזה 200g",       protein:44, cal:360, note:"90% רזה" },
-      { id:"d_turkey",  name:"חזה הודו 300g",           protein:67, cal:300, note:"" },
-      { id:"d_eggs_leg",name:"ביצים ×4 + עדשות 150g",  protein:35, cal:380, note:"combo צמחוני" },
-    ]
-  }
-};
-
 function loadNutrition() {
   const key = SK.nutrition+"_"+todayKey();
   return JSON.parse(localStorage.getItem(key)||"null") || { checked:{}, custom:{breakfast:0,lunch:0,dinner:0}, date:todayKey() };
