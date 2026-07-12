@@ -747,6 +747,10 @@ let WEEKLY = load(SK.weekly);
 let REHAB  = load(SK.rehab);
 let WEIGHT = load(SK.weight);  // array of {date:"YYYY-MM-DD", value, savedAt} — one entry per real calendar day entered, continuous (not week-gated)
 let DAILY  = load(SK.daily);   // object keyed by date "YYYY-MM-DD" -> {sleep, water, savedAt}
+// Dashboard chart instances + strength-chart view mode — declared early for the same TDZ reason as above.
+let weightChartInst   = null;
+let strengthChartInst = null;
+let strMode = "avg"; // "avg" | "ex"
 
 // ══════════════════════════════════════════════════════════════════
 // HELPERS
@@ -1127,8 +1131,11 @@ if(typeof cleanupLogs==="function" && cleanupLogs()) _writeLS(SK.logs, LOGS);
 // Init workout tab
 renderDayPills();
 renderWorkoutContent();
-// Restore last-open tab across reloads
-if(UI.tab && UI.tab!=="workout" && document.getElementById("view-"+UI.tab)) switchTab(UI.tab);
+// Restore last-open tab across reloads. Deferred via setTimeout(...,0) so it always runs AFTER the rest of
+// this script has finished executing top-to-bottom — otherwise, if UI.tab is a tab whose render function
+// depends on a const/let declared further down in the file (dashboard, nutrition, etc.), calling switchTab
+// here synchronously would hit that binding while it's still in its temporal dead zone and throw.
+if(UI.tab && UI.tab!=="workout") setTimeout(() => { if(document.getElementById("view-"+UI.tab)) switchTab(UI.tab); }, 0);
 // Resume a rest timer that was running when the app was closed
 if(typeof resumeRest==="function") resumeRest();
 
@@ -1674,9 +1681,6 @@ function updateExportPreview(){
 // ══════════════════════════════════════════════════════════════════
 // DASHBOARD TAB
 // ══════════════════════════════════════════════════════════════════
-let weightChartInst   = null;
-let strengthChartInst = null;
-let strMode = "avg"; // "avg" | "ex"
 
 /* helpers */
 function sessionMaxWeight(log, exId) {
@@ -1801,8 +1805,8 @@ function updateStrengthChart() {
 /* main dashboard render */
 function renderDashboard() {
   // KPIs
-  const lastW = [...WEEKLY].sort((a,b)=>b.week.localeCompare(a.week))[0];
-  const latestWeight = lastW?.data?.weight || "—";
+  const lastWeightEntry = [...WEIGHT].sort((a,b)=>b.date.localeCompare(a.date))[0];
+  const latestWeight = lastWeightEntry ? lastWeightEntry.value : "—";
   const totalWorkouts = Object.keys(LOGS).length;
   const aggD = getAggregateStrengthData();
   const lastPct = aggD.data.filter(v=>v!==null).slice(-1)[0];
