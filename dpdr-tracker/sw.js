@@ -1,4 +1,4 @@
-const CACHE = "dpdr-tracker-v1";
+const CACHE = "dpdr-tracker-v2";
 const ASSETS = [
   "./",
   "./index.html",
@@ -8,7 +8,14 @@ const ASSETS = [
 ];
 
 self.addEventListener("install", (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)));
+  // index.html is served with Cache-Control: max-age=600 — a plain fetch()/addAll() here can silently
+  // pick up a stale copy from the browser's HTTP cache even under a brand-new CACHE name. Force a real
+  // network round-trip for every asset so a version bump always ships what's actually on the server.
+  e.waitUntil(
+    caches.open(CACHE).then((c) =>
+      Promise.all(ASSETS.map((url) => fetch(url, { cache: "reload" }).then((res) => c.put(url, res))))
+    )
+  );
   self.skipWaiting();
 });
 

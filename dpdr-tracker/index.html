@@ -50,6 +50,12 @@ body{background:var(--bg);color:var(--text);font-family:'Rubik',sans-serif;font-
 .slider{-webkit-appearance:none;appearance:none;width:100%;height:4px;border-radius:2px;background:var(--border);outline:none;cursor:pointer}
 .slider::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--accent);cursor:pointer;transition:transform .15s}
 .slider::-webkit-slider-thumb:hover{transform:scale(1.2)}
+.bool-row{display:flex;gap:8px;margin-top:2px}
+.bool-btn{flex:1;padding:9px 0;border-radius:8px;cursor:pointer;text-align:center;font-size:12px;font-weight:600;background:var(--border);border:1px solid var(--border);color:var(--muted);transition:all .15s}
+.readonly-stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.readonly-stat{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 12px}
+.readonly-stat-label{font-size:11px;color:var(--muted);margin-bottom:4px}
+.readonly-stat-val{font-size:18px;font-weight:600}
 
 /* TOOL CARDS */
 .tools-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px}
@@ -229,10 +235,16 @@ body{background:var(--bg);color:var(--text);font-family:'Rubik',sans-serif;font-
       <input type="range" class="slider" min="4" max="10" value="7" oninput="updateMeter('sleep',this.value)">
     </div>
     <div class="meter-card">
-      <div class="mlabel">💪 כאב גב (1-10)</div>
-      <div class="score-display" id="pain-val" style="color:var(--muted)">3</div>
-      <input type="range" class="slider" min="1" max="10" value="3" oninput="updateMeter('pain',this.value)">
+      <div class="mlabel">🚬 עישון היום?</div>
+      <div class="bool-row" id="smoking-row" style="margin-top:12px">
+        <div class="bool-btn" id="smoking-no" onclick="setSmoking(false)">לא עישנתי ✅</div>
+        <div class="bool-btn" id="smoking-yes" onclick="setSmoking(true)">עישנתי ⚠️</div>
+      </div>
     </div>
+  </div>
+  <div class="info-block warn-box" id="smoking-alert" style="display:none;margin-bottom:20px">
+    <h3>⚠️ דגל אדום — עישון</h3>
+    <p>הפסקת יוני 2026 היא הישג. חזרה לעישון = עיכוב בריפוי ואסתמה. עדכן רופא אם צריך תמיכה.</p>
   </div>
 
   <div class="section-label">כלים מהירים — לחץ לפרטים ולהפעלה</div>
@@ -289,22 +301,22 @@ body{background:var(--bg);color:var(--text);font-family:'Rubik',sans-serif;font-
 
   <div class="section-label">רשימת משימות — היום</div>
   <div class="tasks-list">
-    <div class="task-item" onclick="toggleTask(this)">
+    <div class="task-item" onclick="toggleTask(this)" data-scope="daily" data-tid="grounding">
       <div class="task-check"></div>
       <div class="task-text">Grounding 5-4-3-2-1 — לפחות פעם אחת</div>
       <div class="task-priority prio-high">חובה</div>
     </div>
-    <div class="task-item" onclick="toggleTask(this)">
+    <div class="task-item" onclick="toggleTask(this)" data-scope="daily" data-tid="mindfulness">
       <div class="task-check"></div>
       <div class="task-text">מיינדפולנס חיצוני — 10 דקות, קשב החוצה בלבד</div>
       <div class="task-priority prio-high">חובה</div>
     </div>
-    <div class="task-item" onclick="toggleTask(this)">
+    <div class="task-item" onclick="toggleTask(this)" data-scope="daily" data-tid="cardio">
       <div class="task-check"></div>
       <div class="task-text">קרדיו Zone 2 — 25-30 דקות הליכה/ריצה</div>
       <div class="task-priority prio-med">מומלץ</div>
     </div>
-    <div class="task-item" onclick="toggleTask(this)">
+    <div class="task-item" onclick="toggleTask(this)" data-scope="daily" data-tid="sleeptime">
       <div class="task-check"></div>
       <div class="task-text">שמירה על שעת שינה — כניסה למיטה 21:00</div>
       <div class="task-priority prio-med">מומלץ</div>
@@ -432,43 +444,37 @@ body{background:var(--bg);color:var(--text);font-family:'Rubik',sans-serif;font-
 
 <!-- LOG -->
 <div id="page-log" class="page">
-  <div class="section-label">רשומת השבוע הנוכחי</div>
+  <div class="section-label">רשומת השבוע הנוכחי (ראשון–שבת)</div>
   <div class="log-week">
     <div class="log-week-header">
       <div class="log-week-title">שבוע — <span id="week-date"></span></div>
-      <button class="btn btn-primary" id="save-btn" onclick="saveWeek()" style="font-size:12px;padding:7px 14px">שמור</button>
     </div>
+
+    <div class="section-label" style="margin-top:0">אובייקטיבי — מחושב מהדיווח היומי</div>
+    <div class="readonly-stat-grid">
+      <div class="readonly-stat"><div class="readonly-stat-label">DPDR ממוצע</div><div class="readonly-stat-val" id="wDpdrVal">—</div></div>
+      <div class="readonly-stat"><div class="readonly-stat-label">קוגניציה ממוצעת</div><div class="readonly-stat-val" id="wCogVal">—</div></div>
+      <div class="readonly-stat"><div class="readonly-stat-label">ממוצע שינה (שעות)</div><div class="readonly-stat-val" id="wSleepVal">—</div></div>
+      <div class="readonly-stat"><div class="readonly-stat-label">ימים נטולי עישון</div><div class="readonly-stat-val" id="wSmokeFreeVal">—</div></div>
+    </div>
+
+    <div class="section-label">ידני — מדווח פעם בשבוע</div>
     <div class="log-grid">
       <div class="log-row">
-        <div class="log-row-label">DPDR ממוצע</div>
-        <input type="range" class="slider log-row-slider" min="1" max="10" value="5" id="lDpdr" oninput="document.getElementById('lDpdrV').textContent=this.value">
-        <div class="log-row-val" id="lDpdrV">5</div>
-      </div>
-      <div class="log-row">
-        <div class="log-row-label">קוגניציה ממוצעת</div>
-        <input type="range" class="slider log-row-slider" min="1" max="10" value="6" id="lCog" oninput="document.getElementById('lCogV').textContent=this.value">
-        <div class="log-row-val" id="lCogV">6</div>
-      </div>
-      <div class="log-row">
-        <div class="log-row-label">ממוצע שינה (שעות)</div>
-        <input type="range" class="slider log-row-slider" min="4" max="10" value="7" id="lSleep" oninput="document.getElementById('lSleepV').textContent=this.value">
-        <div class="log-row-val" id="lSleepV">7</div>
-      </div>
-      <div class="log-row">
         <div class="log-row-label">ימי Grounding</div>
-        <input type="range" class="slider log-row-slider" min="0" max="7" value="3" id="lGround" oninput="document.getElementById('lGroundV').textContent=this.value">
-        <div class="log-row-val" id="lGroundV">3</div>
+        <input type="range" class="slider log-row-slider" min="0" max="7" value="0" id="lGround" oninput="document.getElementById('lGroundV').textContent=this.value; saveWeekManual();">
+        <div class="log-row-val" id="lGroundV">0</div>
       </div>
       <div class="log-row">
         <div class="log-row-label">אימוני Zone 2</div>
-        <input type="range" class="slider log-row-slider" min="0" max="7" value="2" id="lCardio" oninput="document.getElementById('lCardioV').textContent=this.value">
-        <div class="log-row-val" id="lCardioV">2</div>
+        <input type="range" class="slider log-row-slider" min="0" max="7" value="0" id="lCardio" oninput="document.getElementById('lCardioV').textContent=this.value; saveWeekManual();">
+        <div class="log-row-val" id="lCardioV">0</div>
       </div>
     </div>
   </div>
   <div class="section-label">היסטוריה</div>
   <div id="log-history">
-    <div style="font-size:13px;color:var(--muted);padding:12px 0">כאן יופיעו השבועות לאחר שתשמור לראשונה.</div>
+    <div style="font-size:13px;color:var(--muted);padding:12px 0">כאן יופיעו השבועות הקודמים.</div>
   </div>
 </div>
 
@@ -476,12 +482,12 @@ body{background:var(--bg);color:var(--text);font-family:'Rubik',sans-serif;font-
 <div id="page-tasks" class="page">
   <div class="section-label">🔴 דחוף — השבוע</div>
   <div class="tasks-list">
-    <div class="task-item" onclick="toggleTask(this)">
+    <div class="task-item" onclick="toggleTask(this)" data-scope="med" data-tid="video_eeg">
       <div class="task-check"></div>
       <div class="task-text">לתאם תור ל-Video-EEG</div>
       <div class="task-priority prio-high">דחוף</div>
     </div>
-    <div class="task-item" onclick="toggleTask(this)">
+    <div class="task-item" onclick="toggleTask(this)" data-scope="med" data-tid="orthopedist">
       <div class="task-check"></div>
       <div class="task-text">לתאם אורתופד — לציין: טראומה צווארית, חוסר תחושה, MRI צווארי חסר</div>
       <div class="task-priority prio-high">דחוף</div>
@@ -489,17 +495,17 @@ body{background:var(--bg);color:var(--text);font-family:'Rubik',sans-serif;font-
   </div>
   <div class="section-label">📋 ממתין לתוצאות</div>
   <div class="tasks-list">
-    <div class="task-item" onclick="toggleTask(this)">
+    <div class="task-item" onclick="toggleTask(this)" data-scope="med" data-tid="psychiatrist">
       <div class="task-check"></div>
       <div class="task-text">פסיכיאטר — לאחר Video-EEG</div>
       <div class="task-priority prio-med">ממתין</div>
     </div>
-    <div class="task-item" onclick="toggleTask(this)">
+    <div class="task-item" onclick="toggleTask(this)" data-scope="med" data-tid="physio">
       <div class="task-check"></div>
       <div class="task-text">פיזיותרפיסט — לאחר אבחנה מהאורתופד</div>
       <div class="task-priority prio-med">ממתין</div>
     </div>
-    <div class="task-item" onclick="toggleTask(this)">
+    <div class="task-item" onclick="toggleTask(this)" data-scope="med" data-tid="bloodwork">
       <div class="task-check"></div>
       <div class="task-text">בדיקות דם: D, B12, פריטין, שומנים, TSH, CRP, טסטוסטרון</div>
       <div class="task-priority prio-med">יוני 2026</div>
@@ -507,17 +513,17 @@ body{background:var(--bg);color:var(--text);font-family:'Rubik',sans-serif;font-
   </div>
   <div class="section-label">💊 לשקול עם רופא</div>
   <div class="tasks-list">
-    <div class="task-item" onclick="toggleTask(this)">
+    <div class="task-item" onclick="toggleTask(this)" data-scope="med" data-tid="omega3">
       <div class="task-check"></div>
       <div class="task-text">Omega-3 EPA+DHA 2-3g — להוסיף לשגרה</div>
       <div class="task-priority prio-low">תוסף</div>
     </div>
-    <div class="task-item" onclick="toggleTask(this)">
+    <div class="task-item" onclick="toggleTask(this)" data-scope="med" data-tid="vitd">
       <div class="task-check"></div>
       <div class="task-text">Vitamin D3 + K2 — לאחר בדיקת דם</div>
       <div class="task-priority prio-low">תוסף</div>
     </div>
-    <div class="task-item" onclick="toggleTask(this)">
+    <div class="task-item" onclick="toggleTask(this)" data-scope="med" data-tid="melatonin">
       <div class="task-check"></div>
       <div class="task-text">מלטונין: להפחית מ-5mg ל-1mg בהדרגה</div>
       <div class="task-priority prio-low">תרופה</div>
@@ -1060,9 +1066,65 @@ const DK_CURRICULUM = [
   }
 ];
 
+// ══════════════════════════════════════
+// STORAGE — localStorage (mirrors workout-tracker's pattern)
+// ══════════════════════════════════════
+const SK = {
+  daily: "dpdr_daily_v1",         // per-date: {dpdr, cog, sleep, smoking, savedAt}
+  weekly: "dpdr_weekly_v1",       // array of {week (Sunday key), data:{ground, cardio}, savedAt}
+  reads: "dpdr_reads_v1",         // {dkIndex: true, ...}
+  dailyTasks: "dpdr_dailytasks_v1", // per-date: {taskId: bool}
+  medTasks: "dpdr_medtasks_v1",   // flat, not date-scoped: {taskId: bool}
+  tools: "dpdr_tools_v1"          // per-date: {toolId: bool}
+};
+function load(k) { try { return JSON.parse(localStorage.getItem(k)) || (k===SK.weekly?[]:{}); } catch { return k===SK.weekly?[]:{}; } }
+function _writeLS(k,v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
+function save(k,v) { _writeLS(k,v); if(typeof _scheduleCloudPush==="function") _scheduleCloudPush(); }
+
+let DAILY = load(SK.daily);
+let WEEKLY = load(SK.weekly);
+let READS = load(SK.reads);
+let DAILY_TASKS = load(SK.dailyTasks);
+let MED_TASKS = load(SK.medTasks);
+let TOOLS = load(SK.tools);
+
+function todayKey() { return new Date().toISOString().split("T")[0]; }
+// Calendar week (Sunday→Saturday) — shared convention with the workout-tracker platform.
+function weekLabelSunday(d) {
+  d = d ? new Date(d) : new Date();
+  const day = d.getDay();
+  const sunday = new Date(d);
+  sunday.setDate(d.getDate() - day);
+  return sunday.toISOString().split("T")[0];
+}
+function weekDatesSunday(sundayKey) {
+  const out = [];
+  const d = new Date(sundayKey);
+  for (let i=0;i<7;i++){ const x=new Date(d); x.setDate(d.getDate()+i); out.push(x.toISOString().split("T")[0]); }
+  return out;
+}
+// Objective weekly stats computed live from real daily entries — never re-typed by the user.
+function weekComputedStats(sundayKey) {
+  const dates = weekDatesSunday(sundayKey);
+  const today = todayKey();
+  let dpdrVals=[], cogVals=[], sleepVals=[], smokeFree=0, daysElapsed=0;
+  dates.forEach(dt=>{
+    if (dt>today) return;
+    daysElapsed++;
+    const d = DAILY[dt];
+    if (!d) return;
+    if (d.dpdr!=null) dpdrVals.push(parseFloat(d.dpdr));
+    if (d.cog!=null) cogVals.push(parseFloat(d.cog));
+    if (d.sleep!=null) sleepVals.push(parseFloat(d.sleep));
+    if (d.smoking===false) smokeFree++;
+  });
+  const avg = arr => arr.length ? Math.round(arr.reduce((a,b)=>a+b,0)/arr.length*10)/10 : null;
+  return { avgDpdr:avg(dpdrVals), avgCog:avg(cogVals), avgSleep:avg(sleepVals), smokeFree, daysElapsed };
+}
+
 // ── DK STATE ──
 const DK_START = new Date('2026-06-12'); // Day 1 reference date
-let dkReadDays = {};
+let dkReadDays = READS;
 
 function getDkDayIndex() {
   const today = new Date();
@@ -1092,6 +1154,7 @@ function renderDK(idx) {
 
 function markRead() {
   dkReadDays[dkCurrentIndex] = true;
+  save(SK.reads, READS);
   const btn = document.getElementById('dk-read-btn');
   btn.textContent = '✓ נקרא';
   btn.className = 'dk-read-badge read';
@@ -1125,20 +1188,93 @@ function updateMeter(id, val) {
   const el = document.getElementById(id+'-val');
   el.textContent = val;
   el.style.color = pickColor(mColors[id], parseFloat(val), 10);
+  // Persist dpdr/cog/sleep per-date; feeds the weekly objective summary.
+  const today = todayKey();
+  if (!DAILY[today]) DAILY[today] = {};
+  DAILY[today][id] = parseFloat(val);
+  DAILY[today].savedAt = new Date().toISOString();
+  save(SK.daily, DAILY);
+  renderWeeklyComputed();
 }
 
-// TASKS
+// SMOKING (daily, persisted) — replaces the old weekly boolean field, which moved here per protocol.
+function setSmoking(val) {
+  const today = todayKey();
+  if (!DAILY[today]) DAILY[today] = {};
+  const clear = DAILY[today].smoking === val;
+  DAILY[today].smoking = clear ? null : val;
+  DAILY[today].savedAt = new Date().toISOString();
+  save(SK.daily, DAILY);
+  renderSmokingUI();
+  renderWeeklyComputed();
+}
+function renderSmokingUI() {
+  const today = todayKey();
+  const v = DAILY[today] ? DAILY[today].smoking : null;
+  const noBtn = document.getElementById('smoking-no'), yesBtn = document.getElementById('smoking-yes');
+  if (!noBtn || !yesBtn) return;
+  [noBtn,yesBtn].forEach(b=>{ b.style.background='var(--border)'; b.style.borderColor='var(--border)'; b.style.color='var(--muted)'; });
+  if (v===false){ noBtn.style.background='rgba(62,207,142,.15)'; noBtn.style.borderColor='var(--green)'; noBtn.style.color='var(--green)'; }
+  if (v===true){ yesBtn.style.background='rgba(224,92,92,.15)'; yesBtn.style.borderColor='var(--red)'; yesBtn.style.color='var(--red)'; }
+  const alertBox = document.getElementById('smoking-alert');
+  if (alertBox) alertBox.style.display = v===true ? 'block' : 'none';
+}
+
+// TASKS — daily-habit tasks reset visually each day (persisted per-date); medical to-dos persist flat/forever.
 function toggleTask(el) {
   el.classList.toggle('done');
-  el.querySelector('.task-check').textContent = el.classList.contains('done') ? '✓' : '';
+  const isDone = el.classList.contains('done');
+  el.querySelector('.task-check').textContent = isDone ? '✓' : '';
+  const scope = el.dataset.scope, tid = el.dataset.tid;
+  if (!scope || !tid) return; // unscoped task-items (if any) stay purely visual
+  if (scope === 'daily') {
+    const today = todayKey();
+    if (!DAILY_TASKS[today]) DAILY_TASKS[today] = {};
+    DAILY_TASKS[today][tid] = isDone;
+    save(SK.dailyTasks, DAILY_TASKS);
+  } else if (scope === 'med') {
+    MED_TASKS[tid] = isDone;
+    save(SK.medTasks, MED_TASKS);
+  }
+}
+function _restoreTasks() {
+  const today = todayKey();
+  const todayDaily = DAILY_TASKS[today] || {};
+  document.querySelectorAll('.task-item[data-scope="daily"]').forEach(el=>{
+    const done = !!todayDaily[el.dataset.tid];
+    el.classList.toggle('done', done);
+    el.querySelector('.task-check').textContent = done ? '✓' : '';
+  });
+  document.querySelectorAll('.task-item[data-scope="med"]').forEach(el=>{
+    const done = !!MED_TASKS[el.dataset.tid];
+    el.classList.toggle('done', done);
+    el.querySelector('.task-check').textContent = done ? '✓' : '';
+  });
 }
 
-// TOOL DONE
+// TOOL DONE — persisted per-date (which quick tools were used today)
 function markDone(id) {
-  document.getElementById(id).classList.toggle('done');
+  const el = document.getElementById(id);
+  el.classList.toggle('done');
+  _persistTool(id, el.classList.contains('done'));
 }
 function markDoneFromModal(id) {
-  document.getElementById(id).classList.add('done');
+  const el = document.getElementById(id);
+  el.classList.add('done');
+  _persistTool(id, true);
+}
+function _persistTool(id, done) {
+  const today = todayKey();
+  if (!TOOLS[today]) TOOLS[today] = {};
+  TOOLS[today][id] = done;
+  save(SK.tools, TOOLS);
+}
+function _restoreTools() {
+  const today = todayKey();
+  const todayTools = TOOLS[today] || {};
+  document.querySelectorAll('.tool-card').forEach(el=>{
+    el.classList.toggle('done', !!todayTools[el.id]);
+  });
 }
 
 // MODAL
@@ -1224,44 +1360,152 @@ function stopBreath() { if (breathTimer) { clearTimeout(breathTimer); breathTime
 // INIT DAILY KNOWLEDGE
 renderDK(dkCurrentIndex);
 
-// WEEK DATE
-const now = new Date();
-const wd = document.getElementById('week-date');
-if (wd) wd.textContent = now.toLocaleDateString('he-IL',{day:'numeric',month:'long',year:'numeric'});
-
-// SAVE WEEK
-let weeks = [];
-function saveWeek() {
-  const entry = {
-    date: now.toLocaleDateString('he-IL',{day:'numeric',month:'short'}),
-    dpdr: document.getElementById('lDpdr').value,
-    cog: document.getElementById('lCog').value,
-    sleep: document.getElementById('lSleep').value,
-    ground: document.getElementById('lGround').value,
-    cardio: document.getElementById('lCardio').value,
-  };
-  weeks.unshift(entry);
+// ══════════════════════════════════════
+// WEEKLY LOG — calendar week (Sunday→Saturday), real persistence.
+// DPDR/cognition/sleep/smoke-free are objective (computed from daily entries, never re-typed).
+// Grounding-days/Zone2-cardio remain manual weekly entries.
+// ══════════════════════════════════════
+function _currentWeekEntry() {
+  const week = weekLabelSunday();
+  return WEEKLY.find(w=>w.week===week) || {week, data:{}, savedAt:null};
+}
+function saveWeekManual() {
+  const week = weekLabelSunday();
+  const data = { ground: document.getElementById('lGround').value, cardio: document.getElementById('lCardio').value };
+  const f = WEEKLY.filter(w=>w.week!==week);
+  f.push({week, data, savedAt:new Date().toISOString()});
+  WEEKLY = f;
+  save(SK.weekly, WEEKLY);
   renderHistory();
-  const btn = document.getElementById('save-btn');
-  btn.textContent = '✓ נשמר';
-  btn.style.background = 'var(--green)';
-  btn.style.color = '#0e1117';
-  setTimeout(() => { btn.textContent='שמור'; btn.style.background=''; btn.style.color=''; }, 1500);
+}
+function renderWeeklyComputed() {
+  const week = weekLabelSunday();
+  const s = weekComputedStats(week);
+  const dpdrEl=document.getElementById('wDpdrVal'), cogEl=document.getElementById('wCogVal'),
+        sleepEl=document.getElementById('wSleepVal'), smokeEl=document.getElementById('wSmokeFreeVal');
+  if (dpdrEl) dpdrEl.textContent = s.avgDpdr!=null ? s.avgDpdr : '—';
+  if (cogEl) cogEl.textContent = s.avgCog!=null ? s.avgCog : '—';
+  if (sleepEl) sleepEl.textContent = s.avgSleep!=null ? s.avgSleep : '—';
+  if (smokeEl) smokeEl.textContent = s.daysElapsed ? (s.smokeFree+'/'+s.daysElapsed) : '—';
 }
 function dpdrBg(v) { return v<=3?'rgba(62,207,142,.15)':v<=6?'rgba(246,166,35,.15)':'rgba(224,92,92,.15)'; }
 function dpdrColor(v) { return v<=3?'var(--green)':v<=6?'var(--amber)':'var(--red)'; }
 function renderHistory() {
   const h = document.getElementById('log-history');
-  h.innerHTML = weeks.map(w =>
-    '<div class="history-row">' +
-    '<div>' +
-    '<div style="font-size:13px;font-weight:600">' + w.date + '</div>' +
-    '<div class="history-week">DPDR: ' + w.dpdr + ' · קוג׳: ' + w.cog + ' · שינה: ' + w.sleep + 'ש׳ · עיגון: ' + w.ground + '/7 · Zone2: ' + w.cardio + '</div>' +
-    '</div>' +
-    '<div class="history-score" style="background:' + dpdrBg(+w.dpdr) + ';color:' + dpdrColor(+w.dpdr) + '">' + w.dpdr + '</div>' +
-    '</div>'
-  ).join('');
+  const sorted = [...WEEKLY].sort((a,b)=>b.week.localeCompare(a.week)).slice(0,12);
+  if (!sorted.length) { h.innerHTML = '<div style="font-size:13px;color:var(--muted);padding:12px 0">כאן יופיעו השבועות הקודמים.</div>'; return; }
+  h.innerHTML = sorted.map(w => {
+    const s = weekComputedStats(w.week);
+    const d = w.data||{};
+    const dpdrShown = s.avgDpdr!=null ? s.avgDpdr : '—';
+    return '<div class="history-row">' +
+      '<div>' +
+      '<div style="font-size:13px;font-weight:600">שבוע ' + w.week + '</div>' +
+      '<div class="history-week">DPDR: ' + dpdrShown + ' · קוג׳: ' + (s.avgCog!=null?s.avgCog:'—') + ' · שינה: ' + (s.avgSleep!=null?s.avgSleep:'—') + 'ש׳ · נטול עישון: ' + s.smokeFree+'/'+s.daysElapsed + ' · עיגון: ' + (d.ground||'—') + '/7 · Zone2: ' + (d.cardio||'—') + '</div>' +
+      '</div>' +
+      '<div class="history-score" style="background:' + (s.avgDpdr!=null?dpdrBg(s.avgDpdr):'transparent') + ';color:' + (s.avgDpdr!=null?dpdrColor(s.avgDpdr):'var(--muted)') + '">' + dpdrShown + '</div>' +
+      '</div>';
+  }).join('');
 }
+
+// ══════════════════════════════════════
+// INIT — restore today's/this-week's state into the UI on load
+// ══════════════════════════════════════
+function initState() {
+  const today = todayKey();
+  const rec = DAILY[today] || {};
+
+  // Meters
+  ['dpdr','cog','sleep'].forEach(id=>{
+    if (rec[id]==null) return;
+    const slider = document.querySelector('input[oninput*="updateMeter(\'' + id + '\'"]');
+    const disp = document.getElementById(id+'-val');
+    if (slider) slider.value = rec[id];
+    if (disp) { disp.textContent = rec[id]; disp.style.color = pickColor(mColors[id], parseFloat(rec[id]), 10); }
+  });
+  renderSmokingUI();
+
+  // Week date label (Sunday–Saturday range)
+  const week = weekLabelSunday();
+  const dates = weekDatesSunday(week);
+  const wd = document.getElementById('week-date');
+  if (wd) {
+    const fmt = k => new Date(k).toLocaleDateString('he-IL',{day:'numeric',month:'short'});
+    wd.textContent = fmt(dates[0]) + ' – ' + fmt(dates[6]);
+  }
+
+  // Weekly manual fields (ground/cardio)
+  const wEntry = _currentWeekEntry();
+  const gEl=document.getElementById('lGround'), gVEl=document.getElementById('lGroundV');
+  const cEl=document.getElementById('lCardio'), cVEl=document.getElementById('lCardioV');
+  if (wEntry.data.ground!=null && gEl) { gEl.value=wEntry.data.ground; gVEl.textContent=wEntry.data.ground; }
+  if (wEntry.data.cardio!=null && cEl) { cEl.value=wEntry.data.cardio; cVEl.textContent=wEntry.data.cardio; }
+
+  renderWeeklyComputed();
+  renderHistory();
+  _restoreTasks();
+  _restoreTools();
+}
+initState();
+
+// ══════════════════════════════════════
+// SUPABASE CLOUD SYNC — same project as workout-tracker, separate row.
+// ══════════════════════════════════════
+const SUPA_URL = "https://vlrqnafvsekwtrbtatcf.supabase.co";
+const SUPA_KEY = ["eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9","eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZscnFuYWZ2c2Vrd3RyYnRhdGNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMzMTE1ODYsImV4cCI6MjA5ODg4NzU4Nn0","tfQ2KopLhTmFDU7k4osE9XbWLwP3v4BKS5sbTAN2cXM"].join(".");
+const SUPA_HEADERS = { apikey:SUPA_KEY, Authorization:"Bearer "+SUPA_KEY, "Content-Type":"application/json" };
+const ROW_ID = "gal_dpdr";
+
+function _mergeByKey(localObj, cloudObj, pick){
+  const out = Object.assign({}, cloudObj);
+  for(const k in localObj){ out[k] = out[k] ? pick(localObj[k], out[k]) : localObj[k]; }
+  return out;
+}
+function _pickBySavedAt(a,b){ const ta=Date.parse(a.savedAt||0)||0, tb=Date.parse(b.savedAt||0)||0; return ta>=tb?a:b; }
+function _mergeFlatBool(localObj, cloudObj){ return Object.assign({}, cloudObj, localObj); } // last-writer-ish; booleans rarely conflict
+function _mergeWeekly(localArr, cloudArr){
+  const m={}, richer=w=>Object.values(w.data||{}).filter(v=>v!==""&&v!=null).length;
+  (cloudArr||[]).concat(localArr||[]).forEach(w=>{ if(!w||!w.week)return; const p=m[w.week]; if(!p||richer(w)>=richer(p)) m[w.week]=w; });
+  return Object.values(m).sort((a,b)=>a.week.localeCompare(b.week));
+}
+
+let _pushTimer=null, _pulling=false;
+function _scheduleCloudPush(){ clearTimeout(_pushTimer); _pushTimer=setTimeout(cloudPush, 1500); }
+
+async function cloudPush(){
+  if(_pulling) return;
+  try{
+    const body=[{ id:ROW_ID, payload:{ daily:DAILY, weekly:WEEKLY, reads:READS, dailyTasks:DAILY_TASKS, medTasks:MED_TASKS, tools:TOOLS },
+                  updated_at:new Date().toISOString(), updated_by:"app" }];
+    await fetch(`${SUPA_URL}/rest/v1/workout_data`, { method:"POST",
+      headers:Object.assign({}, SUPA_HEADERS, { Prefer:"resolution=merge-duplicates,return=minimal" }),
+      body:JSON.stringify(body) });
+  }catch(e){ /* offline — local copy already saved */ }
+}
+async function cloudPull(){
+  _pulling=true;
+  try{
+    const r=await fetch(`${SUPA_URL}/rest/v1/workout_data?id=eq.${ROW_ID}&select=payload`, { headers:SUPA_HEADERS });
+    if(r.ok){
+      const rows=await r.json();
+      const p=(rows[0]&&rows[0].payload)||{};
+      if(p.daily)      DAILY       = _mergeByKey(DAILY, p.daily, _pickBySavedAt);
+      if(p.weekly)      WEEKLY      = _mergeWeekly(WEEKLY, p.weekly);
+      if(p.reads)       READS       = Object.assign({}, p.reads, READS);
+      if(p.dailyTasks)  DAILY_TASKS = _mergeByKey(DAILY_TASKS, p.dailyTasks, (a,b)=>Object.assign({},b,a));
+      if(p.medTasks)    MED_TASKS   = _mergeFlatBool(MED_TASKS, p.medTasks);
+      if(p.tools)       TOOLS       = _mergeByKey(TOOLS, p.tools, (a,b)=>Object.assign({},b,a));
+      dkReadDays = READS;
+      _writeLS(SK.daily,DAILY); _writeLS(SK.weekly,WEEKLY); _writeLS(SK.reads,READS);
+      _writeLS(SK.dailyTasks,DAILY_TASKS); _writeLS(SK.medTasks,MED_TASKS); _writeLS(SK.tools,TOOLS);
+      initState();
+      renderDK(dkCurrentIndex);
+    }
+  }catch(e){ /* offline */ }
+  finally{ _pulling=false; }
+}
+window.addEventListener("load", ()=>{ cloudPull(); });
+document.addEventListener("visibilitychange", ()=>{ if(!document.hidden){ cloudPull(); } });
 </script>
 <script>
 if ('serviceWorker' in navigator) {
