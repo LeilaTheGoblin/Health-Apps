@@ -744,6 +744,28 @@ function save(k,v)     { _writeLS(k,v); if(typeof _scheduleAutoSave==="function"
 
 let LOGS   = load(SK.logs);
 let WEEKLY = load(SK.weekly);
+// One-time self-healing migration: any WEEKLY entry whose .week key isn't Sunday-aligned (leftover from the
+// old Monday-based weekLabel() system, pre-11.07) gets remapped to its real Sunday key. Without this, a
+// stray Monday key would generate a 7-day range that overlaps into the NEXT real week (see weekDatesSunday),
+// causing weight/back_pain/etc. to appear to belong to two weeks at once. Duplicates at the same canonical
+// key are merged, keeping whichever has more filled-in fields.
+function _normalizeWeeklyKeys(arr){
+  const m = {}, richer = w => Object.values(w.data||{}).filter(v=>v!==""&&v!=null).length;
+  let changed = false;
+  (arr||[]).forEach(w=>{
+    if(!w || !w.week) return;
+    const canon = weekLabelSunday(w.week);
+    if (canon !== w.week) changed = true;
+    const p = m[canon];
+    if(!p || richer(w) >= richer(p)) m[canon] = Object.assign({}, w, { week: canon });
+  });
+  return { arr: Object.values(m).sort((a,b)=>a.week.localeCompare(b.week)), changed };
+}
+{
+  const _norm = _normalizeWeeklyKeys(WEEKLY);
+  WEEKLY = _norm.arr;
+  if (_norm.changed) _writeLS(SK.weekly, WEEKLY);
+}
 let REHAB  = load(SK.rehab);
 let WEIGHT = load(SK.weight);  // array of {date:"YYYY-MM-DD", value, savedAt} — one entry per real calendar day entered, continuous (not week-gated)
 let DAILY  = load(SK.daily);   // object keyed by date "YYYY-MM-DD" -> {sleep, water, savedAt}
@@ -771,9 +793,13 @@ function weekLabelSunday(d) {
   return sunday.toISOString().split("T")[0];
 }
 // All 7 date-keys (Sun..Sat) for the calendar week starting at `sundayKey`.
+// Normalizes the input to its own Sunday first — defensive against any non-Sunday-aligned week key that
+// might exist in storage (e.g. a leftover record from the old Monday-based weekLabel() system, pre-11.07
+// migration). Without this normalization, a stray key like a Monday date would generate a 7-day range that
+// overlaps into the FOLLOWING real Sunday-week, causing entries (like weight) to wrongly match two weeks.
 function weekDatesSunday(sundayKey) {
   const out = [];
-  const d = new Date(sundayKey);
+  const d = new Date(weekLabelSunday(sundayKey));
   for (let i=0;i<7;i++){ const x=new Date(d); x.setDate(d.getDate()+i); out.push(x.toISOString().split("T")[0]); }
   return out;
 }
@@ -2348,7 +2374,7 @@ async function cloudPull(){
       const p=(rows[0]&&rows[0].payload)||{};
       if(p.logs)   LOGS   = _mergeByKey(LOGS,   p.logs,  _pickLog);
       if(p.rehab)  REHAB  = _mergeByKey(REHAB,  p.rehab, _pickRehab);
-      if(p.weekly) WEEKLY = _mergeWeekly(WEEKLY, p.weekly);
+      if(p.weekly) WEEKLY = _normalizeWeeklyKeys(_mergeWeekly(WEEKLY, p.weekly)).arr;
       if(p.weight) WEIGHT = _mergeWeightArr(WEIGHT, p.weight);
       if(p.daily)  DAILY  = _mergeByKey(DAILY,  p.daily, _pickDaily);
       cleanupLogs();
