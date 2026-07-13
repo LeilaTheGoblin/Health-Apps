@@ -940,7 +940,11 @@ function renderWorkoutContent() {
   const container = document.getElementById("workout-content");
   container.innerHTML = "";
 
-  const exDone = ex => { const e=log.exercises[ex.id]; if(e&&e.meta&&e.meta.done) return true; return Array.from({length:ex.sets},(_,i)=>i).every(i => e&&e.sets&&e.sets[i]&&e.sets[i].reps); };
+  // A set only counts toward "done" if reps were actually confirmed by the user — pre-filled
+  // auto-suggested reps from the progressive-overload target (exLog.sets[i].auto.reps===true)
+  // must NOT count, otherwise any exercise with full prior-session history shows as done the
+  // instant it's opened, before anything is actually performed today.
+  const exDone = ex => { const e=log.exercises[ex.id]; if(e&&e.meta&&e.meta.done) return true; return Array.from({length:ex.sets},(_,i)=>i).every(i => { const s=e&&e.sets&&e.sets[i]; return s && s.reps && !(s.auto&&s.auto.reps); }); };
   const doneCount = day.exercises.filter(exDone).length;
   const est = avgDuration(selectedDay);
   const running = log.startedAt && !log.endedAt;
@@ -2339,7 +2343,7 @@ function _logHasData(l){
   if(l.notes && String(l.notes).trim()) return true;
   for(const ex in (l.exercises||{})){
     const e=l.exercises[ex]; const s=(e&&e.sets)||{};
-    for(const i in s){ if(parseFloat(s[i].weight)>0 || parseInt(s[i].reps)>0 || s[i].done) return true; }
+    for(const i in s){ const si=s[i]; if((parseFloat(si.weight)>0 && !(si.auto&&si.auto.weight)) || (parseInt(si.reps)>0 && !(si.auto&&si.auto.reps)) || si.done) return true; }
     if(e && e.meta && (e.meta.pain || e.meta.done)) return true;
   }
   return false;
