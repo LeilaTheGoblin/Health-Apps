@@ -2213,6 +2213,10 @@ function _round05(v){ return Math.round(v*2)/2; }
 
 function _sessionData(log, exId){
   const ex = log.exercises && log.exercises[exId]; if(!ex) return null;
+  // Manually flagged sessions (e.g. equipment substituted — barbell instead of DB — so the
+  // numeric weight isn't comparable) are excluded from progressive-overload math entirely,
+  // while staying visible as-is in the raw log/History for the user's own reference.
+  if(ex.meta && ex.meta.excludeFromHistory) return null;
   const sets = Object.keys(ex.sets||{}).map(k=>ex.sets[k])
     .filter(s => parseFloat(s.weight)>0 && parseInt(s.reps)>0);
   if(!sets.length) return null;
@@ -2225,12 +2229,21 @@ function _sessionData(log, exId){
     pain: (ex.meta && parseInt(ex.meta.pain)) || null
   };
 }
+// One-directional fallback: when an exercise has no usable history of its own, borrow the most
+// recent data from a designated equivalent exercise instead. Currently used for db_flat_bench (Push,
+// heavy top-set day) → db_bench_u (Upper, light-volume day) — same real movement (DB Bench Press),
+// tracked as separate program entries. Stops applying automatically once db_flat_bench builds its
+// own clean (non-excluded) history again.
+const PROGRESSION_FALLBACK = { db_flat_bench: "db_bench_u" };
 function _exHistory(exId){
   const today = todayKey();
-  return Object.keys(LOGS).map(k=>LOGS[k])
+  const own = Object.keys(LOGS).map(k=>LOGS[k])
     .filter(l => l && l.date && l.date < today && l.savedAt)   // only sessions the user actually saved count as history
     .map(l => _sessionData(l, exId)).filter(Boolean)
     .sort((a,b)=> b.date.localeCompare(a.date));
+  if(own.length) return own;
+  const fb = PROGRESSION_FALLBACK[exId];
+  return fb ? _exHistory(fb) : own;
 }
 // Raw sets object {0:{weight,reps,rpe,...},...} from the most recent *saved* past session that has real data for exId.
 function _lastSessionSets(exId){
@@ -2240,12 +2253,13 @@ function _lastSessionSets(exId){
     .sort((a,b)=> b.date.localeCompare(a.date));
   for(const l of cands){
     const e = l.exercises && l.exercises[exId];
-    if(e && e.sets){
+    if(e && e.sets && !(e.meta && e.meta.excludeFromHistory)){
       const hasData = Object.keys(e.sets).some(k => parseFloat(e.sets[k].weight)>0 || parseInt(e.sets[k].reps)>0);
       if(hasData) return e.sets;
     }
   }
-  return null;
+  const fb = PROGRESSION_FALLBACK[exId];
+  return fb ? _lastSessionSets(fb) : null;
 }
 // returns {weight, reason, level, color} or null
 function computeTarget(exId){
