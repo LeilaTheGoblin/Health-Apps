@@ -699,6 +699,12 @@ const TRACKABLE_EXERCISES = [
   { id:"hip_thrust_d5",   name:"Hip Thrust (D5)" },
   { id:"db_bench_u",      name:"DB Bench (Upper)" },
 ];
+// One-directional fallback: when an exercise has no usable history of its own, borrow the most
+// recent data from a designated equivalent exercise instead. Currently used for db_flat_bench (Push,
+// heavy top-set day) → db_bench_u (Upper, light-volume day) — same real movement (DB Bench Press),
+// tracked as separate program entries. Stops applying automatically once db_flat_bench builds its
+// own clean (non-excluded) history again.
+const PROGRESSION_FALLBACK = { db_flat_bench: "db_bench_u" };
 // Same TDZ reasoning — used by the dashboard's chart config, reachable from the same early auto-restore path.
 const CHART_GRID = "rgba(255,255,255,0.06)";
 const CHART_TICK = "#6B7280";
@@ -2229,12 +2235,9 @@ function _sessionData(log, exId){
     pain: (ex.meta && parseInt(ex.meta.pain)) || null
   };
 }
-// One-directional fallback: when an exercise has no usable history of its own, borrow the most
-// recent data from a designated equivalent exercise instead. Currently used for db_flat_bench (Push,
-// heavy top-set day) → db_bench_u (Upper, light-volume day) — same real movement (DB Bench Press),
-// tracked as separate program entries. Stops applying automatically once db_flat_bench builds its
-// own clean (non-excluded) history again.
-const PROGRESSION_FALLBACK = { db_flat_bench: "db_bench_u" };
+// PROGRESSION_FALLBACK declared near the top of the script (next to _BIG_LOWER/TRACKABLE_EXERCISES) —
+// same TDZ reasoning: renderWorkoutContent() → computeSetTargets() → _exHistory() runs during the very
+// first synchronous render, before execution reaches this point in the file.
 function _exHistory(exId){
   const today = todayKey();
   const own = Object.keys(LOGS).map(k=>LOGS[k])
