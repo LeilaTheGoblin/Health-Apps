@@ -4,6 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>העשרה ובריאות אישית</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#10B981">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="העשרה יומית">
+<link rel="icon" href="icon-192.png">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -623,6 +630,13 @@ document.getElementById('general-quiz-start').addEventListener('click', (e) => {
   e.target.textContent = '🔄 ערבב ותתחיל מחדש';
   renderQuiz('general-quiz-content', 'general-quiz-score', QUESTION_BANK, 'general-quiz-analysis');
 });
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(()=>{});
+  });
+}
 </script>
 </body>
 </html>
