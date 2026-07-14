@@ -709,6 +709,10 @@ const PROGRESSION_FALLBACK = { db_flat_bench: "db_bench_u" };
 const CHART_GRID = "rgba(255,255,255,0.06)";
 const CHART_TICK = "#6B7280";
 const CHART_FONT = { family:"-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif", size:11 };
+// Chart.js auto-generated tick/tooltip values can carry binary floating-point artifacts
+// (e.g. 78.00000000000001) — round to 2 decimals purely for display. Same TDZ reasoning as
+// the consts above: makeChartCfg() is reachable from the very first render.
+function _round2(v){ return Math.round(v*100)/100; }
 // Same TDZ reasoning — used by renderNutrition(), reachable if UI.tab was "nutrition" on last visit.
 const NUTRITION_PLAN = {
   breakfast: {
@@ -1892,11 +1896,11 @@ function makeChartCfg(labels, data, color, yUnit) {
       responsive:true,
       plugins:{
         legend:{ display:false },
-        tooltip:{ callbacks:{ label:ctx=>ctx.parsed.y!=null?ctx.parsed.y+yUnit:"—" } }
+        tooltip:{ callbacks:{ label:ctx=>ctx.parsed.y!=null?_round2(ctx.parsed.y)+yUnit:"—" } }
       },
       scales:{
         x:{ grid:{color:CHART_GRID}, ticks:{color:CHART_TICK,font:CHART_FONT,maxRotation:40} },
-        y:{ grid:{color:CHART_GRID}, ticks:{color:CHART_TICK,font:CHART_FONT, callback:v=>v+yUnit} }
+        y:{ grid:{color:CHART_GRID}, ticks:{color:CHART_TICK,font:CHART_FONT, callback:v=>_round2(v)+yUnit} }
       }
     }
   };
