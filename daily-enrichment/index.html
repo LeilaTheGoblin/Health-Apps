@@ -4,13 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>העשרה ובריאות אישית</title>
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#10B981">
-<link rel="apple-touch-icon" href="icon-192.png">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="העשרה יומית">
-<link rel="icon" href="icon-192.png">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -102,14 +95,19 @@
   .read-label { font-size: 14px; font-weight: 600; color: #D1D5DB; }
   .read-label.checked { color: #6EE7B7; }
   .read-sub { font-size: 11px; color: #4B5563; margin-top: 3px; }
+  .streak-badge {
+    display: inline-flex; align-items: center; gap: 5px; margin-top: 10px;
+    padding: 5px 11px; border-radius: 20px; font-size: 12px; font-weight: 700;
+    background: rgba(245,158,11,0.10); border: 1px solid rgba(245,158,11,0.25); color: #FBBF24;
+  }
+  .streak-badge.zero { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.08); color: #6B7280; }
 
   /* ── AGENT STATUS (machine-readable) ── */
   /*
    * AGENT INSTRUCTIONS:
-   * Scan #agent-status-block to get:
-   *   READ_STATUS = UNREAD | READ
-   *   DATE = YYYY-MM-DD (today's date when checkbox was set)
-   *   ARTICLE_ID = unique identifier for current article
+   * The #agent-status-block is hidden from the user (display:none) — the user reports
+   * read status manually by pasting the text from the "📤 העתק לסוכן" button, not by screenshot.
+   * That button copies: READ_STATUS / READ_DATE / TODAY / ARTICLE_ID as plain text.
    *
    * Logic for agent:
    *   IF READ_STATUS == READ → user read today's content → safe to update tomorrow
@@ -117,8 +115,22 @@
    *   Update #did-you-know-content, #dyk-source, #article-tag, #article-title,
    *   #reading-time, #article-date, #evidence-level, #article-body,
    *   #article-sources, #agent-article-id with new content.
+   *
+   * NEW RULE (02.07.2026) — "did you know" must relate tangentially to the day's article topic:
+   *   short, DIFFERENT angle than the article itself, but topically adjacent — not random.
+   *   Example: if the article is about creatine clearance from muscle, the "did you know"
+   *   could be a surprising fact about creatine itself, or about muscle physiology generally —
+   *   not about sleep or an unrelated domain.
+   *
+   * NEW RULE (02.07.2026) — quizzes:
+   *   DAILY_QUIZ (in the script below) must be REPLACED each day with 3-5 new multiple-choice
+   *   questions about the new article's content.
+   *   Before replacing DAILY_QUIZ, push its current (outgoing) questions into QUESTION_BANK
+   *   (append, never overwrite/clear it) so the cumulative quiz keeps growing across days.
+   *   Question shape: { q, options: [4 strings], correct: indexOfCorrectOption, explain }
    */
   .agent-status-block {
+    display: none; /* hidden from user view — data still lives in the DOM for the copy button below */
     background: rgba(0,0,0,0.35); border: 1px solid rgba(255,255,255,0.06);
     border-radius: 8px; padding: 9px 12px; margin-top: 12px;
     font-family: monospace; font-size: 11px;
@@ -129,6 +141,53 @@
   .status-val { color: #6B7280; }
   .status-val.read { color: #10B981; font-weight: 700; }
   .status-val.unread { color: #F59E0B; }
+  .agent-copy-btn {
+    width: 100%; padding: 9px 0; border-radius: 8px; margin-top: 10px;
+    background: #1F2937; color: #6B7280; font-size: 11px; border: none;
+    cursor: pointer; font-family: inherit; transition: background 0.2s;
+  }
+
+  /* ── QUIZ ── */
+  .quiz-card {
+    background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 12px; padding: 16px; margin-bottom: 16px;
+  }
+  .quiz-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; }
+  .quiz-title { font-size: 15px; font-weight: 800; color: #F9FAFB; }
+  .quiz-sub { font-size: 11px; color: #6B7280; margin-top: 2px; }
+  .quiz-score { font-size: 12px; font-weight: 700; color: #9CA3AF; background: rgba(255,255,255,0.05); padding: 4px 10px; border-radius: 20px; white-space: nowrap; flex-shrink: 0; margin-right: 10px; }
+  .quiz-q-block { margin-bottom: 18px; padding-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+  .quiz-q-block:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+  .quiz-q-text { font-size: 13px; font-weight: 600; color: #E5E7EB; margin-bottom: 10px; line-height: 1.6; }
+  .quiz-options { display: flex; flex-direction: column; gap: 7px; }
+  .quiz-option {
+    text-align: right; padding: 9px 12px; border-radius: 8px;
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+    color: #D1D5DB; font-size: 12.5px; cursor: pointer; transition: all 0.15s; font-family: inherit;
+  }
+  .quiz-option:hover:not(.disabled) { background: rgba(255,255,255,0.07); }
+  .quiz-option.correct { background: rgba(16,185,129,0.15); border-color: #10B981; color: #6EE7B7; }
+  .quiz-option.incorrect { background: rgba(239,68,68,0.15); border-color: #EF4444; color: #FCA5A5; }
+  .quiz-option.disabled { cursor: default; }
+  .quiz-explain {
+    font-size: 11.5px; color: #9CA3AF; margin-top: 8px; line-height: 1.6;
+    background: rgba(255,255,255,0.03); padding: 8px 10px; border-radius: 6px;
+    border-right: 2px solid #3B82F6;
+  }
+  .quiz-start-btn {
+    width: 100%; padding: 11px 0; border-radius: 8px; border: none; cursor: pointer;
+    background: linear-gradient(135deg, #3B82F6, #8B5CF6); color: #fff;
+    font-size: 13px; font-weight: 700; font-family: inherit; transition: opacity 0.2s;
+  }
+  .quiz-start-btn:active { opacity: 0.85; }
+  .quiz-analysis { margin-top: 16px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.06); }
+  .quiz-analysis-title { font-size: 12px; font-weight: 700; color: #9CA3AF; margin-bottom: 8px; }
+  .topic-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; font-size: 12px; }
+  .topic-name { color: #D1D5DB; }
+  .topic-score { font-weight: 700; }
+  .topic-score.good { color: #10B981; }
+  .topic-score.mid { color: #F59E0B; }
+  .topic-score.bad { color: #EF4444; }
 
   /* ── FOOTER ── */
   .footer { padding: 10px 16px 30px; font-size: 10px; color: #374151; text-align: center; border-top: 1px solid rgba(255,255,255,0.04); margin-top: 8px; }
@@ -152,9 +211,9 @@
     <div class="dyk-card">
       <div class="dyk-label">💡 הידעת?</div>
       <div class="dyk-text" id="did-you-know-content">
-        <strong>יותר מ-70% מהפרשת הורמון הגדילה (GH) מתרחשת בגל הראשון של שינה עמוקה (SWS/N3)</strong> — לרוב בתוך 90–120 דקות מההירדמות. GH מרכזי לסינתזת חלבון שריר, ניידות שומן ואיחוי רקמות. שינה מקוטעת, קפאין מאוחר, או חשיפה לאור כחול לפני השינה מפחיתים מאוד את עוצמת גל ה-SWS הראשוני — ובכך <strong>מקטינים את ה-GH pulse הלילי</strong> משמעותית. זו אחת הסיבות שהירדמות מהירה ועמוקה עדיפה בהרבה על כמות שינה גדולה אך מקוטעת.
+        <strong>כל המיטוכונדריות בגוף שלך הגיעו מאמא שלך בלבד.</strong> מיד לאחר ההפריה, המיטוכונדריות שהגיעו מהזרע (מהאב) מסומנות ומפורקות בעובר בתהליך שנקרא ubiquitination — תוך שעות ספורות. כך ה-DNA המיטוכונדריאלי עובר בתורשה אך ורק בקו האימהי, וזו הסיבה שחוקרי אבולוציה ואנתרופולוגיה מסוגלים למפות מוצא אנושי לפי "חוה המיטוכונדריאלית" המשותפת.
       </div>
-      <div class="dyk-source" id="dyk-source">מקור: Van Cauter E et al. (2000). Age-related changes in slow wave sleep and REM sleep and relationship with growth hormone and cortisol levels in healthy men. JAMA, 284(7), 861–868. DOI: 10.1001/jama.284.7.861</div>
+      <div class="dyk-source" id="dyk-source">מקור: Sutovsky P et al. (1999). Ubiquitin tag for sperm mitochondria. Nature, 402, 371–372. DOI: 10.1038/46466</div>
     </div>
 
     <!-- ══ ARTICLE ══
@@ -221,6 +280,36 @@
       </div>
     </div>
 
+    <!-- ══ DAILY QUIZ ══
+         AGENT: replace DAILY_QUIZ array in the script daily with ≥5 new questions about the new article.
+         UI mechanics (button, shuffle, scoring) are fixed — do not touch this markup. -->
+    <div class="quiz-card">
+      <div class="quiz-header">
+        <div>
+          <div class="quiz-title">🧠 בוחן יומי</div>
+          <div class="quiz-sub">על הכתבה של היום · לפחות 5 שאלות</div>
+        </div>
+        <div class="quiz-score" id="daily-quiz-score">0/0</div>
+      </div>
+      <button class="quiz-start-btn" id="daily-quiz-start">▶ התחל שאלון יומי</button>
+      <div id="daily-quiz-content" style="display:none"></div>
+    </div>
+
+    <!-- ══ CUMULATIVE QUIZ ══
+         AGENT: pulls from QUESTION_BANK, which accumulates across days — do not clear it -->
+    <div class="quiz-card">
+      <div class="quiz-header">
+        <div>
+          <div class="quiz-title">📚 בוחן מצטבר</div>
+          <div class="quiz-sub">מכל החומר שנקרא עד היום</div>
+        </div>
+        <div class="quiz-score" id="general-quiz-score">0/0</div>
+      </div>
+      <button class="quiz-start-btn" id="general-quiz-start">▶ התחל מבחן מצטבר</button>
+      <div id="general-quiz-content" style="display:none"></div>
+      <div id="general-quiz-analysis" class="quiz-analysis" style="display:none"></div>
+    </div>
+
     <!-- ══ READ STATUS ══ -->
     <div class="read-section">
       <div class="read-checkbox-row" id="read-toggle">
@@ -228,8 +317,10 @@
         <div>
           <div class="read-label" id="read-label">קראתי את החומר של היום</div>
           <div class="read-sub">סמן לאחר קריאה — הסוכן יעדכן תוכן חדש מחר</div>
+          <div class="streak-badge" id="streak-badge">🔥 רצף: 0 ימים</div>
         </div>
       </div>
+      <button class="agent-copy-btn" id="agent-copy-btn">📤 העתק סטטוס לסוכן</button>
 
       <!--
         ══════════════════════════════════════════════
@@ -307,20 +398,231 @@ function applyReadState(isRead, date) {
 const isAlreadyRead = readData && readData.status === 'READ';
 applyReadState(isAlreadyRead, readData?.date);
 
+// ── READING STREAK ──
+// Derived fresh each time from every "health_read_YYYY-MM-DD" entry ever saved (status:"READ") —
+// no separate counter to drift out of sync. Counts consecutive READ days backward from today;
+// if today isn't marked yet, counts backward from yesterday instead (today's slot isn't "missed"
+// until the day actually passes). The first gap day stops the count — one missed day resets to 0.
+function _allReadDates() {
+  const dates = new Set();
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (!k || !k.startsWith('health_read_')) continue;
+    try {
+      const d = JSON.parse(localStorage.getItem(k));
+      if (d && d.status === 'READ') dates.add(k.slice('health_read_'.length));
+    } catch {}
+  }
+  return dates;
+}
+function computeStreak() {
+  const readDates = _allReadDates();
+  let streak = 0;
+  const cursor = new Date(today);
+  if (!readDates.has(todayStr)) cursor.setDate(cursor.getDate() - 1);
+  while (readDates.has(cursor.toISOString().split('T')[0])) {
+    streak++;
+    cursor.setDate(cursor.getDate() - 1);
+  }
+  return streak;
+}
+function renderStreak() {
+  const n = computeStreak();
+  const el = document.getElementById('streak-badge');
+  el.textContent = n > 0 ? `🔥 רצף: ${n} ${n === 1 ? 'יום' : 'ימים'}` : '— אין רצף פעיל כרגע';
+  el.className = 'streak-badge' + (n > 0 ? '' : ' zero');
+}
+renderStreak();
+
 // Toggle
 document.getElementById('read-toggle').addEventListener('click', () => {
   const nowRead = !(readData && readData.status === 'READ');
   readData = { status: nowRead ? 'READ' : 'UNREAD', date: todayStr };
   localStorage.setItem(READ_KEY, JSON.stringify(readData));
   applyReadState(nowRead, todayStr);
+  renderStreak();
 });
-</script>
-<script>
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').catch(()=>{});
+
+// ══════════════════════════════════════════════════════════════════
+// COPY STATUS FOR AGENT (replaces screenshot-based reporting)
+// ══════════════════════════════════════════════════════════════════
+document.getElementById('agent-copy-btn').addEventListener('click', () => {
+  const status = (readData && readData.status === 'READ') ? 'READ' : 'UNREAD';
+  const date = (readData && readData.date) || '—';
+  const articleId = document.getElementById('agent-article-id').textContent;
+  const text = `READ_STATUS: ${status}\nREAD_DATE: ${date}\nTODAY: ${todayStr}\nARTICLE_ID: ${articleId}`;
+  const btn = document.getElementById('agent-copy-btn');
+  function done() {
+    btn.textContent = '✓ הועתק — הדבק בשיחה עם הסוכן';
+    setTimeout(() => { btn.textContent = '📤 העתק סטטוס לסוכן'; }, 2500);
+  }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(done).catch(() => fallbackCopy(text, done));
+  } else {
+    fallbackCopy(text, done);
+  }
+});
+function fallbackCopy(text, cb) {
+  const ta = document.createElement('textarea');
+  ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.focus(); ta.select();
+  try { document.execCommand('copy'); } catch {}
+  document.body.removeChild(ta);
+  cb();
+}
+
+// ══════════════════════════════════════════════════════════════════
+// QUIZZES
+// AGENT: replace DAILY_QUIZ daily; push its old contents into QUESTION_BANK first (append, never clear).
+// ══════════════════════════════════════════════════════════════════
+const DAILY_QUIZ = [
+  {
+    q: "מהי ההגדרה הקלינית המדויקת של Zone 2 Cardio?",
+    options: ["60–70% מהדופק המקסימלי, ותו לא", "ריכוז לקטט בדם של 1.5–2.0 mmol/L", "יכולת לרוץ 5 ק\"מ ברצף", "דופק מנוחה מתחת ל-60"],
+    correct: 1,
+    explain: "ההגדרה הקלינית מבוססת על ריכוז לקטט בדם — הדופק הוא רק קירוב שנגזר ממנה, ולכן פחות מדויק.",
+    topic: "הגדרת Zone 2"
+  },
+  {
+    q: "איזה חלבון הוא ה'מנצח' של ביוגנזה מיטוכונדריאלית שמופעל באימון Zone 2?",
+    options: ["BDNF", "PGC-1α", "AMPK", "CPT-1"],
+    correct: 1,
+    explain: "PGC-1α מפעיל תמלול גנים ליצירת מיטוכונדריות חדשות. AMPK כן מפעיל את PGC-1α, אך הוא לא ה'מנצח' עצמו.",
+    topic: "ביוגנזה מיטוכונדריאלית"
+  },
+  {
+    q: "לפי Seifert et al. (2010), כמה עולה BDNF בסרום לאחר 20–30 דקות ב-Zone 2–3?",
+    options: ["עד 10%", "עד 32%", "עד 50%", "אין שינוי מובהק"],
+    correct: 1,
+    explain: "המחקר מצא עלייה של עד 32% ב-serum BDNF לאחר 20–30 דקות של פעילות אירובית ממושכת.",
+    topic: "BDNF ונוירוביולוגיה"
+  },
+  {
+    q: "מהו ה-'polarized model' באימון סבולת, לפי הספרות?",
+    options: ["50% Zone 2 / 50% עצימות גבוהה", "~80% Zone 2 / ~20% עצימות גבוהה", "רק HIIT", "רק Zone 2, בלי עצימות גבוהה בכלל"],
+    correct: 1,
+    explain: "המודל הפולארי הנתמך במחקר: כ-80% מנפח האימון ב-Zone 2, וכ-20% בעצימות גבוהה.",
+    topic: "מודל אימון פולארי"
+  },
+  {
+    q: "איזה אנזים מעביר חומצות שומן לתוך המיטוכונדריה לצורך חמצון (β-oxidation)?",
+    options: ["CPT-1", "PGC-1α", "AMPK", "TrkB"],
+    correct: 0,
+    explain: "CPT-1 (Carnitine Palmitoyltransferase 1) הוא השער שדרכו חומצות שומן נכנסות למיטוכונדריה. חוסר בגמישות מטבולית פוגע ביכולת הזו.",
+    topic: "גמישות מטבולית"
+  }
+];
+
+// Accumulates across ALL days — agent appends here, never overwrites/clears.
+// Seeded on 2026-07-02 with the first DAILY_QUIZ (Zone 2 / mitochondria / BDNF topic).
+const QUESTION_BANK = [
+  ...DAILY_QUIZ.map(q => ({ ...q, date: "2026-07-02" }))
+];
+
+// ══════════════════════════════════════════════════════════════════
+// QUIZ ENGINE — shuffled every run, button-triggered, live score,
+// and (for the general quiz) a per-topic correct/incorrect breakdown.
+// ══════════════════════════════════════════════════════════════════
+function shuffle(arr) { return [...arr].sort(() => Math.random() - 0.5); }
+
+function shuffleOptions(item) {
+  const order = shuffle(item.options.map((_, i) => i));
+  return {
+    ...item,
+    options: order.map(i => item.options[i]),
+    correct: order.indexOf(item.correct)
+  };
+}
+
+function renderQuiz(contentId, scoreId, sourceQuestions, analysisId) {
+  const container = document.getElementById(contentId);
+  const scoreEl = document.getElementById(scoreId);
+  const analysisEl = analysisId ? document.getElementById(analysisId) : null;
+  if (analysisEl) { analysisEl.style.display = 'none'; analysisEl.innerHTML = ''; }
+
+  const questions = shuffle(sourceQuestions).map(shuffleOptions);
+  container.innerHTML = '';
+  container.style.display = 'block';
+  let answered = 0, correct = 0;
+  const topicTally = {};
+  scoreEl.textContent = `0/${questions.length}`;
+
+  questions.forEach((item, qi) => {
+    const block = document.createElement('div');
+    block.className = 'quiz-q-block';
+    const qText = document.createElement('div');
+    qText.className = 'quiz-q-text';
+    qText.textContent = `${qi + 1}. ${item.q}`;
+    block.appendChild(qText);
+
+    const optWrap = document.createElement('div');
+    optWrap.className = 'quiz-options';
+    const explainEl = document.createElement('div');
+    explainEl.className = 'quiz-explain';
+    explainEl.style.display = 'none';
+    explainEl.textContent = item.explain || '';
+
+    item.options.forEach((optText, oi) => {
+      const btn = document.createElement('button');
+      btn.className = 'quiz-option';
+      btn.textContent = optText;
+      btn.onclick = () => {
+        if (btn.classList.contains('locked')) return;
+        optWrap.querySelectorAll('.quiz-option').forEach(b => { b.classList.add('disabled','locked'); });
+        const topic = item.topic || 'כללי';
+        if (!topicTally[topic]) topicTally[topic] = { correct: 0, total: 0 };
+        topicTally[topic].total++;
+        if (oi === item.correct) {
+          btn.classList.add('correct');
+          correct++;
+          topicTally[topic].correct++;
+        } else {
+          btn.classList.add('incorrect');
+          optWrap.children[item.correct].classList.add('correct');
+        }
+        answered++;
+        scoreEl.textContent = `${correct}/${questions.length}`;
+        explainEl.style.display = 'block';
+
+        if (answered === questions.length && analysisEl) {
+          renderAnalysis(analysisEl, topicTally);
+        }
+      };
+      optWrap.appendChild(btn);
+    });
+
+    block.appendChild(optWrap);
+    block.appendChild(explainEl);
+    container.appendChild(block);
   });
 }
+
+function renderAnalysis(analysisEl, topicTally) {
+  analysisEl.innerHTML = '<div class="quiz-analysis-title">📊 ניתוח לפי נושא</div>';
+  Object.entries(topicTally).forEach(([topic, stat]) => {
+    const pct = stat.correct / stat.total;
+    const cls = pct >= 0.8 ? 'good' : pct >= 0.5 ? 'mid' : 'bad';
+    const row = document.createElement('div');
+    row.className = 'topic-row';
+    row.innerHTML = `<span class="topic-name">${topic}</span><span class="topic-score ${cls}">${stat.correct}/${stat.total}</span>`;
+    analysisEl.appendChild(row);
+  });
+  analysisEl.style.display = 'block';
+}
+
+// Initial score placeholders (questions render only after the user presses start)
+document.getElementById('daily-quiz-score').textContent = `0/${DAILY_QUIZ.length}`;
+document.getElementById('general-quiz-score').textContent = `0/${QUESTION_BANK.length}`;
+
+document.getElementById('daily-quiz-start').addEventListener('click', (e) => {
+  e.target.textContent = '🔄 ערבב ותתחיל מחדש';
+  renderQuiz('daily-quiz-content', 'daily-quiz-score', DAILY_QUIZ);
+});
+
+document.getElementById('general-quiz-start').addEventListener('click', (e) => {
+  e.target.textContent = '🔄 ערבב ותתחיל מחדש';
+  renderQuiz('general-quiz-content', 'general-quiz-score', QUESTION_BANK, 'general-quiz-analysis');
+});
 </script>
 </body>
 </html>
