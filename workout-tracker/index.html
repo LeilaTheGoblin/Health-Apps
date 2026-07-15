@@ -359,6 +359,7 @@
       <div class="tab" data-tab="dashboard">דשבורד</div>
       <div class="tab" data-tab="nutrition">תזונה</div>
       <div class="tab" data-tab="weekly">שבועי</div>
+      <div class="tab" data-tab="health">בריאות</div>
       <div class="tab" data-tab="history">היסטוריה</div>
       <div class="tab" data-tab="export">ייצוא ↗</div>
     </div>
@@ -409,6 +410,15 @@
       <div class="section-sub" id="weekly-subtitle"></div>
       <div id="weekly-content"></div>
       <button class="btn" id="weekly-save" style="background:#3B82F6">שמור מדדים</button>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════
+         TAB: HEALTH — routine tests, blood panel, screening, upload
+    ══════════════════════════════════════════════════ -->
+    <div class="view" id="view-health">
+      <div class="section-title" style="margin-bottom:4px">בריאות</div>
+      <div class="section-sub" style="margin-bottom:14px">מעקב בדיקות שגרתיות, פאנל דם, וסקר לפי גיל</div>
+      <div id="health-content"></div>
     </div>
 
     <!-- ══════════════════════════════════════════════════
@@ -645,7 +655,7 @@ const REHAB_ROUTINE = {
       { id:"r_band_pull_apart",name:"Band Pull-Aparts",       sets:3, reps:"15",             cue:"Band בגובה כתפיים, ידיים ישרות. פרוש לצדדים עד הרחבה מלאה, שכמות מתקרבות. חזר לאט.",                                         why:"Rhomboids + Mid/Lower Trap — מאזן את כיפוף הכתף הקדמי" },
       { id:"r_face_pull",      name:"Face Pull (Band)",       sets:3, reps:"15",             cue:"Band על גובה עיניים. משוך לכיוון הפנים, מרפקים גבוהים מכתפיים, סיים עם ידיים ב-W. החזק שנייה.",                              why:"Posterior Deltoid + External Rotators — קריטי למניעת impingement" },
       { id:"r_prone_ytw",      name:"Prone Y-T-W",            sets:3, reps:"10 כל אות",      cue:"שכב על בטן (מיטה/מזרון). Y = 45° מעל ראש, T = לצדדים, W = מרפקים 90°. תנועה מהשכמה, לא מהיד.",                               why:"Lower + Middle Trap isolation — מוכח ב-systematic reviews לשיקום dyskinesis" },
-      { id:"r_sleeper",        name:"Sleeper Stretch",        sets:2, reps:"30 שניות/צד",   cue:"שכב על הצד הכואב, מרפק 90°. לחץ קדימה על כף היד עד מתיחה אחורית בכתף. לא כאב חד. ⚠️ עצור אם זרמים.",                       why:"Posterior Capsule — נוקשות אחורית תורמת ל-dyskinesis" },
+      { id:"r_sleeper",        name:"Sleeper Stretch (מושהה ⏸)", sets:2, reps:"דלג — מושהה",   cue:"⏸ מושהה עד הערכת אורתופד/נוירו של הכתף. בהינתן חוסר תחושה חדש + אי-סימטריה מחמירה ומעורבות עצבית אפשרית — מתיחת הקפסולה האחורית עלולה לגרות. אל תבצע; לחזור רק אחרי אישור.",                       why:"מותלה זמנית — פרסטזיה חדשה + החמרה בציר צווארי/שכמתי ללא דימות עדכני" },
       { id:"r_doorway_pec",    name:"Doorway Pec Stretch",    sets:2, reps:"30 שניות×2",    cue:"עמוד בפתח דלת, אמות על המשקוף במרפק 90°. צעד קדימה עד מתיחה בחזה הקדמי. גב ניטרלי, בלי לקמר. עשה בגובה מרפק בינוני וגבוה.",   why:"פתיחת חזה (Pec minor/major קצרים) — הגורם המרכזי לכתפיים מגולגלות קדימה. פוסטורה #1" },
       { id:"r_thoracic_ext",   name:"Thoracic Extension",     sets:2, reps:"8-10",          cue:"גליל קצף/קצה כיסא מתחת לגב עליון, ידיים תומכות בעורף. הישען אחורה בעדינות מעל הגליל תוך נשיפה. תנועה בגב עליון בלבד — לא במותני.", why:"יישור גב עליון (T-spine) — מנטרל גיבנת מהטלפון ומאפשר עמידה זקופה. פוסטורה #2" },
       { id:"r_posture_reset",  name:"Standing Posture Reset", sets:3, reps:"5 נשימות",      cue:"עמוד לקיר: עורף, גב עליון וישבן נוגעים. סנטר אחורה (chin tuck), שכמות למטה-אחורה, אגן ניטרלי (לא לקמר). נשום 5 נשימות. חזור לאורך היום.", why:"מאמן תבנית עמידה זקופה כברירת מחדל — משלב chin tuck (צוואר טכנולוגי) + כיווץ שכמות + אגן ניטרלי" }
@@ -655,11 +665,13 @@ const REHAB_ROUTINE = {
     label: "גב תחתון + אגן", color: "#F59E0B",
     why: "מטרה: core stability, הפחתת לחץ על L4-L5, תיקון לורדוזה, שחרור Psoas",
     items: [
-      { id:"r_cat_cow",       name:"Cat-Cow",                 sets:3, reps:"10",             cue:"על ארבע. Cat = גב עגול, סנטר לחזה. Cow = גב שקוע, ראש מורם. תנועה איטית, נשימה עמוקה.",                                        why:"ניידות עמ\"ש — תמיד ראשון, כחימום לפני כל השאר" },
+      { id:"r_cat_cow",       name:"Cat-Cow (טווח אמצע)",     sets:3, reps:"10",             cue:"על ארבע, תנועה איטית בטווח אמצע ונוח בלבד. ⚠️ בלט L4-L5/L5-S1 רגיש לפלקסיה — אל תגיע לקצה טווח ה-Cat (גב עגול מלא), בעיקר בהתלקחות; הדגש את שלב ה-Cow/נייטרלי. עצור על זרמים לרגל.",                                        why:"ניידות עמ\"ש — אך בלט דיסקלי רגיש לפלקסיה בקצה טווח; טווח אמצע בלבד" },
       { id:"r_dead_bug",      name:"Dead Bug",                sets:3, reps:"8/צד",           cue:"שכב גב. ידיים למעלה, ברכיים 90°. הורד יד ורגל מנגדיות. גב תחתון צמוד לרצפה לאורך כל התרגיל.",                                why:"Core stability ללא עומס על עמ\"ש — 1st line ב-LBP rehabilitation" },
       { id:"r_bird_dog",      name:"Bird Dog",                sets:3, reps:"10/צד",          cue:"על ארבע. הושט יד שמאל + רגל ימין בו-זמנית. גוף ישר כמו קרש. החזק 2 שניות. לא לסובב אגן.",                                    why:"Multifidus + Erector Spinae — חיזוק ללא גזירה (shear) על הדיסקים" },
       { id:"r_mcgill",        name:"McGill Big 3",            sets:1, reps:"פרוטוקול מלא",  cue:"① Modified Curl-Up ② Side Plank ③ Bird Dog. 3 חזרות × 10 שניות החזקה כל אחד.",                                               why:"הפרוטוקול הכי מגובה מחקרית ל-LBP כרוני (McGill RCTs)" },
       { id:"r_glute_bridge",  name:"Glute Bridge",            sets:3, reps:"15",             cue:"שכב גב, כפות רגל על הרצפה. הרם אגן עד קו ישר ברך-ירך-כתף. סחוט glutes. החזק שנייה. ירד לאט.",                                why:"Glute activation — חולשה תורמת ישירות ללורדוזה וללחץ על L4-L5" },
+      { id:"r_sciatic_glide", name:"Sciatic Nerve Glide",     sets:2, reps:"10/צד",          cue:"שב זקוף. יישר את רגל שמאל תוך משיכת כף הרגל אליך + הרמת ראש; ואז כופף ברך + הורד סנטר. תנועה קצבית וחלקה — לא מחזיקים במתיחה. טווח ללא כאב/זרמים חדים; אם מחמיר — עצור.", why:"ניוד עצב סכיאטי לתסמין הרדיקולרי השמאלי (SLR+ שמאל). ראיות מוגבלות — יישום זהיר, לא בכוח (ודאות נמוכה-בינונית)" },
+      { id:"r_hip_hinge",     name:"Hip Hinge (מוט)",         sets:3, reps:"10",             cue:"מוט לאורך הגב נוגע בעורף/גב עליון/עצה. הטה אגן אחורה בגב ניטרלי — לא כיפוף מותני. ברכיים רכות. חזור לזקיפה בסחיטת גלוט.", why:"תבנית hip-hinge — הגנת עמ\"ש בעומסים יומיים, מפחיתה גזירה על L4-L5/L5-S1" },
       { id:"r_9090",          name:"90/90 Hip Flexor Stretch", sets:2, reps:"45 שניות/צד",  cue:"ברך קדמית + אחורית ב-90°. זקוף, דחוף אגן קדימה-מטה. לא להשען.",                                                              why:"Psoas קצר = מחמיר לורדוזה. מתיחה יומית חובה" },
       { id:"r_piriformis",    name:"Figure-4 Stretch",        sets:2, reps:"45 שניות/צד",   cue:"שכב גב. קרסול ימין על ברך שמאל. משוך ברך שמאל לחזה עד מתיחה בישבן ימין.",                                                    why:"מסובבי ירך חיצוניים (Piriformis) — הפרעה בהם מזוהה בפרופיל" }
     ]
@@ -677,7 +689,7 @@ const WEEKLY_FIELDS = [
 // ══════════════════════════════════════════════════════════════════
 // STORAGE — localStorage
 // ══════════════════════════════════════════════════════════════════
-const SK = { logs:"wt_logs_v3", weekly:"wt_weekly_v2", rehab:"wt_rehab_v1", nutrition:"wt_nutrition_v1", weight:"wt_weight_v1", daily:"wt_daily_v1" };
+const SK = { logs:"wt_logs_v3", weekly:"wt_weekly_v2", rehab:"wt_rehab_v1", nutrition:"wt_nutrition_v1", weight:"wt_weight_v1", daily:"wt_daily_v1", health:"wt_health_v1" };
 // Declared early (not just where used) — computeTarget() runs during the very first render, before the
 // script reaches the "PROGRESSIVE OVERLOAD ENGINE" section further down, so a later `const` here would
 // be in its temporal dead zone and throw the moment real history exists.
@@ -766,6 +778,104 @@ const NUTRITION_PLAN = {
   }
 };
 
+// ══════════════════════════════════════════════════════════════════
+// HEALTH RUBRIC — reference data (declared early: renderHealth() is reachable
+// from the UI.tab auto-restore path during initial script execution → avoids TDZ).
+// ══════════════════════════════════════════════════════════════════
+// Flag verdicts. Reference ranges are conventional-unit clinical consensus (Israel labs commonly
+// report these units); ranges vary slightly by lab/assay — treat borderline as advisory, not diagnostic.
+const _HF_GRN = { label:"תקין",  color:"#10B981" };
+const _HF_AMB = { label:"גבולי", color:"#F59E0B" };
+const _HF_RED = { label:"חריג",  color:"#EF4444" };
+// within [lo,hi] → תקין; within a 10% margin outside → גבולי; beyond → חריג
+function _hRange(v,lo,hi){ if(v>=lo&&v<=hi) return _HF_GRN; const m=(hi-lo)*0.10; return (v>=lo-m&&v<=hi+m)?_HF_AMB:_HF_RED; }
+
+// Blood markers. flag(v) returns a verdict object; ref = display string; cat groups the table.
+// §4 = core mentor-protocol panel; the rest are logged from the user's actual lab draws.
+const BLOOD_PANEL = [
+  // ── §4 core panel ──
+  { id:"vitamin_d",   name:"ויטמין D (25-OH)",   unit:"ng/mL", cat:"§4 ליבה", ref:"≥30",       flag:v=> v<20?_HF_RED : v<30?_HF_AMB : _HF_GRN },
+  { id:"b12",         name:"ויטמין B12",          unit:"pg/mL", cat:"§4 ליבה", ref:"300–900",   flag:v=> v<200?_HF_RED : v<300?_HF_AMB : _HF_GRN },
+  { id:"iron",        name:"ברזל (Iron)",         unit:"µg/dL", cat:"§4 ליבה", ref:"60–170",    flag:v=> _hRange(v,60,170) },
+  { id:"ferritin",    name:"פריטין",              unit:"ng/mL", cat:"§4 ליבה", ref:"30–300",    flag:v=> v<30?_HF_RED : v>300?_HF_AMB : _HF_GRN },
+  { id:"chol_total",  name:"כולסטרול כללי",       unit:"mg/dL", cat:"§4 ליבה", ref:"<200",      flag:v=> v<200?_HF_GRN : v<240?_HF_AMB : _HF_RED },
+  { id:"ldl",         name:"LDL",                 unit:"mg/dL", cat:"§4 ליבה", ref:"<100",      flag:v=> v<100?_HF_GRN : v<160?_HF_AMB : _HF_RED },
+  { id:"hdl",         name:"HDL",                 unit:"mg/dL", cat:"§4 ליבה", ref:"≥40",       flag:v=> v<40?_HF_RED : _HF_GRN },
+  { id:"trig",        name:"טריגליצרידים",        unit:"mg/dL", cat:"§4 ליבה", ref:"<150",      flag:v=> v<150?_HF_GRN : v<200?_HF_AMB : _HF_RED },
+  { id:"tsh",         name:"TSH",                 unit:"mIU/L", cat:"§4 ליבה", ref:"0.4–4.0",   flag:v=> _hRange(v,0.4,4.0) },
+  { id:"hscrp",       name:"hsCRP",               unit:"mg/L",  cat:"§4 ליבה", ref:"<1",        flag:v=> v<1?_HF_GRN : v<=3?_HF_AMB : _HF_RED },
+  { id:"magnesium",   name:"מגנזיום (בדם)",       unit:"mg/dL", cat:"§4 ליבה", ref:"1.7–2.2",   flag:v=> _hRange(v,1.7,2.2) },
+  { id:"zinc",        name:"אבץ (Zinc)",          unit:"µg/dL", cat:"§4 ליבה", ref:"70–120",    flag:v=> _hRange(v,70,120) },
+  { id:"testo_total", name:"טסטוסטרון כללי",      unit:"ng/dL", cat:"§4 ליבה", ref:"300–1000",  flag:v=> v<300?_HF_RED : v<400?_HF_AMB : _HF_GRN },
+  { id:"testo_free",  name:"טסטוסטרון חופשי",     unit:"pg/mL", cat:"§4 ליבה", ref:"47–244*",   flag:v=> _hRange(v,47,244), note:"*טווח תלוי-שיטה — לאמת מול טווח המעבדה" },
+  { id:"hba1c",       name:"HbA1c",               unit:"%",     cat:"§4 ליבה", ref:"<5.7",      flag:v=> v<5.7?_HF_GRN : v<6.5?_HF_AMB : _HF_RED },
+  { id:"alp",         name:"ALP (זרחתי בסיסי)",   unit:"U/L",   cat:"§4 ליבה", ref:"40–129",    flag:v=> v>150?_HF_RED : (v>129||v<40)?_HF_AMB : _HF_GRN, note:"היה בגבול עליון בעבר — לעקוב אחר מגמה" },
+  { id:"urea",        name:"אוריאה (Urea)",       unit:"mg/dL", cat:"§4 ליבה", ref:"15–45",     flag:v=> v>60?_HF_RED : (v>45||v<15)?_HF_AMB : _HF_GRN, note:"היה בגבול עליון בעבר — לעקוב אחר מגמה" },
+  // ── המטולוגיה (CBC) ──
+  { id:"wbc",         name:"WBC (כדוריות לבנות)", unit:"K/µL",  cat:"המטולוגיה", ref:"4.0–10.0", flag:v=> _hRange(v,4.0,10.0) },
+  { id:"rbc",         name:"RBC (כדוריות אדומות)",unit:"M/µL",  cat:"המטולוגיה", ref:"4.5–5.9",  flag:v=> _hRange(v,4.5,5.9) },
+  { id:"hb",          name:"המוגלובין (HB)",      unit:"g/dL",  cat:"המטולוגיה", ref:"13.5–17.5",flag:v=> v<13.5?_HF_RED : (v>17.5?_HF_AMB:_HF_GRN) },
+  { id:"hct",         name:"המטוקריט (HCT)",      unit:"%",     cat:"המטולוגיה", ref:"40–52",    flag:v=> v<40?_HF_RED : (v>52?_HF_AMB:_HF_GRN) },
+  { id:"mcv",         name:"MCV",                 unit:"fL",    cat:"המטולוגיה", ref:"80–100",   flag:v=> _hRange(v,80,100) },
+  { id:"mch",         name:"MCH",                 unit:"pg",    cat:"המטולוגיה", ref:"27–33",    flag:v=> _hRange(v,27,33) },
+  { id:"mchc",        name:"MCHC",                unit:"g/dL",  cat:"המטולוגיה", ref:"32–36",    flag:v=> _hRange(v,32,36) },
+  { id:"rdw",         name:"RDW",                 unit:"%",     cat:"המטולוגיה", ref:"≤14.5",    flag:v=> v<=14.5?_HF_GRN : (v<=17?_HF_AMB:_HF_RED) },
+  { id:"plt",         name:"טסיות (PLT)",         unit:"K/µL",  cat:"המטולוגיה", ref:"150–450",  flag:v=> _hRange(v,150,450) },
+  // ── ביוכימיה ──
+  { id:"glucose",     name:"גלוקוז (צום)",        unit:"mg/dL", cat:"ביוכימיה", ref:"70–99",    flag:v=> v<70?_HF_AMB : (v<100?_HF_GRN : (v<126?_HF_AMB:_HF_RED)) },
+  { id:"creatinine",  name:"קריאטינין",           unit:"mg/dL", cat:"ביוכימיה", ref:"0.7–1.3",  flag:v=> v<0.7?_HF_AMB : (v<=1.3?_HF_GRN : (v<=1.5?_HF_AMB:_HF_RED)) },
+  { id:"calcium",     name:"סידן (Calcium)",      unit:"mg/dL", cat:"ביוכימיה", ref:"8.6–10.3", flag:v=> _hRange(v,8.6,10.3) },
+  { id:"phosphorus",  name:"זרחן (Phosphorus)",   unit:"mg/dL", cat:"ביוכימיה", ref:"2.5–4.5",  flag:v=> _hRange(v,2.5,4.5) },
+  { id:"protein_tot", name:"חלבון כללי",          unit:"g/dL",  cat:"ביוכימיה", ref:"6.0–8.3",  flag:v=> _hRange(v,6.0,8.3) },
+  { id:"albumin",     name:"אלבומין",             unit:"g/dL",  cat:"ביוכימיה", ref:"3.5–5.2",  flag:v=> _hRange(v,3.5,5.2) },
+  { id:"globulin",    name:"גלובולין",            unit:"g/dL",  cat:"ביוכימיה", ref:"2.0–3.5",  flag:v=> _hRange(v,2.0,3.5) },
+  { id:"ast",         name:"AST (GOT)",           unit:"U/L",   cat:"ביוכימיה", ref:"≤40",      flag:v=> v<=40?_HF_GRN : (v<=80?_HF_AMB:_HF_RED) },
+  { id:"alt",         name:"ALT (GPT)",           unit:"U/L",   cat:"ביוכימיה", ref:"≤45",      flag:v=> v<=45?_HF_GRN : (v<=90?_HF_AMB:_HF_RED), note:"אנזים כבד — לעקוב; מושפע מאימוני התנגדות אינטנסיביים" },
+  { id:"bili_total",  name:"בילירובין כללי",      unit:"mg/dL", cat:"ביוכימיה", ref:"≤1.2",     flag:v=> v<=1.2?_HF_GRN : (v<=2?_HF_AMB:_HF_RED) },
+  { id:"sodium",      name:"נתרן (Na)",           unit:"mmol/L",cat:"ביוכימיה", ref:"135–145",  flag:v=> _hRange(v,135,145) },
+  { id:"potassium",   name:"אשלגן (K)",           unit:"mmol/L",cat:"ביוכימיה", ref:"3.5–5.1",  flag:v=> _hRange(v,3.5,5.1) },
+  // ── בלוטת התריס (מורחב) ──
+  { id:"t3_free",     name:"T3 חופשי",            unit:"pmol/L",cat:"בלוטת התריס", ref:"3.1–6.8", flag:v=> _hRange(v,3.1,6.8) },
+  { id:"t4_free",     name:"T4 חופשי",            unit:"pmol/L",cat:"בלוטת התריס", ref:"12–22",   flag:v=> _hRange(v,12,22) },
+  { id:"folic_acid",  name:"חומצה פולית",         unit:"ng/mL", cat:"בלוטת התריס", ref:"≥3",      flag:v=> v<3?_HF_RED : _HF_GRN },
+];
+
+// Routine / recurring tests. freqM = recommended interval in months (null = one-time / pending event
+// tracked by completion date). cat groups rows in the table.
+const ROUTINE_TESTS = [
+  { id:"blood_panel",  name:"פאנל דם מלא (§4)",            cat:"מעבדה",   freqM:4,   note:"רץ מיוני 2026 — חזרה כל ~3–4 ח'" },
+  { id:"bp",           name:"מדידת לחץ דם + דופק",         cat:"כללי",    freqM:12,  note:"בסיס 110/70 · דופק 60–70" },
+  { id:"dental",       name:"בדיקת שיניים",                cat:"כללי",    freqM:6,   note:"" },
+  { id:"vision",       name:"בדיקת ראייה",                 cat:"כללי",    freqM:24,  note:"" },
+  { id:"derma",        name:"בדיקת עור/שומות",             cat:"כללי",    freqM:12,  note:"לפי סיכון/ממצא" },
+  { id:"sti",          name:"סקר STI (כולל HIV)",          cat:"כללי",    freqM:12,  note:"בפעילות מינית" },
+  { id:"testicular",   name:"בדיקה עצמית אשכים",           cat:"כללי",    freqM:1,   note:"גיל שיא 15–35" },
+  { id:"tdap",         name:"חיסון Tdap (דחף)",            cat:"חיסונים", freqM:120, note:"כל 10 שנים" },
+  { id:"flu",          name:"חיסון שפעת",                  cat:"חיסונים", freqM:12,  note:"עונתי" },
+  { id:"ct_lumbar",    name:"CT עמ\"ש מותני",              cat:"דימות ונוירו", freqM:null, note:"בוצע 21/11/25: בלט קל L4-L5 (לחץ מתון על השק) + L5-S1 (משיק לשק), נוירופורמינות חופשיות, ללא ממצא חריף" },
+  { id:"ortho",        name:"הערכת אורתופד",               cat:"דימות ונוירו", freqM:null, note:"בוצע 11/11/25: LBP+הקרנה שמאל, SLR+ 70° שמאל, כוח 5/5, החזרים תקינים" },
+  { id:"mri_shoulder", name:"MRI כתף ימין (ישן)",          cat:"דימות ונוירו", freqM:null, note:"בוצע 01/2021: תקין מבנית — אך ישן ולא משקף מצב נוכחי; מאז החמרה: חוסר תחושה + אי-סימטריה שכמה ימין בולטת" },
+  { id:"shoulder_reeval", name:"דימות כתף/צוואר חוזר + הערכה", cat:"דימות ונוירו", freqM:null, note:"מומלץ — החמרת תסמינים מאז 2021 (חוסר תחושה, אי-סימטריה); לשקול MRI צווארי + EMG/הולכה עצבית — טרם בוצע" },
+  { id:"mri_brain",    name:"MRI מוח (אפילפסיה)",          cat:"דימות ונוירו", freqM:null, note:"בוצע 16/01/25: ללא ממצא מוקדי/מבני" },
+  { id:"eeg_awake",    name:"EEG ערנות",                   cat:"דימות ונוירו", freqM:null, note:"בוצע 20/08/24: פוקוס אפילפטיפורמי טמפורלי בודד מימין" },
+  { id:"eeg_sleep",    name:"EEG שינה/חסך שינה",           cat:"דימות ונוירו", freqM:null, note:"בוצע 19/01/25: תקין, ללא פעילות אפילפטית" },
+  { id:"video_eeg",    name:"Video-EEG",                   cat:"דימות ונוירו", freqM:null, note:"מומלץ ע\"י נוירולוג (דורש אשפוז) — בירור דה-ריאליזציה/אפילפסיה לא נסגר; טרם בוצע" },
+  { id:"neuro_fu",     name:"מעקב נוירולוגי",              cat:"דימות ונוירו", freqM:6,    note:"אחרון 27/02/26 · סיבת הבירור: שלילת דה-ריאליזציה · אבחנה ADHD; בירור אפילפסיה פתוח (EEG בודד חריג)" },
+];
+
+// Age/population screening rationale cards (male ~23–24). Informational.
+const SCREENING = [
+  { t:"לחץ דם", d:"מבוגר צעיר: מדידה לפחות אחת ל-12 ח' (תקין) — תדיר יותר אם יש גורמי סיכון. בסיס נוכחי תקין (110/70)." },
+  { t:"פרופיל שומנים", d:"סקר בסיסי בשנות ה-20; אם תקין וללא סיכון — כל 4–6 שנים. כאן נמצא במעקב רבעוני יזום דרך §4." },
+  { t:"סוכר / HbA1c", d:"סקר שגרתי בד\"כ מגיל 35, או מוקדם יותר עם BMI≥25 / סיכון. נכלל בפאנל למעקב בסיס." },
+  { t:"אשכים", d:"גיל שיא לגידול אשך 15–35 — בדיקה עצמית חודשית; פנייה על גוש/כאב/שינוי." },
+  { t:"סקר מין (STI/HIV)", d:"HIV לפחות פעם אחת גיל 15–65; בפעילות מינית — סקר שנתי או לפי חשיפה." },
+  { t:"עור", d:"בדיקת עצמית של שומות; הערכת רופא לפי גורמי סיכון/ממצא חדש." },
+  { t:"בריאות הנפש", d:"סקר תקופתי מומלץ למבוגרים צעירים; רלוונטי בהינתן מעקב DPDR/קוגניציה פעיל." },
+  { t:"עישון / ריאות", d:"נגמל 6/2026. סקר CT ריאות אינו רלוונטי בגיל זה (מיועד 50+ עם היסטוריית עישון כבדה) — הרלוונטי הוא שימור אי-עישון." },
+  { t:"חיסונים", d:"Tdap דחף כל 10 שנים; שפעת עונתי; השלמת חיסונים לפי פנקס." },
+];
+
 function load(k)    { try { return JSON.parse(localStorage.getItem(k)) || (k===SK.logs?{}:k===SK.weekly?[]:k===SK.weight?[]:{}); } catch { return k===SK.logs?{}:k===SK.weekly?[]:k===SK.weight?[]:{};} }
 function _writeLS(k,v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
 function save(k,v)     { _writeLS(k,v); if(typeof _scheduleAutoSave==="function")_scheduleAutoSave(); if(typeof _scheduleCloudPush==="function")_scheduleCloudPush(); }
@@ -797,9 +907,48 @@ function _normalizeWeeklyKeys(arr){
 let REHAB  = load(SK.rehab);
 let WEIGHT = load(SK.weight);  // array of {date:"YYYY-MM-DD", value, savedAt} — one entry per real calendar day entered, continuous (not week-gated)
 let DAILY  = load(SK.daily);   // object keyed by date "YYYY-MM-DD" -> {sleep, water, savedAt}
+// HEALTH: { bloods:{ markerId:{ entries:[{date,value,savedAt}] } }, tests:{ testId:{ lastDate, savedAt } }, notes:"", seedVersion:N }
+let HEALTH = load(SK.health);
+if(!HEALTH.bloods) HEALTH.bloods = {};
+if(!HEALTH.tests)  HEALTH.tests  = {};
+if(typeof HEALTH.notes!=="string") HEALTH.notes = "";
+// One-time seed of values extracted from the user's lab PDFs. Bump `version` to inject a new batch;
+// merges only dates not already present, then records seedVersion so it runs once per version.
+// v1: blood draw 2025-12-23 (המטולוגיה + הורמונים/אנדו + ביוכימיה, מאתר כללית).
+const HEALTH_SEED = {
+  version: 2,
+  bloods: {
+    b12:[{date:"2025-12-23",value:710}], tsh:[{date:"2025-12-23",value:3.02}], iron:[{date:"2025-12-23",value:145.8}], alp:[{date:"2025-12-23",value:134}],
+    wbc:[{date:"2025-12-23",value:6.49}], rbc:[{date:"2025-12-23",value:5.55}], hb:[{date:"2025-12-23",value:16.4}], hct:[{date:"2025-12-23",value:46.7}],
+    mcv:[{date:"2025-12-23",value:84.2}], mch:[{date:"2025-12-23",value:29.6}], mchc:[{date:"2025-12-23",value:35.1}], rdw:[{date:"2025-12-23",value:12.3}], plt:[{date:"2025-12-23",value:277}],
+    glucose:[{date:"2025-12-23",value:71}], creatinine:[{date:"2025-12-23",value:1.20}], calcium:[{date:"2025-12-23",value:10.04}], phosphorus:[{date:"2025-12-23",value:3.98}],
+    protein_tot:[{date:"2025-12-23",value:7.70}], albumin:[{date:"2025-12-23",value:4.38}], globulin:[{date:"2025-12-23",value:3.3}],
+    ast:[{date:"2025-12-23",value:27}], alt:[{date:"2025-12-23",value:48}], bili_total:[{date:"2025-12-23",value:1.05}], sodium:[{date:"2025-12-23",value:140}], potassium:[{date:"2025-12-23",value:4.04}],
+    t3_free:[{date:"2025-12-23",value:5.59}], t4_free:[{date:"2025-12-23",value:16.88}], folic_acid:[{date:"2025-12-23",value:6.9}],
+  },
+  tests: {
+    blood_panel:{ lastDate:"2025-12-23" },
+    ct_lumbar:{ lastDate:"2025-11-21" }, ortho:{ lastDate:"2025-11-11" }, mri_shoulder:{ lastDate:"2021-01-01" },
+    mri_brain:{ lastDate:"2025-01-16" }, eeg_awake:{ lastDate:"2024-08-20" }, eeg_sleep:{ lastDate:"2025-01-19" },
+    neuro_fu:{ lastDate:"2026-02-27" },
+  },
+};
+if((HEALTH.seedVersion||0) < HEALTH_SEED.version){
+  for(const mk in HEALTH_SEED.bloods){
+    if(!HEALTH.bloods[mk]) HEALTH.bloods[mk] = { entries:[] };
+    const have = new Set(HEALTH.bloods[mk].entries.map(e=>e.date));
+    HEALTH_SEED.bloods[mk].forEach(e=>{ if(!have.has(e.date)) HEALTH.bloods[mk].entries.push({ date:e.date, value:e.value, savedAt:new Date().toISOString() }); });
+    HEALTH.bloods[mk].entries.sort((a,b)=>a.date.localeCompare(b.date));
+  }
+  const seedT = HEALTH_SEED.tests||{};
+  for(const tk in seedT){ if(!HEALTH.tests[tk] || !HEALTH.tests[tk].lastDate){ HEALTH.tests[tk] = Object.assign({}, HEALTH.tests[tk], seedT[tk], { savedAt:new Date().toISOString() }); } }
+  HEALTH.seedVersion = HEALTH_SEED.version;
+  _writeLS(SK.health, HEALTH);
+}
 // Dashboard chart instances + strength-chart view mode — declared early for the same TDZ reason as above.
 let weightChartInst   = null;
 let strengthChartInst = null;
+let healthChartInst   = null;
 let strMode = "avg"; // "avg" | "ex"
 
 // ══════════════════════════════════════════════════════════════════
@@ -853,6 +1002,7 @@ function switchTab(tab){
   if (tab==="dashboard")  renderDashboard();
   if (tab==="nutrition")  renderNutrition();
   if (tab==="weekly")     renderWeekly();
+  if (tab==="health")     renderHealth();
   if (tab==="history")    renderHistory();
   if (tab==="export")     renderExport();
 }
@@ -2184,6 +2334,186 @@ function renderNutrition() {
 }
 
 // ══════════════════════════════════════════════════════════════════
+// HEALTH TAB — routine tests, blood panel (auto-flag), screening, upload
+// ══════════════════════════════════════════════════════════════════
+let _hSelMarker = null;  // blood marker whose trend panel is expanded
+function _hSave(){ HEALTH.savedAt=new Date().toISOString(); save(SK.health, HEALTH); }
+function _hBadge(st){ return `<span style="font-size:11px;font-weight:700;color:#fff;background:${st.color};padding:3px 9px;border-radius:20px;white-space:nowrap">${st.label}</span>`; }
+
+function _hTestStatus(t){
+  const rec = HEALTH.tests[t.id] || {};
+  const last = rec.lastDate;
+  if(t.freqM===null){ return last ? {label:"בוצע "+last, color:"#10B981"} : {label:"ממתין", color:"#F59E0B"}; }
+  if(!last) return {label:"אין נתון", color:"#6B7280"};
+  const due = new Date(last); due.setMonth(due.getMonth()+t.freqM);
+  const days = Math.round((due - new Date())/86400000);
+  if(days<0)   return {label:"פג ("+(-days)+" ימ')",  color:"#EF4444"};
+  if(days<=30) return {label:"מתקרב ("+days+" ימ')",  color:"#F59E0B"};
+  return {label:"בתוקף", color:"#10B981"};
+}
+
+function _hRoutineSection(){
+  const wrap = el("div","chart-card");
+  wrap.appendChild(el("div","chart-title","🗓️ בדיקות שגרתיות"));
+  wrap.appendChild(el("div","chart-subtitle","סטטוס מחושב אוטומטית מתאריך אחרון + תדירות מומלצת"));
+  const cats = [...new Set(ROUTINE_TESTS.map(t=>t.cat))];
+  cats.forEach(cat=>{
+    wrap.appendChild(el("div","cue-label",cat));
+    const ov = el("div","overflow-x");
+    const tbl = document.createElement("table"); tbl.className="hist-table";
+    tbl.innerHTML = `<thead><tr><th>בדיקה</th><th>תדירות</th><th>תאריך אחרון</th><th>סטטוס</th></tr></thead>`;
+    const tb = document.createElement("tbody");
+    ROUTINE_TESTS.filter(t=>t.cat===cat).forEach(t=>{
+      const rec = HEALTH.tests[t.id] || {};
+      const st = _hTestStatus(t);
+      const freqTxt = t.freqM===null ? "חד-פעמי" : t.freqM<12 ? t.freqM+" ח'" : (t.freqM/12)+" ש'";
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td style="text-align:right"><div style="font-weight:600;color:#E5E7EB">${t.name}</div>${t.note?`<div style="font-size:10px;color:#6B7280">${t.note}</div>`:""}</td>
+        <td>${freqTxt}</td><td></td><td>${_hBadge(st)}</td>`;
+      const dCell = tr.children[2];
+      const inp = document.createElement("input");
+      inp.type="date"; inp.value=rec.lastDate||""; inp.style.cssText="background:#111827;border:1px solid rgba(255,255,255,0.12);color:#E5E7EB;border-radius:6px;padding:4px 6px;font-size:11px;font-family:inherit";
+      inp.onchange=()=>{ if(!HEALTH.tests[t.id]) HEALTH.tests[t.id]={}; HEALTH.tests[t.id].lastDate=inp.value; HEALTH.tests[t.id].savedAt=new Date().toISOString(); _hSave(); renderHealth(); };
+      dCell.appendChild(inp);
+      tb.appendChild(tr);
+    });
+    tbl.appendChild(tb); ov.appendChild(tbl); wrap.appendChild(ov);
+  });
+  return wrap;
+}
+
+function _hLatest(mk){ const e=(HEALTH.bloods[mk]&&HEALTH.bloods[mk].entries)||[]; return e.length?e[e.length-1]:null; }
+
+function _hBloodSection(){
+  const wrap = el("div","chart-card");
+  wrap.appendChild(el("div","chart-title","🩸 פאנל דם"));
+  wrap.appendChild(el("div","chart-subtitle","ערך אחרון מסומן מול טווח ייחוס · לחיצה על מדד פותחת גרף מגמה"));
+
+  // add-reading form
+  const form = el("div","weekly-item");
+  form.style.cssText += ";display:flex;gap:6px;flex-wrap:wrap;align-items:center";
+  const sel = document.createElement("select"); sel.className="ex-select"; sel.style.flex="1 1 140px";
+  const _cats = [...new Set(BLOOD_PANEL.map(m=>m.cat))];
+  _cats.forEach(cat=>{ const og=document.createElement("optgroup"); og.label=cat;
+    BLOOD_PANEL.filter(m=>m.cat===cat).forEach(m=>{ const o=document.createElement("option"); o.value=m.id; o.textContent=m.name; og.appendChild(o); });
+    sel.appendChild(og); });
+  const valInp = document.createElement("input"); valInp.type="number"; valInp.step="any"; valInp.placeholder="ערך"; valInp.style.cssText="width:80px;background:#111827;border:1px solid rgba(255,255,255,0.12);color:#E5E7EB;border-radius:6px;padding:6px;font-family:inherit";
+  const dInp = document.createElement("input"); dInp.type="date"; dInp.value=todayKey(); dInp.style.cssText="background:#111827;border:1px solid rgba(255,255,255,0.12);color:#E5E7EB;border-radius:6px;padding:6px;font-size:12px;font-family:inherit";
+  const addBtn = document.createElement("button"); addBtn.className="wk-btn"; addBtn.style.background="#3B82F6"; addBtn.textContent="הוסף";
+  addBtn.onclick=()=>{
+    const v=parseFloat(valInp.value); if(isNaN(v)||!dInp.value){ return; }
+    const mk=sel.value; if(!HEALTH.bloods[mk]) HEALTH.bloods[mk]={entries:[]};
+    const arr=HEALTH.bloods[mk].entries; const ex=arr.find(e=>e.date===dInp.value);
+    if(ex){ ex.value=v; ex.savedAt=new Date().toISOString(); } else arr.push({date:dInp.value,value:v,savedAt:new Date().toISOString()});
+    arr.sort((a,b)=>a.date.localeCompare(b.date)); _hSave(); _hSelMarker=mk; renderHealth();
+  };
+  form.append(sel,valInp,dInp,addBtn);
+  wrap.appendChild(form);
+
+  // abnormal-summary strip (latest value flagged amber/red)
+  const flagged = BLOOD_PANEL.map(m=>{ const l=_hLatest(m.id); return l?{m,l,st:m.flag(l.value)}:null; })
+    .filter(x=>x && x.st.color!=="#10B981");
+  if(flagged.length){
+    const strip=el("div","info-box"); strip.style.cssText+=";border-color:rgba(245,158,11,0.3);background:rgba(245,158,11,0.07)";
+    strip.innerHTML=`<div class="info-title" style="color:#F59E0B">דורש תשומת לב (${flagged.length})</div><div class="info-text" style="color:#D1D5DB">`+
+      flagged.map(x=>`${x.m.name}: <b style="color:${x.st.color}">${x.l.value} ${x.m.unit}</b> (${x.st.label}, ייחוס ${x.m.ref})`).join(" · ")+`</div>`;
+    wrap.appendChild(strip);
+  }
+
+  // panel table (grouped by category)
+  const ov = el("div","overflow-x");
+  const tbl = document.createElement("table"); tbl.className="hist-table";
+  tbl.innerHTML = `<thead><tr><th>מדד</th><th>טווח</th><th>אחרון</th><th>סטטוס</th></tr></thead>`;
+  const tb = document.createElement("tbody");
+  [...new Set(BLOOD_PANEL.map(m=>m.cat))].forEach(cat=>{
+    const hr=document.createElement("tr");
+    hr.innerHTML=`<td colspan="4" style="text-align:right;color:#06B6D4;font-weight:700;font-size:10px;letter-spacing:0.6px;padding-top:10px">${cat}</td>`;
+    tb.appendChild(hr);
+    BLOOD_PANEL.filter(m=>m.cat===cat).forEach(m=>{
+    const last=_hLatest(m.id);
+    const st = last ? m.flag(last.value) : {label:"—",color:"#6B7280"};
+    const tr = document.createElement("tr");
+    tr.style.cursor="pointer";
+    tr.innerHTML = `<td style="text-align:right"><div style="font-weight:600;color:${_hSelMarker===m.id?'#93C5FD':'#E5E7EB'}">${m.name}</div><div style="font-size:10px;color:#6B7280">${m.unit}${m.note?" · "+m.note:""}</div></td>
+      <td style="font-size:11px;color:#9CA3AF">${m.ref}</td>
+      <td>${last?`<span style="font-weight:700;color:#F9FAFB">${last.value}</span><div style="font-size:9px;color:#6B7280">${last.date.slice(5)}</div>`:"—"}</td>
+      <td>${_hBadge(st)}</td>`;
+    tr.onclick=()=>{ _hSelMarker = _hSelMarker===m.id?null:m.id; renderHealth(); };
+    tb.appendChild(tr);
+    if(_hSelMarker===m.id){
+      const dtr=document.createElement("tr");
+      const td=document.createElement("td"); td.colSpan=4; td.style.background="rgba(96,165,250,0.05)";
+      td.appendChild(_hTrendPanel(m));
+      dtr.appendChild(td); tb.appendChild(dtr);
+    }
+    });
+  });
+  tbl.appendChild(tb); ov.appendChild(tbl); wrap.appendChild(ov);
+  return wrap;
+}
+
+function _hTrendPanel(m){
+  const box = el("div"); box.style.padding="8px 4px";
+  const entries = (HEALTH.bloods[m.id]&&HEALTH.bloods[m.id].entries)||[];
+  if(entries.length<1){ box.appendChild(el("div","",`<span style="color:#6B7280;font-size:12px">אין נתונים ל${m.name}</span>`)); return box; }
+  if(entries.length>=2){
+    const cv=document.createElement("canvas"); cv.height=140; box.appendChild(cv);
+    if(healthChartInst){ healthChartInst.destroy(); healthChartInst=null; }
+    setTimeout(()=>{ try{ healthChartInst=new Chart(cv.getContext("2d"), makeChartCfg(entries.map(e=>e.date.slice(5)), entries.map(e=>e.value), "#EF4444", " "+m.unit)); }catch(e){} },0);
+  }
+  // history list with delete
+  entries.slice().reverse().forEach(e=>{
+    const row=el("div"); row.style.cssText="display:flex;justify-content:space-between;align-items:center;padding:4px 2px;border-bottom:1px solid rgba(255,255,255,0.04);font-size:12px";
+    const st=m.flag(e.value);
+    row.innerHTML=`<span style="color:#9CA3AF">${e.date}</span><span style="color:${st.color};font-weight:700">${e.value} ${m.unit}</span>`;
+    const del=document.createElement("span"); del.textContent="✕"; del.style.cssText="color:#EF4444;cursor:pointer;font-size:11px;padding:0 4px";
+    del.onclick=(ev)=>{ ev.stopPropagation(); HEALTH.bloods[m.id].entries=HEALTH.bloods[m.id].entries.filter(x=>x.date!==e.date); _hSave(); renderHealth(); };
+    row.appendChild(del);
+    box.appendChild(row);
+  });
+  return box;
+}
+
+function _hScreeningSection(){
+  const wrap = el("div","chart-card");
+  wrap.appendChild(el("div","chart-title","🔍 סקר מומלץ לפי גיל/חתך"));
+  wrap.appendChild(el("div","chart-subtitle","הנחיות סקר כלליות למבוגר צעיר — לא תחליף להערכה רפואית"));
+  SCREENING.forEach(s=>{
+    const b=el("div","info-box");
+    b.innerHTML=`<div class="info-title">${s.t}</div><div class="info-text">${s.d}</div>`;
+    wrap.appendChild(b);
+  });
+  return wrap;
+}
+
+function _hUploadSection(){
+  const wrap = el("div","chart-card");
+  wrap.appendChild(el("div","chart-title","📎 העלאת בדיקות"));
+  const info=el("div","info-box");
+  info.innerHTML=`<div class="info-title">איך מזינים בדיקת דם</div><div class="info-text">שלח צילום מסך / תמונה של הבדיקה בשיחה עם המנטור — הוא מחלץ את הערכים ומזין אותם אוטומטית ללוג כאן. לחלופין, הזן ידנית דרך טופס "הוסף" בפאנל הדם.</div>`;
+  wrap.appendChild(info);
+  const lbl=el("div","cue-label","הערות / קישורים לבדיקות");
+  wrap.appendChild(lbl);
+  const ta=document.createElement("textarea");
+  ta.className="export-preview"; ta.rows=4; ta.style.width="100%"; ta.placeholder="למשל: תאריך בדיקה, מעבדה, קישור לתיק רפואי דיגיטלי...";
+  ta.value=HEALTH.notes||"";
+  let _t; ta.oninput=()=>{ clearTimeout(_t); _t=setTimeout(()=>{ HEALTH.notes=ta.value; _hSave(); },500); };
+  wrap.appendChild(ta);
+  return wrap;
+}
+
+function renderHealth(){
+  const c = document.getElementById("health-content");
+  if(!c) return;
+  if(healthChartInst){ try{ healthChartInst.destroy(); }catch(e){} healthChartInst=null; }
+  c.innerHTML="";
+  c.appendChild(_hRoutineSection());
+  c.appendChild(_hBloodSection());
+  c.appendChild(_hScreeningSection());
+  c.appendChild(_hUploadSection());
+}
+
+// ══════════════════════════════════════════════════════════════════
 // AGENT EXPORT — File System Access API + IndexedDB for persistent handle
 // Agent reads: /Users/galasali/Documents/Claude/Projects/Fitness/data_export.json
 // ══════════════════════════════════════════════════════════════════
@@ -2465,6 +2795,30 @@ function _mergeByKey(localObj, cloudObj, pick){
 function _pickLog(a,b){ const ta=Date.parse(a.savedAt||0)||0, tb=Date.parse(b.savedAt||0)||0; return ta>=tb?a:b; }
 function _pickRehab(a,b){ const ca=Object.values(a.done||{}).filter(Boolean).length, cb=Object.values(b.done||{}).filter(Boolean).length; return ca>=cb?a:b; }
 function _pickDaily(a,b){ const ta=Date.parse(a.savedAt||0)||0, tb=Date.parse(b.savedAt||0)||0; return ta>=tb?a:b; }
+// Merge HEALTH across devices: blood entries merged per-marker keyed by date (newer savedAt wins on a
+// same-date clash); routine tests picked by newer savedAt; notes/seedVersion by newer overall touch.
+function _mergeHealth(local, cloud){
+  local=local||{}; cloud=cloud||{};
+  const out={ bloods:{}, tests:{}, notes:local.notes||"", seedVersion:Math.max(local.seedVersion||0, cloud.seedVersion||0) };
+  const lb=local.bloods||{}, cb=cloud.bloods||{};
+  new Set([...Object.keys(lb),...Object.keys(cb)]).forEach(k=>{
+    const byDate={};
+    [...((lb[k]&&lb[k].entries)||[]), ...((cb[k]&&cb[k].entries)||[])].forEach(e=>{
+      if(!e||!e.date) return; const ex=byDate[e.date];
+      if(!ex || (Date.parse(e.savedAt||0)||0)>=(Date.parse(ex.savedAt||0)||0)) byDate[e.date]=e;
+    });
+    out.bloods[k]={ entries:Object.values(byDate).sort((a,b)=>a.date.localeCompare(b.date)) };
+  });
+  const lt=local.tests||{}, ct=cloud.tests||{};
+  new Set([...Object.keys(lt),...Object.keys(ct)]).forEach(k=>{
+    const a=lt[k], b=ct[k];
+    if(!a){ out.tests[k]=b; } else if(!b){ out.tests[k]=a; }
+    else out.tests[k]=(Date.parse(a.savedAt||0)||0)>=(Date.parse(b.savedAt||0)||0)?a:b;
+  });
+  // notes: keep whichever side is non-empty; if both, keep local (this device just wrote)
+  if(!out.notes && cloud.notes) out.notes=cloud.notes;
+  return out;
+}
 function _mergeWeekly(localArr, cloudArr){
   const m={}, richer=w=>Object.values(w.data||{}).filter(v=>v!==""&&v!=null).length;
   (cloudArr||[]).concat(localArr||[]).forEach(w=>{ if(!w||!w.week)return; const p=m[w.week]; if(!p||richer(w)>=richer(p)) m[w.week]=w; });
@@ -2510,7 +2864,7 @@ async function cloudPush(){
   _syncBadge("syncing");
   try{
     const cleanLogs={}; for(const k in LOGS){ if(_logKeep(LOGS[k])) cleanLogs[k]=LOGS[k]; }
-    const body=[{ id:ROW_ID, payload:{ logs:cleanLogs, weekly:WEEKLY, rehab:REHAB, weight:WEIGHT, daily:DAILY },
+    const body=[{ id:ROW_ID, payload:{ logs:cleanLogs, weekly:WEEKLY, rehab:REHAB, weight:WEIGHT, daily:DAILY, health:HEALTH },
                   updated_at:new Date().toISOString(), updated_by:"app" }];
     const r=await fetch(`${SUPA_URL}/rest/v1/workout_data`, { method:"POST",
       headers:Object.assign({}, SUPA_HEADERS, { Prefer:"resolution=merge-duplicates,return=minimal" }),
@@ -2530,8 +2884,10 @@ async function cloudPull(){
       if(p.weekly) WEEKLY = _normalizeWeeklyKeys(_mergeWeekly(WEEKLY, p.weekly)).arr;
       if(p.weight) WEIGHT = _mergeWeightArr(WEIGHT, p.weight);
       if(p.daily)  DAILY  = _mergeByKey(DAILY,  p.daily, _pickDaily);
+      if(p.health) HEALTH = _mergeHealth(HEALTH, p.health);
       cleanupLogs();
-      _writeLS(SK.logs,LOGS); _writeLS(SK.rehab,REHAB); _writeLS(SK.weekly,WEEKLY); _writeLS(SK.weight,WEIGHT); _writeLS(SK.daily,DAILY);
+      _writeLS(SK.logs,LOGS); _writeLS(SK.rehab,REHAB); _writeLS(SK.weekly,WEEKLY); _writeLS(SK.weight,WEIGHT); _writeLS(SK.daily,DAILY); _writeLS(SK.health,HEALTH);
+      if(document.getElementById("view-health") && document.getElementById("view-health").classList.contains("active") && typeof renderHealth==="function") renderHealth();
       if(typeof renderDayPills==="function") renderDayPills();
       if(typeof renderWorkoutContent==="function") renderWorkoutContent();
       _syncBadge("synced");
