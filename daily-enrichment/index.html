@@ -441,6 +441,30 @@ function renderStreak() {
 }
 renderStreak();
 
+// ══════════════════════════════════════════════════════════════════
+// CLOUD SYNC OF READ STATUS (so the scheduled agent can see the REAL live status —
+// previously it could only read the static HTML file on disk, which always shows whatever
+// UNREAD/READ default was hardcoded at the last content edit, never the actual browser state)
+// ══════════════════════════════════════════════════════════════════
+const SUPA_URL = "https://vlrqnafvsekwtrbtatcf.supabase.co";
+const SUPA_KEY = ["eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9","eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZscnFuYWZ2c2Vrd3RyYnRhdGNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMzMTE1ODYsImV4cCI6MjA5ODg4NzU4Nn0","tfQ2KopLhTmFDU7k4osE9XbWLwP3v4BKS5sbTAN2cXM"].join(".");
+const SUPA_HEADERS = { apikey:SUPA_KEY, Authorization:"Bearer "+SUPA_KEY, "Content-Type":"application/json" };
+const ENRICH_ROW_ID = "gal_enrichment";
+async function _pushReadStatusToCloud(){
+  try{
+    const articleId = document.getElementById('agent-article-id').textContent;
+    const status = (readData && readData.status === 'READ') ? 'READ' : 'UNREAD';
+    const date = (readData && readData.date) || null;
+    const body = [{ id: ENRICH_ROW_ID,
+      payload: { readStatus: status, readDate: date, today: todayStr, articleId, streak: computeStreak() },
+      updated_at: new Date().toISOString() }];
+    await fetch(`${SUPA_URL}/rest/v1/workout_data`, { method:"POST",
+      headers:Object.assign({}, SUPA_HEADERS, { Prefer:"resolution=merge-duplicates,return=minimal" }),
+      body: JSON.stringify(body) });
+  }catch(e){}
+}
+_pushReadStatusToCloud();   // sync current state on load too, not just on toggle
+
 // Toggle
 document.getElementById('read-toggle').addEventListener('click', () => {
   const nowRead = !(readData && readData.status === 'READ');
@@ -448,6 +472,7 @@ document.getElementById('read-toggle').addEventListener('click', () => {
   localStorage.setItem(READ_KEY, JSON.stringify(readData));
   applyReadState(nowRead, todayStr);
   renderStreak();
+  _pushReadStatusToCloud();
 });
 
 // ══════════════════════════════════════════════════════════════════
