@@ -1,4 +1,4 @@
-const CACHE = "dpdr-tracker-v2";
+const CACHE = "dpdr-tracker-v3";
 const ASSETS = [
   "./",
   "./index.html",
