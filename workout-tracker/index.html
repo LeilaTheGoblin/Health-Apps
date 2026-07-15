@@ -161,10 +161,13 @@
   .ex-cue { font-size: 12px; color: #D1D5DB; line-height: 1.65; margin: 10px 0 6px; background: rgba(255,255,255,0.03); border-radius: 7px; padding: 8px 10px; border-right: 2px solid #06B6D4; }
   .ex-cue .cue-label { display: block; margin-bottom: 3px; }
 
-  /* ── REST TIMER (floating) ── */
+  /* ── REST TIMER(S) (floating, supports several running in parallel — e.g. supersets) ── */
   #rest-timer {
     position: fixed; left: 50%; transform: translateX(-50%); bottom: 46px; z-index: 10000;
-    display: none; align-items: center; gap: 12px;
+    display: none; flex-direction: column; align-items: center; gap: 8px;
+  }
+  #rest-timer .rest-pill {
+    display: flex; align-items: center; gap: 12px;
     background: #111827; border: 1px solid rgba(16,185,129,0.5); border-radius: 999px;
     padding: 8px 14px; box-shadow: 0 6px 24px rgba(0,0,0,0.5);
   }
@@ -705,6 +708,21 @@ const TRACKABLE_EXERCISES = [
 // tracked as separate program entries. Stops applying automatically once db_flat_bench builds its
 // own clean (non-excluded) history again.
 const PROGRESSION_FALLBACK = { db_flat_bench: "db_bench_u" };
+// Same real-world movement, tracked under different IDs because it appears in more than one program
+// day at a different intensity/rep-range (e.g. Push = heavy top-set, Upper = light-volume day). The
+// dashboard's per-exercise and aggregate strength charts merge every id in a group into one series —
+// otherwise a heavier set done on the nominally "lighter" day looks like a separate, shorter history
+// instead of contributing to the true progression of that movement.
+const EXERCISE_ALIAS_GROUPS = [
+  ["db_flat_bench", "db_bench_u"],
+  ["ohp_seated", "ohp_seated_u"],
+  ["pullup", "pullup_u"],
+  ["lat_pulldown", "lat_pull_u"],
+  ["hip_thrust", "hip_thrust_d5"],
+  ["face_pull", "face_pull_u"],
+];
+function _groupIdsFor(exId){ const g=EXERCISE_ALIAS_GROUPS.find(g=>g.includes(exId)); return g||[exId]; }
+function _groupKeyFor(exId){ const g=EXERCISE_ALIAS_GROUPS.find(g=>g.includes(exId)); return g?g[0]:exId; }
 // Same TDZ reasoning — used by the dashboard's chart config, reachable from the same early auto-restore path.
 const CHART_GRID = "rgba(255,255,255,0.06)";
 const CHART_TICK = "#6B7280";
@@ -881,33 +899,75 @@ function _startExTiming(exId){
   if(typeof renderWorkoutContent==="function") renderWorkoutContent();
 }
 
-// ── rest timer (timestamp-based → keeps counting while app is closed/locked) ──
-let _restInt=null;
+// ── rest timer(s) (timestamp-based → keep counting while app is closed/locked) ──
+// Several can run at once (e.g. supersets: two exercises alternated set-by-set) — each keyed by the
+// id of the exercise whose set just finished, so re-finishing a set on the SAME exercise replaces its
+// own timer instead of stacking duplicates. UI.rests is an array of {id, endsAt, name, nextExId}.
+let _restInts = {};   // id -> intervalId
 function _beep(){ try{ const c=new (window.AudioContext||window.webkitAudioContext)(); const o=c.createOscillator(), g=c.createGain(); o.connect(g); g.connect(c.destination); o.type="sine"; o.frequency.value=880; g.gain.value=0.2; o.start(); setTimeout(()=>{ o.stop(); c.close(); },300); }catch(e){} if(navigator.vibrate) navigator.vibrate([200,90,200]); }
+function _restsArr(){ if(!UI.rests) UI.rests=[]; return UI.rests; }
 function _restEl(){ let e=document.getElementById("rest-timer"); if(!e){ e=el("div"); e.id="rest-timer"; document.body.appendChild(e); } return e; }
-function stopRest(){
-  if(_restInt) clearInterval(_restInt); _restInt=null;
+function _renderRests(){
+  const container=_restEl();
+  const arr=_restsArr();
+  if(!arr.length){ container.style.display="none"; container.innerHTML=""; return; }
+  container.style.display="flex";
+  container.innerHTML = arr.map(r=>{
+    const left=Math.max(0, Math.round((r.endsAt-Date.now())/1000));
+    return `<div class="rest-pill" data-id="${r.id}"><span class="rt-name">מנוחה · ${r.name||""}</span><span class="rt-time">${fmtDur(left)}</span><span class="rt-add" data-id="${r.id}">+30</span><span class="rt-x" data-id="${r.id}">דלג ✕</span></div>`;
+  }).join("");
+  container.querySelectorAll(".rt-x").forEach(b=>{ b.onclick=()=>stopRestById(b.dataset.id); });
+  container.querySelectorAll(".rt-add").forEach(b=>{ b.onclick=()=>{ const r=_restsArr().find(x=>x.id===b.dataset.id); if(r){ r.endsAt+=30000; saveUI(); _renderRests(); } }; });
+}
+function stopRestById(id){
+  if(_restInts[id]){ clearInterval(_restInts[id]); delete _restInts[id]; }
+  const arr=_restsArr();
+  const idx=arr.findIndex(r=>r.id===id);
   let nextExId=null;
-  if(UI.rest){ nextExId=UI.rest.nextExId||null; delete UI.rest; saveUI(); }
-  const e=document.getElementById("rest-timer"); if(e) e.style.display="none";
+  if(idx>=0){ nextExId=arr[idx].nextExId||null; arr.splice(idx,1); saveUI(); }
+  _renderRests();
   if(nextExId) _startExTiming(nextExId);   // rest over (naturally or skipped) → chain to the next exercise
 }
-function _restTick(){
-  if(!UI.rest){ stopRest(); return; }
-  const left=Math.round((UI.rest.endsAt-Date.now())/1000);
-  if(left<=0){ _beep(); stopRest(); return; }
-  const e=_restEl(); e.style.display="flex";
-  e.innerHTML=`<span class="rt-name">מנוחה · ${UI.rest.name||""}</span><span class="rt-time">${fmtDur(left)}</span><span class="rt-add">+30</span><span class="rt-x">דלג ✕</span>`;
-  e.querySelector(".rt-x").onclick=stopRest;
-  e.querySelector(".rt-add").onclick=()=>{ if(UI.rest){ UI.rest.endsAt+=30000; saveUI(); _restTick(); } };
+function stopAllRests(){
+  _restsArr().forEach(r=>{ if(_restInts[r.id]) clearInterval(_restInts[r.id]); });
+  _restInts={};
+  UI.rests=[];
+  saveUI();
+  _renderRests();
 }
-function startRest(sec,name,nextExId){
-  clearInterval(_restInt);
-  UI.rest={ endsAt:Date.now()+sec*1000, name, nextExId: nextExId||null };
-  saveUI(); _restTick(); _restInt=setInterval(_restTick,1000);
+// Back-compat alias — some call sites (e.g. the rest-skip on a single active timer) may still expect stopRest().
+function stopRest(){ const arr=_restsArr(); if(arr.length) stopRestById(arr[0].id); }
+function _tickRest(id){
+  const r=_restsArr().find(x=>x.id===id);
+  if(!r){ if(_restInts[id]){ clearInterval(_restInts[id]); delete _restInts[id]; } return; }
+  const left=Math.round((r.endsAt-Date.now())/1000);
+  if(left<=0){ _beep(); stopRestById(id); return; }
+  _renderRests();
+}
+function startRest(sec,name,nextExId,timerId){
+  const id = timerId || nextExId || name || ("t"+Date.now());
+  const arr=_restsArr();
+  const idx=arr.findIndex(r=>r.id===id);
+  const entry={ id, endsAt:Date.now()+sec*1000, name, nextExId: nextExId||null };
+  if(idx>=0) arr[idx]=entry; else arr.push(entry);
+  saveUI();
+  if(_restInts[id]) clearInterval(_restInts[id]);
+  _tickRest(id);
+  _restInts[id]=setInterval(()=>_tickRest(id),1000);
+  _renderRests();
   if(typeof _scheduleNtfy==="function") _scheduleNtfy(sec, "מנוחה הסתיימה", name?`חזרה ל${name}`:"זמן לחזור לסט הבא");
 }
-function resumeRest(){ if(UI.rest && UI.rest.endsAt>Date.now()){ clearInterval(_restInt); _restTick(); _restInt=setInterval(_restTick,1000); } else if(UI.rest){ stopRest(); } }
+function resumeRest(){
+  _restsArr().forEach(r=>{
+    if(r.endsAt>Date.now()){
+      if(_restInts[r.id]) clearInterval(_restInts[r.id]);
+      _restInts[r.id]=setInterval(()=>_tickRest(r.id),1000);
+    } else {
+      stopRestById(r.id);
+    }
+  });
+  _renderRests();
+}
 
 // ── workout timer ──
 function _curLog(){ return LOGS[todayKey()+"_"+selectedDay]; }
@@ -919,7 +979,7 @@ function startWorkoutTimer(){
   l.startedAt=new Date().toISOString(); delete l.endedAt; delete l.durationSec;
   save(SK.logs,LOGS); renderWorkoutContent();
 }
-function endWorkoutTimer(){ const l=_curLog(); if(!l||!l.startedAt)return; l.endedAt=new Date().toISOString(); l.durationSec=Math.round((Date.parse(l.endedAt)-Date.parse(l.startedAt))/1000); save(SK.logs,LOGS); renderWorkoutContent(); }
+function endWorkoutTimer(){ const l=_curLog(); if(!l||!l.startedAt)return; l.endedAt=new Date().toISOString(); l.durationSec=Math.round((Date.parse(l.endedAt)-Date.parse(l.startedAt))/1000); save(SK.logs,LOGS); if(typeof stopAllRests==="function") stopAllRests(); renderWorkoutContent(); }
 setInterval(()=>{ const l=_curLog(); const d=document.getElementById("wk-timer-disp"); if(d&&l&&l.startedAt&&!l.endedAt) d.textContent=fmtDur((Date.now()-Date.parse(l.startedAt))/1000); },1000);
 
 function renderDayPills() {
@@ -1085,7 +1145,7 @@ function renderWorkoutContent() {
           if(nextEx) nextExId = nextEx.id;
         }
         save(SK.logs,LOGS);
-        if(on && ex.rest) startRest(ex.rest, ex.name, nextExId);
+        if(on && ex.rest) startRest(ex.rest, ex.name, nextExId, ex.id);
         else if(on && nextExId) _startExTiming(nextExId);   // last set done, no rest defined → chain immediately
         renderWorkoutContent();
       };
@@ -1159,8 +1219,16 @@ function renderWorkoutContent() {
     if(DAYS.every(d=>UI.cycle[d])) UI.cycle={};
     UI.cycle[selectedDay]=today; saveUI();
     save(SK.logs,LOGS); renderDayPills();
-    saveBtn.textContent="✓ נשמר"; saveBtn.style.background="#10B981";
-    setTimeout(()=>{ saveBtn.textContent="שמור אימון"; saveBtn.style.background=day.color; },2500);
+    if(typeof stopAllRests==="function") stopAllRests();   // workout is done — no rest timer should keep running past it
+    saveBtn.textContent="✓ נשמר — עובר ליום הבא"; saveBtn.style.background="#10B981";
+    // Auto-advance to the next day in the 5-day rotation, same "chained" spirit as the per-exercise timing above.
+    const savedDay = selectedDay;
+    setTimeout(()=>{
+      if(selectedDay!==savedDay) return;   // user already navigated away manually — don't fight them
+      const nextDay = DAYS[(DAYS.indexOf(savedDay)+1) % DAYS.length];
+      selectedDay = nextDay; UI.day = nextDay; saveUI();
+      renderDayPills(); renderWorkoutContent();
+    },1400);
   };
   container.appendChild(saveBtn);
 }
@@ -1820,9 +1888,17 @@ function updateExportPreview(){
 
 /* helpers */
 function sessionMaxWeight(log, exId) {
-  const sets = Object.values(log.exercises?.[exId]?.sets || {});
+  const ex = log.exercises?.[exId];
+  if (ex && ex.meta && ex.meta.excludeFromHistory) return null;   // e.g. equipment-substituted (barbell instead of DB) — not comparable
+  const sets = Object.values(ex?.sets || {});
   const ws = sets.map(s=>parseFloat(s.weight)).filter(w=>w>0);
   return ws.length ? Math.max(...ws) : null;
+}
+// Same as sessionMaxWeight but checks every id in an alias group (see EXERCISE_ALIAS_GROUPS) — a given
+// day's log only ever has ONE of the group's ids populated, so this just finds whichever is present.
+function sessionMaxWeightForIds(log, ids) {
+  for (const id of ids) { const mw = sessionMaxWeight(log, id); if (mw) return mw; }
+  return null;
 }
 
 function dateToWeekKey(dateStr) {
@@ -1842,18 +1918,22 @@ function getWeightChartData() {
   };
 }
 
-/* aggregate strength: avg % change from each exercise baseline, bucketed by ISO week */
+/* aggregate strength: avg % change from each exercise-GROUP baseline, bucketed by ISO week.
+   Grouped by EXERCISE_ALIAS_GROUPS first so the same real movement performed on two different
+   program days (different id) contributes to one baseline/series, not two independent ones. */
 function getAggregateStrengthData() {
   const byWeek = {};
-  TRACKABLE_EXERCISES.forEach(ex => {
+  const groupKeys = [...new Set(TRACKABLE_EXERCISES.map(ex=>_groupKeyFor(ex.id)))];
+  groupKeys.forEach(groupKey => {
+    const ids = _groupIdsFor(groupKey);
     const sessions = Object.entries(LOGS)
-      .filter(([,log])=>log.exercises?.[ex.id])
+      .filter(([,log])=>ids.some(id=>log.exercises?.[id]))
       .sort((a,b)=>a[0].localeCompare(b[0]));
     if (sessions.length < 2) return;
-    const baseline = sessionMaxWeight(sessions[0][1], ex.id);
+    const baseline = sessionMaxWeightForIds(sessions[0][1], ids);
     if (!baseline) return;
     sessions.forEach(([key,log]) => {
-      const mw = sessionMaxWeight(log, ex.id);
+      const mw = sessionMaxWeightForIds(log, ids);
       if (!mw) return;
       const wk = dateToWeekKey(key.split("_")[0]);
       if (!byWeek[wk]) byWeek[wk] = [];
@@ -1870,15 +1950,16 @@ function getAggregateStrengthData() {
   };
 }
 
-/* single exercise max weight per session */
+/* single exercise-GROUP max weight per session (merges every id in the alias group — see above) */
 function getSingleExStrengthData(exId) {
+  const ids = _groupIdsFor(exId);
   const sessions = Object.entries(LOGS)
-    .filter(([,log])=>log.exercises?.[exId])
+    .filter(([,log])=>ids.some(id=>log.exercises?.[id]))
     .sort((a,b)=>a[0].localeCompare(b[0]))
     .slice(-14);
   return {
     labels: sessions.map(([k])=>k.split("_")[0].slice(5)),
-    data:   sessions.map(([,log])=>sessionMaxWeight(log, exId))
+    data:   sessions.map(([,log])=>sessionMaxWeightForIds(log, ids))
   };
 }
 
@@ -1970,7 +2051,17 @@ function renderDashboard() {
   // Strength: populate selector & wire mode buttons (only first call)
   const sel = document.getElementById("ex-selector");
   if (!sel.options.length) {
-    sel.innerHTML = TRACKABLE_EXERCISES.map(e=>`<option value="${e.id}">${e.name}</option>`).join("");
+    // Dedupe by alias group — the same real movement (e.g. pullup/pullup_u) shows once, not twice.
+    const seenGroups = new Set();
+    const opts = TRACKABLE_EXERCISES.filter(e => {
+      const gk = _groupKeyFor(e.id);
+      if (seenGroups.has(gk)) return false;
+      seenGroups.add(gk); return true;
+    });
+    sel.innerHTML = opts.map(e=>{
+      const gk=_groupKeyFor(e.id), grouped=_groupIdsFor(gk).length>1;
+      return `<option value="${gk}">${e.name}${grouped?" (כל הימים)":""}</option>`;
+    }).join("");
     sel.addEventListener("change", updateStrengthChart);
   }
   const btnAvg = document.getElementById("str-btn-avg");
@@ -2268,6 +2359,38 @@ function _lastSessionSets(exId){
   const fb = PROGRESSION_FALLBACK[exId];
   return fb ? _lastSessionSets(fb) : null;
 }
+// ── weight-increment learning ──
+// Some gyms/dumbbell racks don't carry the exact intermediate weight a flat +2.5/+5kg step would
+// suggest (fixed-increment adjustable dumbbells, home setups, etc). Rather than assume a uniform
+// increment always exists, learn the actual set of weights this exercise (or its alias-group
+// siblings — same movement on a different program day) has REALLY been loaded with, from manually
+// entered (non-auto) sets only, and snap suggested targets to the nearest one actually available.
+function _observedWeights(exId){
+  const ids = _groupIdsFor(exId);
+  const set = new Set();
+  Object.values(LOGS).forEach(log=>{
+    if(!log || !log.savedAt) return;
+    ids.forEach(id=>{
+      const ex = log.exercises && log.exercises[id];
+      if(!ex || (ex.meta && ex.meta.excludeFromHistory)) return;
+      Object.values(ex.sets||{}).forEach(s=>{
+        if(s.auto && s.auto.weight) return;   // only a real, manually-confirmed entry counts as "this weight exists"
+        const w = parseFloat(s.weight);
+        if(w>0) set.add(w);
+      });
+    });
+  });
+  return [...set].sort((a,b)=>a-b);
+}
+// direction "up" → nearest observed weight >= naiveTarget; "down" → nearest observed weight <= naiveTarget.
+// Falls back to the naive (flat-increment) value when there isn't enough real history to trust a pattern yet.
+function _snapToObserved(exId, naiveTarget, direction){
+  const obs = _observedWeights(exId);
+  if(obs.length < 3) return naiveTarget;
+  if(direction==="up"){ const c=obs.filter(w=>w>=naiveTarget-0.01); if(c.length) return c[0]; }
+  else { const c=obs.filter(w=>w<=naiveTarget+0.01); if(c.length) return c[c.length-1]; }
+  return naiveTarget;
+}
 // returns {weight, reason, level, color} or null
 function computeTarget(exId){
   const hist = _exHistory(exId);
@@ -2285,9 +2408,14 @@ function computeTarget(exId){
   }
   const rpe = last.maxRpe;
   if(rpe==null){ level="hold"; weight=last.topWeight; reason="אין RPE קודם — חזור על אותו משקל"; }
-  else if(rpe>=9){ level="deload"; weight=_round05(last.topWeight*0.925); reason=`RPE ${rpe} — דילוד ~7.5%`; }
+  else if(rpe>=9){ level="deload"; weight=_snapToObserved(exId, _round05(last.topWeight*0.925), "down"); reason=`RPE ${rpe} — דילוד ~7.5%`; }
   else if(rpe==8){ level="hold"; weight=last.topWeight; reason="RPE 8 — שמור משקל, נסה +1 חזרה"; }
-  else { const inc=_BIG_LOWER.indexOf(exId)>=0?5:2.5; level="up"; weight=_round05(last.topWeight+inc); reason=`RPE ${rpe} — העלה +${inc} ק"ג`; }
+  else {
+    const inc=_BIG_LOWER.indexOf(exId)>=0?5:2.5; level="up";
+    const naive=_round05(last.topWeight+inc);
+    weight=_snapToObserved(exId, naive, "up");
+    reason = weight===naive ? `RPE ${rpe} — העלה +${inc} ק"ג` : `RPE ${rpe} — העלה למשקל הבא שכבר השתמשת בו (${weight} ק"ג)`;
+  }
   if(plateau && level==="up"){ level="plateau"; reason=`תקוע 3 אימונים — שקול החלפת תרגיל/טווח חזרות`; }
   return { level, weight, reason, color:C[level] };
 }
@@ -2417,9 +2545,33 @@ window.addEventListener("load", ()=>{ cloudPull(); if(typeof resumeRest==="funct
 document.addEventListener("visibilitychange", ()=>{ if(!document.hidden){ cloudPull(); if(typeof resumeRest==="function") resumeRest(); } });
 </script>
 <script>
+// Proactive update check + reload prompt. iOS home-screen PWAs (standalone mode) don't reliably
+// re-check for a new sw.js as often as a normal browser tab does — a fix that's already live and
+// verified on desktop can otherwise sit un-applied on a phone for a long time with no visible sign
+// anything is stale. This actively checks on load/visibility-change and surfaces a banner the moment
+// a new version has installed, instead of relying on the user to notice or manually clear caches.
+function _showUpdateBanner(){
+  if (document.getElementById('update-banner')) return;
+  const b = document.createElement('div');
+  b.id = 'update-banner';
+  b.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:20000;background:#111827;border-top:1px solid rgba(59,130,246,0.5);color:#F9FAFB;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:13px;box-shadow:0 -6px 24px rgba(0,0,0,0.5)';
+  b.innerHTML = '<span>🔄 גרסה חדשה זמינה</span><button style="background:#3B82F6;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-weight:700;cursor:pointer">רענן עכשיו</button>';
+  b.querySelector('button').onclick = () => window.location.reload();
+  document.body.appendChild(b);
+}
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').catch(()=>{});
+    navigator.serviceWorker.register('./sw.js').then(reg => {
+      const check = () => reg.update().catch(()=>{});
+      check();
+      document.addEventListener('visibilitychange', () => { if(!document.hidden) check(); });
+      reg.addEventListener('updatefound', () => {
+        const nw = reg.installing; if(!nw) return;
+        nw.addEventListener('statechange', () => {
+          if(nw.state==='installed' && navigator.serviceWorker.controller) _showUpdateBanner();
+        });
+      });
+    }).catch(()=>{});
   });
 }
 </script>
