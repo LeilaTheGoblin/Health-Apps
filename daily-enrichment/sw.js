@@ -1,4 +1,4 @@
-const CACHE = "daily-enrichment-v4";
+const CACHE = "daily-enrichment-v5";
 const ASSETS = [
   "./",
   "./index.html",
