@@ -578,7 +578,7 @@ const PROGRAM = {
   day2: {
     label: "Pull", tag: "גב · ביצפס", color: "#8B5CF6",
     exercises: [
-      { id: "pullup",           name: "Pull-Up (מתח)",          sets: 3, reps: "6-10",  rest:150, pullType:true, note: "פרונציה ~רוחב כתפיים", cue:"אחיזת פרונציה (כפות לפנים) ברוחב כתפיים או מעט יותר. התחל במשיכת שכמות למטה (depression) לפני כיפוף מרפק. ROM מלא בשליטה, בלי נדנוד. עצור מיד באי-סימטריה בשכמה ימין או כאב חד. במכונה מסייעת — רשום את משקל הסיוע (המערכת מזהה ומחשבת עומס אפקטיבי בנפרד)." },
+      { id: "pullup",           name: "מתח חופשי (מוט)",        sets: 3, reps: "6-10",  rest:150, pullType:true, pullMode:"free", note: "תרגיל ראשון → מוט, לא מכונה", cue:"מוט מתח, אחיזת פרונציה (כפות לפנים) ברוחב כתפיים או מעט יותר. ⚑ כאן אתה טרי — זה התרגיל הראשון ביום, ולכן מבוצע במוט חופשי עם משקל גוף (רשום את משקל גופך בשדה המשקל). התחל במשיכת שכמות למטה (depression) לפני כיפוף מרפק. ROM מלא בשליטה, בלי נדנוד. עצור מיד באי-סימטריה בשכמה ימין או כאב חד." },
       { id: "lat_pulldown",     name: "Lat Pulldown",           sets: 3, reps: "8-10",  rest:120, note: "משלים למתח", cue:"חזה מעט מורם, משוך את המוט לחלק העליון של החזה עם מרפקים למטה. שכמות נמשכות למטה-אחורה. הימנע מכיפוף מוגזם של הצוואר לאחור." },
       { id: "chest_supp_row",   name: "Chest-Supported DB Row", sets: 3, reps: "10-12", rest:120, note: "מועדף — מוריד עומס על עמ\"ש", cue:"חזה נתמך על ספסל משופע — מבטל עומס על הגב התחתון. משוך מרפקים אחורה לצד הגוף, סחוט שכמות בסוף. בלי לסובב את הגו." },
       { id: "seated_cable_row", name: "Seated Cable Row",       sets: 3, reps: "10-12", rest:120, note: "שכמות צמודות בסיום", cue:"גב זקוף וניטרלי (לא להתנדנד מהמותן). משוך לכיוון הבטן, מרפקים צמודים, סחוט שכמות בסוף. חזרה מבוקרת עם מתיחה קלה." },
@@ -604,7 +604,7 @@ const PROGRAM = {
       { id: "db_bench_u",      name: "DB Bench Press",     sets: 3, reps: "10-12", rest:120, note: "נפח — RPE 6-7", cue:"נפח קל יותר מיום Push. שכמות כלואות, מרפקים ~45°. דגש על שליטה וכיווץ, לא על משקל מקסימלי." },
       { id: "cable_row_u",     name: "Cable Row / DB Row", sets: 3, reps: "10-12", rest:120, note: "", cue:"גב ניטרלי. משוך מרפקים אחורה, סחוט שכמות. אם DB Row — יד אחת, ברך וכף יד על ספסל, גב מקביל לרצפה." },
       { id: "ohp_seated_u",    name: "Seated DB OHP",      sets: 3, reps: "10-12", rest:120, note: "קל יותר מיום Push", cue:"בישיבה עם משענת, core נעול, בלי קשת מותנית. דחיפה מבוקרת, בלי לכווץ כתפיים לאוזניים." },
-      { id: "pullup_u",        name: "Pull-Up (מתח)",      sets: 3, reps: "8-10",  rest:120, pullType:true, note: "נפח קל, RPE 6-7", cue:"אחיזת פרונציה ברוחב כתפיים. depression שכמות תחילה, ROM מלא בשליטה. בלי הרמת/כיווץ כתף. במכונה מסייעת — רשום את משקל הסיוע. עצור באי-סימטריה בשכמה ימין." },
+      { id: "pullup_u",        name: "מתח במכונה מסייעת",  sets: 3, reps: "8-10",  rest:120, pullType:true, pullMode:"assist", note: "מאוחר באימון → מכונה, RPE 6-7", cue:"מכונה מסייעת (ברכיים על הכרית). ⚑ כאן אתה כבר אחרי לחיצות וחתירה — לכן מכונה ולא מוט: הסיוע שומר על טכניקה ושליטה שכמתית כשהגב עייף. רשום בשדה המשקל את **משקל הסיוע** (כמה המכונה מורידה לך) — פחות סיוע = חזק יותר. אחיזת פרונציה ברוחב כתפיים, depression שכמות תחילה, ROM מלא. עצור באי-סימטריה בשכמה ימין." },
       { id: "lat_pull_u",      name: "Lat Pulldown",       sets: 2, reps: "10-12", rest:90,  note: "משלים, קל", cue:"משלים קל למתח. מרפקים למטה, שכמות נמשכות למטה-אחורה, בלי כיפוף צוואר." },
       { id: "lateral_raise_u", name: "Lateral Raise",      sets: 3, reps: "15",    rest:60,  note: "סופר-סט עם Face Pull", cue:"מרפק מוביל, עד גובה כתף, בלי מומנטום. אפשר סופר-סט עם Face Pull." },
       { id: "face_pull_u",     name: "Face Pull",          sets: 3, reps: "15-20", rest:45,  note: "חשוב — מונע אסימטריה שכמה", cue:"בגובה עיניים, מרפקים גבוהים, סיים ב-W. החזק שנייה. חשוב לאיזון השכמה הימנית." },
@@ -2191,6 +2191,13 @@ function sessionMaxWeightForIds(log, ids) {
 // Merging them produced a nonsense series (a 25kg "lighter" assisted session looked like a collapse
 // in strength). We classify each set by magnitude against bodyweight, convert both to a single
 // comparable "effective kg moved", and keep the two modes as SEPARATE dashboard series.
+// Which modality a given program slot is *meant* to use. User's rule (16.07.2026): when the pull-up
+// is the 1st–2nd exercise of the day he is fresh → free bar with bodyweight; when it lands mid/late in
+// the session or after several back exercises → assisted machine, because the assistance preserves
+// technique and scapular control on an already-fatigued back. Declared explicitly per slot (pullMode)
+// rather than inferred, so the intent survives any future re-ordering — but see PULL_POSITION_FREE_MAX:
+// if a slot is ever moved, the position rule is what decides.
+const PULL_POSITION_FREE_MAX = 2;    // 1st or 2nd exercise of the day ⇒ free bar; later ⇒ assisted machine
 const PULL_ASSIST_MAX_RATIO = 0.6;   // logged weight below 60% of bodyweight ⇒ it's machine assistance
 function _bodyweightOn(dateStr){
   if (!WEIGHT || !WEIGHT.length) return 76;                       // profile default
@@ -2201,6 +2208,17 @@ function _bodyweightOn(dateStr){
   return bw;
 }
 function _isPullExercise(exId){ return exId==="pullup" || exId==="pullup_u"; }
+// The modality this slot is programmed for: explicit pullMode if set, otherwise derived from where the
+// exercise sits in the day's order (1st/2nd = fresh = free bar, later = assisted machine).
+function _plannedPullMode(exId){
+  if(!_isPullExercise(exId)) return null;
+  for(const dk in PROGRAM){
+    const list = (PROGRAM[dk] && PROGRAM[dk].exercises) || [];
+    const idx = list.findIndex(e=>e.id===exId);
+    if(idx>=0) return list[idx].pullMode || (idx < PULL_POSITION_FREE_MAX ? "free" : "assist");
+  }
+  return null;
+}
 // "assist" | "free" for one logged set of a pull-up exercise.
 function _pullMode(weight, dateStr){
   const w=parseFloat(weight); if(!(w>0)) return null;
@@ -2982,13 +3000,17 @@ function computeTarget(exId){
   // logged convention of the modality he last used — assistance kg on the machine (where progress means
   // a SMALLER number), or bodyweight on the free bar (which he doesn't control by loading plates).
   if(_isPullExercise(exId) && weight!=null){
-    if(last.pullMode==="assist"){
+    // The PROGRAMMED modality wins over whatever the last session happened to be logged as, so the
+    // target always matches how this slot is meant to be performed (fresh → bar, fatigued → machine).
+    const mode = _plannedPullMode(exId) || last.pullMode;
+    if(mode==="assist"){
       const bw=_bodyweightOn(last.date);
       const assist=Math.max(0, Math.round((bw - weight)*2)/2);
-      reason = `${reason} · במכונה מסייעת: הורד את הסיוע ל-${assist} ק"ג (פחות סיוע = חזק יותר)`;
+      reason = `${reason} · מכונה מסייעת (מאוחר באימון): הורד את הסיוע ל-${assist} ק"ג (פחות סיוע = חזק יותר)`;
       weight = assist;
     } else {
-      reason = `${reason} · מתח חופשי: המשקל הוא משקל גופך — התקדמות = עוד חזרות/איטיות מבוקרת`;
+      reason = `${reason} · מתח חופשי במוט (תרגיל פותח): המשקל = משקל גופך — התקדמות = עוד חזרות בשליטה`;
+      weight = Math.round(_bodyweightOn(todayKey())*2)/2;
     }
   }
   return { level, weight, reason, color:C[level] };
