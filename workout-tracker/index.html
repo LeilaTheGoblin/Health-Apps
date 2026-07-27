@@ -136,6 +136,14 @@
     background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
   }
   .set-done-btn.on { background: #10B981; color: #fff; border-color: #10B981; }
+  /* isometric hold timer (Side Plank etc) — replaces counting reps with time under tension */
+  .iso-btn {
+    padding: 5px 9px; border-radius: 7px; cursor: pointer; white-space: nowrap;
+    background: rgba(59,130,246,0.12); border: 1px solid rgba(59,130,246,0.35);
+    color: #93C5FD; font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums;
+    display: flex; align-items: center; justify-content: center; min-width: 62px;
+  }
+  .iso-btn.running { background: rgba(239,68,68,0.15); border-color: rgba(239,68,68,0.45); color: #FCA5A5; }
 
   /* ── WORKOUT HEADER + TIMER ── */
   .wk-hdr { margin-bottom: 14px; }
@@ -552,7 +560,7 @@
 // Core block (McGill anti-flexion/rotation — בטוח לבלט דיסק + עוזר להיפרלורדוזה). ids ייחודיים לכל יום.
 function _core(sfx){ return [
   { id:"dead_bug"+sfx,   name:"Dead Bug",           sets:3, reps:"8/צד",      rest:45, core:true, note:"anti-extension · McGill", cue:"שכב גב, גב תחתון צמוד לרצפה לכל אורך התנועה. ידיים ישרות למעלה, ברכיים 90°. הורד יד ורגל נגדיות לאט תוך נשיפה — בלי שהגב יתקמר. אם הגב מתרומם, קצר את הטווח. מלמד הטיית אגן אחורית שמפחיתה לורדוזה." },
-  { id:"side_plank"+sfx, name:"Side Plank (McGill)", sets:3, reps:"20-30ש/צד", rest:45, core:true, note:"anti-lateral-flexion", cue:"מרפק מתחת לכתף, גוף בקו ישר מכתף לקרסול. הרם אגן וסחוט core+גלוט. אל תיפול קדימה/אחורה. סטים קצרים חוזרים עדיפים על החזקה אחת ארוכה. עומס גזירה נמוך על הדיסק." },
+  { id:"side_plank"+sfx, name:"Side Plank (McGill)", sets:3, reps:"20-30ש/צד", rest:45, core:true, iso:true, note:"anti-lateral-flexion", cue:"מרפק מתחת לכתף, גוף בקו ישר מכתף לקרסול. הרם אגן וסחוט core+גלוט. אל תיפול קדימה/אחורה. סטים קצרים חוזרים עדיפים על החזקה אחת ארוכה. עומס גזירה נמוך על הדיסק." },
   { id:"pallof"+sfx,     name:"Pallof Press",        sets:3, reps:"10/צד",     rest:45, core:true, note:"anti-rotation", cue:"גומייה/כבל בגובה חזה מהצד. דחוף ידיים ישר קדימה והחזק שנייה, התנגד לסיבוב הגוף. אגן ניטרלי, בלי לקמר גב תחתון. שולט בייצוב הליבה בזמן תנועת גפיים." }
 ]; }
 const PROGRAM = {
@@ -570,7 +578,7 @@ const PROGRAM = {
   day2: {
     label: "Pull", tag: "גב · ביצפס", color: "#8B5CF6",
     exercises: [
-      { id: "pullup",           name: "Pull-Up (מתח)",          sets: 3, reps: "6-10",  rest:150, note: "אחיזה ניטרלית/סופינציה", cue:"אחיזה ניטרלית/סופינציה. התחל במשיכת שכמות למטה (depression) לפני כיפוף מרפק. ROM מלא בשליטה, בלי נדנוד. עצור מיד באי-סימטריה בשכמה ימין או כאב חד. Assisted/גומייה אם RPE>8." },
+      { id: "pullup",           name: "Pull-Up (מתח)",          sets: 3, reps: "6-10",  rest:150, pullType:true, note: "פרונציה ~רוחב כתפיים", cue:"אחיזת פרונציה (כפות לפנים) ברוחב כתפיים או מעט יותר. התחל במשיכת שכמות למטה (depression) לפני כיפוף מרפק. ROM מלא בשליטה, בלי נדנוד. עצור מיד באי-סימטריה בשכמה ימין או כאב חד. במכונה מסייעת — רשום את משקל הסיוע (המערכת מזהה ומחשבת עומס אפקטיבי בנפרד)." },
       { id: "lat_pulldown",     name: "Lat Pulldown",           sets: 3, reps: "8-10",  rest:120, note: "משלים למתח", cue:"חזה מעט מורם, משוך את המוט לחלק העליון של החזה עם מרפקים למטה. שכמות נמשכות למטה-אחורה. הימנע מכיפוף מוגזם של הצוואר לאחור." },
       { id: "chest_supp_row",   name: "Chest-Supported DB Row", sets: 3, reps: "10-12", rest:120, note: "מועדף — מוריד עומס על עמ\"ש", cue:"חזה נתמך על ספסל משופע — מבטל עומס על הגב התחתון. משוך מרפקים אחורה לצד הגוף, סחוט שכמות בסוף. בלי לסובב את הגו." },
       { id: "seated_cable_row", name: "Seated Cable Row",       sets: 3, reps: "10-12", rest:120, note: "שכמות צמודות בסיום", cue:"גב זקוף וניטרלי (לא להתנדנד מהמותן). משוך לכיוון הבטן, מרפקים צמודים, סחוט שכמות בסוף. חזרה מבוקרת עם מתיחה קלה." },
@@ -596,7 +604,7 @@ const PROGRAM = {
       { id: "db_bench_u",      name: "DB Bench Press",     sets: 3, reps: "10-12", rest:120, note: "נפח — RPE 6-7", cue:"נפח קל יותר מיום Push. שכמות כלואות, מרפקים ~45°. דגש על שליטה וכיווץ, לא על משקל מקסימלי." },
       { id: "cable_row_u",     name: "Cable Row / DB Row", sets: 3, reps: "10-12", rest:120, note: "", cue:"גב ניטרלי. משוך מרפקים אחורה, סחוט שכמות. אם DB Row — יד אחת, ברך וכף יד על ספסל, גב מקביל לרצפה." },
       { id: "ohp_seated_u",    name: "Seated DB OHP",      sets: 3, reps: "10-12", rest:120, note: "קל יותר מיום Push", cue:"בישיבה עם משענת, core נעול, בלי קשת מותנית. דחיפה מבוקרת, בלי לכווץ כתפיים לאוזניים." },
-      { id: "pullup_u",        name: "Pull-Up (מתח)",      sets: 3, reps: "8-10",  rest:120, note: "נפח קל, RPE 6-7", cue:"depression שכמות תחילה, ROM מלא בשליטה. בלי הרמת/כיווץ כתף. Assisted אם צריך. עצור באי-סימטריה בשכמה ימין." },
+      { id: "pullup_u",        name: "Pull-Up (מתח)",      sets: 3, reps: "8-10",  rest:120, pullType:true, note: "נפח קל, RPE 6-7", cue:"אחיזת פרונציה ברוחב כתפיים. depression שכמות תחילה, ROM מלא בשליטה. בלי הרמת/כיווץ כתף. במכונה מסייעת — רשום את משקל הסיוע. עצור באי-סימטריה בשכמה ימין." },
       { id: "lat_pull_u",      name: "Lat Pulldown",       sets: 2, reps: "10-12", rest:90,  note: "משלים, קל", cue:"משלים קל למתח. מרפקים למטה, שכמות נמשכות למטה-אחורה, בלי כיפוף צוואר." },
       { id: "lateral_raise_u", name: "Lateral Raise",      sets: 3, reps: "15",    rest:60,  note: "סופר-סט עם Face Pull", cue:"מרפק מוביל, עד גובה כתף, בלי מומנטום. אפשר סופר-סט עם Face Pull." },
       { id: "face_pull_u",     name: "Face Pull",          sets: 3, reps: "15-20", rest:45,  note: "חשוב — מונע אסימטריה שכמה", cue:"בגובה עיניים, מרפקים גבוהים, סיים ב-W. החזק שנייה. חשוב לאיזון השכמה הימנית." },
@@ -1157,6 +1165,49 @@ function startRest(sec,name,nextExId,timerId){
   _renderRests();
   if(typeof _scheduleNtfy==="function") _scheduleNtfy(sec, "מנוחה הסתיימה", name?`חזרה ל${name}`:"זמן לחזור לסט הבא");
 }
+// ══════════════════════════════════════════════════════════════════
+// ISOMETRIC SET TIMER (added 16.07.2026) — for holds (Side Plank etc, ex.iso===true)
+// Reps are meaningless for a hold; what matters is time under tension. Pressing ▶ starts a live
+// count-UP for that specific set; pressing ■ stops it, writes the elapsed SECONDS into that set's
+// "reps" field (which is relabelled שניות for iso exercises), marks the set done and triggers the
+// normal rest/chaining flow — same as the ✓ button does for a regular set.
+// Timestamp-based (UI.iso[key] = startedAt ms, persisted in wt_ui_v1) so it survives a screen lock or
+// app backgrounding exactly like the rest timer, instead of dying with the JS interval.
+let _isoInts = {};                       // key -> intervalId
+function _isoMap(){ if(!UI.iso) UI.iso={}; return UI.iso; }
+function _isoKey(exId,i){ return exId+"_"+i; }
+function _isoElapsed(key){ const st=_isoMap()[key]; return st ? Math.max(0, Math.round((Date.now()-st)/1000)) : 0; }
+function _isoPaint(key){
+  const btn=document.querySelector(`.iso-btn[data-key="${key}"]`);
+  if(!btn){ if(_isoInts[key]){ clearInterval(_isoInts[key]); delete _isoInts[key]; } return; }
+  btn.textContent = "■ " + fmtDur(_isoElapsed(key));
+  btn.classList.add("running");
+}
+function startIso(exId,i){
+  const key=_isoKey(exId,i);
+  _isoMap()[key]=Date.now(); saveUI();
+  if(_isoInts[key]) clearInterval(_isoInts[key]);
+  _isoPaint(key);
+  _isoInts[key]=setInterval(()=>_isoPaint(key),1000);
+}
+// Returns elapsed seconds and clears the running state (does NOT write to the log — caller decides).
+function stopIso(exId,i){
+  const key=_isoKey(exId,i);
+  const secs=_isoElapsed(key);
+  if(_isoInts[key]){ clearInterval(_isoInts[key]); delete _isoInts[key]; }
+  delete _isoMap()[key]; saveUI();
+  return secs;
+}
+function isoRunning(exId,i){ return !!_isoMap()[_isoKey(exId,i)]; }
+// Re-attach live intervals after a reload/refocus for any hold left running.
+function resumeIso(){
+  Object.keys(_isoMap()).forEach(key=>{
+    if(_isoInts[key]) clearInterval(_isoInts[key]);
+    _isoInts[key]=setInterval(()=>_isoPaint(key),1000);
+    _isoPaint(key);
+  });
+}
+
 function resumeRest(){
   _restsArr().forEach(r=>{
     if(r.endsAt>Date.now()){
@@ -1311,9 +1362,10 @@ function renderWorkoutContent() {
       row.innerHTML = `
         <span class="set-num">${i+1}</span>
         <div><div class="set-lbl">ק"ג</div><input type="number" min="0" step="0.5" value="${s.weight||""}" placeholder="—" class="${isAuto.weight?'auto-val':''}" data-field="weight" data-set="${i}"></div>
-        <div><div class="set-lbl">חזרות</div><input type="number" min="0" value="${s.reps||""}" placeholder="—" class="${isAuto.reps?'auto-val':''}" data-field="reps" data-set="${i}"></div>
+        <div><div class="set-lbl">${ex.iso?"שניות":"חזרות"}</div><input type="number" min="0" value="${s.reps||""}" placeholder="—" class="${isAuto.reps?'auto-val':''}" data-field="reps" data-set="${i}"></div>
         <div><div class="set-lbl">RPE</div><select data-field="rpe" data-set="${i}" class="${isAuto.rpe?'auto-val':''}"><option value="">—</option>${[5,6,7,8,9,10].map(n=>`<option${s.rpe==n?" selected":""}>${n}</option>`).join("")}</select></div>
         <div><div class="set-lbl">הערה</div><input type="text" value="${s.note||""}" placeholder="כאב/תחושה" data-field="note" data-set="${i}"></div>
+        ${ex.iso?`<div class="iso-btn${isoRunning(ex.id,i)?' running':''}" data-key="${_isoKey(ex.id,i)}" data-set="${i}" title="טיימר החזקה">${isoRunning(ex.id,i)?"■ "+fmtDur(_isoElapsed(_isoKey(ex.id,i))):"▶ התחל"}</div>`:""}
         <div class="set-done-btn${s.done?' on':''}" data-set="${i}" title="בוצע → מנוחה">✓</div>`;
       row.querySelectorAll("input,select").forEach(inp => {
         inp.addEventListener("change", () => {
@@ -1328,10 +1380,30 @@ function renderWorkoutContent() {
           save(SK.logs,LOGS); renderDayPills();
         });
       });
-      const db=row.querySelector(".set-done-btn");
-      db.onclick=()=>{
-        const si=+db.dataset.set;
-        exLog.sets[si].done=!exLog.sets[si].done;
+      // Iso hold timer: ▶ starts a live count-up for this set; ■ stops it, writes the elapsed
+      // seconds into the set's time field and completes the set through the normal flow below.
+      const ib=row.querySelector(".iso-btn");
+      if(ib){
+        ib.onclick=()=>{
+          const si=+ib.dataset.set;
+          if(isoRunning(ex.id,si)){
+            const secs=stopIso(ex.id,si);
+            if(secs>0){
+              exLog.sets[si].reps=String(secs);            // stored in the same field, labelled שניות for iso
+              exLog.sets[si].auto=exLog.sets[si].auto||{};
+              exLog.sets[si].auto.reps=false;              // measured, not a prefilled target
+            }
+            if(!exLog.sets[si].done) _completeSet(si, true);
+            else { save(SK.logs,LOGS); renderWorkoutContent(); }
+          } else {
+            startIso(ex.id,si);
+          }
+        };
+      }
+      // Shared completion path — used by the ✓ button and by stopping an iso hold, so both
+      // stamp exercise end-time, chain to the next exercise and start rest identically.
+      function _completeSet(si, forceOn){
+        exLog.sets[si].done = forceOn===true ? true : !exLog.sets[si].done;
         const on=exLog.sets[si].done;
         const allDone = setsArr.every(j=>exLog.sets[j]&&exLog.sets[j].done);
         if(allDone) exLog.meta.done=true;
@@ -1348,6 +1420,14 @@ function renderWorkoutContent() {
         if(on && ex.rest) startRest(ex.rest, ex.name, nextExId, ex.id);
         else if(on && nextExId) _startExTiming(nextExId);   // last set done, no rest defined → chain immediately
         renderWorkoutContent();
+      }
+      const db=row.querySelector(".set-done-btn");
+      db.onclick=()=>{
+        const si=+db.dataset.set;
+        // Un-ticking a set that has a hold still running also cancels the timer, so it can't keep
+        // counting in the background against a set the user just reopened.
+        if(ex.iso && isoRunning(ex.id,si) && exLog.sets[si].done) stopIso(ex.id,si);
+        _completeSet(si);
       };
       body.appendChild(row);
     });
@@ -2101,6 +2181,67 @@ function sessionMaxWeightForIds(log, ids) {
   return null;
 }
 
+// ══════════════════════════════════════════════════════════════════
+// PULL-UP: FREE BAR vs ASSISTED MACHINE (added 16.07.2026)
+// Both were being logged under the same exercise id, which made the numbers meaningless — and the
+// weight column means OPPOSITE things in each case:
+//   • assisted machine (knees on the pad): the logged 10–30kg is how much is taken OFF bodyweight →
+//     effective load = bodyweight − assistance, and a HIGHER number means an EASIER set.
+//   • free bar: the logged 70–80kg is the user's own bodyweight → effective load = that number.
+// Merging them produced a nonsense series (a 25kg "lighter" assisted session looked like a collapse
+// in strength). We classify each set by magnitude against bodyweight, convert both to a single
+// comparable "effective kg moved", and keep the two modes as SEPARATE dashboard series.
+const PULL_ASSIST_MAX_RATIO = 0.6;   // logged weight below 60% of bodyweight ⇒ it's machine assistance
+function _bodyweightOn(dateStr){
+  if (!WEIGHT || !WEIGHT.length) return 76;                       // profile default
+  const sorted=[...WEIGHT].filter(w=>w&&w.date&&parseFloat(w.value)>0).sort((a,b)=>a.date.localeCompare(b.date));
+  if(!sorted.length) return 76;
+  let bw=parseFloat(sorted[0].value);
+  for(const w of sorted){ if(!dateStr || w.date<=dateStr) bw=parseFloat(w.value); else break; }
+  return bw;
+}
+function _isPullExercise(exId){ return exId==="pullup" || exId==="pullup_u"; }
+// "assist" | "free" for one logged set of a pull-up exercise.
+function _pullMode(weight, dateStr){
+  const w=parseFloat(weight); if(!(w>0)) return null;
+  return w < _bodyweightOn(dateStr)*PULL_ASSIST_MAX_RATIO ? "assist" : "free";
+}
+// Converts a logged weight into actual kilograms moved, so the two modes live on one scale.
+function _effectiveLoad(exId, weight, dateStr){
+  const w=parseFloat(weight); if(!(w>0)) return null;
+  if(!_isPullExercise(exId)) return w;
+  return _pullMode(w,dateStr)==="assist" ? Math.max(1, _bodyweightOn(dateStr) - w) : w;
+}
+
+// ── strength = load × reps, not load alone (added 16.07.2026) ──
+// Tracking only the heaviest weight per session hides real progress: going 60kg×6 → 60kg×10 is a
+// substantial strength gain that used to register as a completely flat line. Estimated 1RM (e1RM)
+// folds the rep count in, so both "more weight" and "more reps at the same weight" move the metric.
+// Epley: e1RM = w × (1 + reps/30); reps==1 returns w exactly. Capped at 12 reps because the formula's
+// accuracy degrades badly in high-rep sets (it would overstate endurance work as maximal strength) —
+// beyond that we clamp to the 12-rep estimate rather than extrapolate. Best set of the session wins.
+function _e1rm(w, reps){
+  const W = parseFloat(w), R = parseInt(reps);
+  if (!(W > 0) || !(R > 0)) return null;
+  return W * (1 + (Math.min(R, 12) - 1) / 30);   // (R-1) so a true 1-rep set returns exactly W
+}
+// mode: null = all sets; "assist"/"free" = only pull-up sets performed that way (ignored for other exercises).
+function sessionBestE1RM(log, exId, mode) {
+  const ex = log.exercises?.[exId];
+  if (!ex) return null;
+  if (ex.meta && ex.meta.excludeFromHistory) return null;   // equipment-substituted — not comparable
+  const isPull = _isPullExercise(exId);
+  const vals = Object.values(ex.sets || {}).map(s => {
+    if (isPull && mode && _pullMode(s.weight, log.date) !== mode) return null;
+    return _e1rm(_effectiveLoad(exId, s.weight, log.date), s.reps);
+  }).filter(v => v > 0);
+  return vals.length ? Math.round(Math.max(...vals) * 10) / 10 : null;
+}
+function sessionBestE1RMForIds(log, ids, mode) {
+  for (const id of ids) { const v = sessionBestE1RM(log, id, mode); if (v) return v; }
+  return null;
+}
+
 function dateToWeekKey(dateStr) {
   const d = new Date(dateStr);
   const jan4 = new Date(d.getFullYear(), 0, 4);
@@ -2130,10 +2271,10 @@ function getAggregateStrengthData() {
       .filter(([,log])=>ids.some(id=>log.exercises?.[id]))
       .sort((a,b)=>a[0].localeCompare(b[0]));
     if (sessions.length < 2) return;
-    const baseline = sessionMaxWeightForIds(sessions[0][1], ids);
+    const baseline = sessionBestE1RMForIds(sessions[0][1], ids);
     if (!baseline) return;
     sessions.forEach(([key,log]) => {
-      const mw = sessionMaxWeightForIds(log, ids);
+      const mw = sessionBestE1RMForIds(log, ids);
       if (!mw) return;
       const wk = dateToWeekKey(key.split("_")[0]);
       if (!byWeek[wk]) byWeek[wk] = [];
@@ -2150,16 +2291,21 @@ function getAggregateStrengthData() {
   };
 }
 
-/* single exercise-GROUP max weight per session (merges every id in the alias group — see above) */
+/* single exercise-GROUP e1RM per session (merges every id in the alias group — see above).
+   Pull-ups accept a virtual id suffix ("pullup::free" / "pullup::assist") so the free-bar and
+   assisted-machine variants render as two separate series instead of one incoherent line. */
 function getSingleExStrengthData(exId) {
-  const ids = _groupIdsFor(exId);
+  const [baseId, mode] = String(exId).split("::");
+  const ids = _groupIdsFor(baseId);
   const sessions = Object.entries(LOGS)
     .filter(([,log])=>ids.some(id=>log.exercises?.[id]))
+    .filter(([,log])=> !mode || sessionBestE1RMForIds(log, ids, mode)!=null)   // drop sessions with no sets in this mode
     .sort((a,b)=>a[0].localeCompare(b[0]))
     .slice(-14);
   return {
     labels: sessions.map(([k])=>k.split("_")[0].slice(5)),
-    data:   sessions.map(([,log])=>sessionMaxWeightForIds(log, ids))
+    data:   sessions.map(([,log])=>sessionBestE1RMForIds(log, ids, mode||null)),
+    raw:    sessions.map(([,log])=>sessionMaxWeightForIds(log, ids))   // heaviest logged number, for reference
   };
 }
 
@@ -2201,7 +2347,7 @@ function updateStrengthChart() {
   const sub  = document.getElementById("str-chart-sub");
   if (strMode==="avg") {
     const d = getAggregateStrengthData();
-    sub.textContent = "% שינוי מנקודת ייחוס ראשונה · ממוצע שבועי של כלל התרגילים";
+    sub.textContent = "% שינוי מנקודת ייחוס · ממוצע שבועי · מבוסס 1RM משוער (משקל × חזרות)";
     if (d.data.some(v=>v!==null))
       strengthChartInst = new Chart(sCtx, makeChartCfg(d.labels, d.data, "#10B981", "%"));
     else
@@ -2210,8 +2356,12 @@ function updateStrengthChart() {
     const sel = document.getElementById("ex-selector");
     const exId = sel?.value; if (!exId) return;
     const d  = getSingleExStrengthData(exId);
-    const ex = TRACKABLE_EXERCISES.find(e=>e.id===exId);
-    sub.textContent = `ק"ג מרבי לסט · ${ex?.name||exId}`;
+    const [baseId, pMode] = String(exId).split("::");
+    const ex = TRACKABLE_EXERCISES.find(e=>e.id===baseId);
+    const label = pMode==="free" ? "מתח חופשי (מוט) — משקל גוף"
+                : pMode==="assist" ? "מתח במכונה מסייעת — עומס אפקטיבי (משקל גוף פחות הסיוע)"
+                : (ex?.name||exId);
+    sub.textContent = `1RM משוער (עומס אפקטיבי × חזרות) · ${label}`;
     if (d.data.some(v=>v!==null))
       strengthChartInst = new Chart(sCtx, makeChartCfg(d.labels, d.data, "#F59E0B", " kg"));
     else
@@ -2260,6 +2410,10 @@ function renderDashboard() {
     });
     sel.innerHTML = opts.map(e=>{
       const gk=_groupKeyFor(e.id), grouped=_groupIdsFor(gk).length>1;
+      // Pull-ups split into two entries — free bar vs assisted machine are different exercises in
+      // practice (and the logged kg means the opposite thing in each), so never one blended line.
+      if(_isPullExercise(gk)) return `<option value="${gk}::free">מתח חופשי (מוט)${grouped?" · כל הימים":""}</option>`+
+                                     `<option value="${gk}::assist">מתח במכונה מסייעת${grouped?" · כל הימים":""}</option>`;
       return `<option value="${gk}">${e.name}${grouped?" (כל הימים)":""}</option>`;
     }).join("");
     sel.addEventListener("change", updateStrengthChart);
@@ -2717,11 +2871,19 @@ function _sessionData(log, exId){
   const sets = Object.keys(ex.sets||{}).map(k=>ex.sets[k])
     .filter(s => parseFloat(s.weight)>0 && parseInt(s.reps)>0);
   if(!sets.length) return null;
-  const topWeight = Math.max(...sets.map(s=>parseFloat(s.weight)));
+  // Effective load, not the raw logged number: for pull-ups a logged 25 (machine assistance) actually
+  // represents ~51kg moved while a logged 76 (free bar) is 76kg — comparing them raw made progression
+  // look like a collapse/jump every time the modality changed. See _effectiveLoad.
+  const topWeight = Math.max(...sets.map(s => _effectiveLoad(exId, s.weight, log.date) || 0));
+  if(!(topWeight>0)) return null;
   const rpes = sets.map(s=>parseInt(s.rpe)).filter(n=>n>0);
+  // Which modality this pull-up session was performed in — needed to translate a suggested target
+  // back into the number the user actually types (assistance kg on the machine vs bodyweight on the bar).
+  const topSet = sets.reduce((best,s)=> (_effectiveLoad(exId,s.weight,log.date)||0) > (_effectiveLoad(exId,best.weight,log.date)||0) ? s : best, sets[0]);
   return {
     date: log.date,
     topWeight,
+    pullMode: _isPullExercise(exId) ? _pullMode(topSet.weight, log.date) : null,
     maxRpe: rpes.length ? Math.max(...rpes) : null,
     pain: (ex.meta && parseInt(ex.meta.pain)) || null
   };
@@ -2812,11 +2974,56 @@ function computeTarget(exId){
     weight=_snapToObserved(exId, naive, "up");
     reason = weight===naive ? `RPE ${rpe} — העלה +${inc} ק"ג` : `RPE ${rpe} — העלה למשקל הבא שכבר השתמשת בו (${weight} ק"ג)`;
   }
-  if(plateau && level==="up"){ level="plateau"; reason=`תקוע 3 אימונים — שקול החלפת תרגיל/טווח חזרות`; }
+  // Evidence-based order of operations on a plateau: a meta-analysis of 11 studies found no
+  // hypertrophy advantage to routine exercise variation, so swapping the exercise is the LAST resort —
+  // change the rep range / volume first and keep the movement (and its measurable history) intact.
+  if(plateau && level==="up"){ level="plateau"; reason=`תקוע 3 אימונים — שנה קודם טווח חזרות/נפח; החלפת תרגיל רק אם זה לא עזר`; }
+  // Pull-ups: the math above runs on EFFECTIVE kg moved, but the box the user types into expects the
+  // logged convention of the modality he last used — assistance kg on the machine (where progress means
+  // a SMALLER number), or bodyweight on the free bar (which he doesn't control by loading plates).
+  if(_isPullExercise(exId) && weight!=null){
+    if(last.pullMode==="assist"){
+      const bw=_bodyweightOn(last.date);
+      const assist=Math.max(0, Math.round((bw - weight)*2)/2);
+      reason = `${reason} · במכונה מסייעת: הורד את הסיוע ל-${assist} ק"ג (פחות סיוע = חזק יותר)`;
+      weight = assist;
+    } else {
+      reason = `${reason} · מתח חופשי: המשקל הוא משקל גופך — התקדמות = עוד חזרות/איטיות מבוקרת`;
+    }
+  }
   return { level, weight, reason, color:C[level] };
 }
 // Per-set targets (weight/reps/RPE) for pre-filling the set rows of the NEXT session.
 // Returns { level, color, reason, weight, sets:[{weight,reps,rpe}, ...] } or null if no history yet.
+// ── physiological sanity pass on a prescribed set pattern (added 16.07.2026) ──
+// At a CONSTANT weight, fatigue accumulates across sets within a session, so two things must hold:
+//   (a) reps are non-increasing  — a later, more fatigued set can't be expected to beat a fresh earlier one;
+//   (b) RPE  is  non-decreasing  — the same (or fewer) reps later must feel at least as hard.
+// The old auto-fill copied last session's per-set values verbatim, so a nonsensical pattern the user
+// happened to log once (e.g. set1 = 8 reps @RPE7, set2 = 10 reps @RPE8 at the same weight — the FRESH
+// set doing less work yet rated easier) got replayed as a target forever. History is left untouched;
+// this only sanitizes what we PRESCRIBE. Sets at a heavier weight than a previous set restart the
+// comparison (a genuine ascending/pyramid pattern is legitimate and must not be flattened).
+function _sanitizeSetPattern(sets){
+  let prevW=null, prevReps=null, prevRpe=null;
+  sets.forEach(s=>{
+    const w = s.weight!=null && s.weight!=="" ? parseFloat(s.weight) : null;
+    const sameOrLighter = (w!=null && prevW!=null) ? (w <= prevW) : (w==null && prevW==null);
+    if(sameOrLighter && w!=null && prevW!=null && w===prevW){
+      // (a) cap reps at the previous set's reps
+      const r = parseInt(s.reps), pr = parseInt(prevReps);
+      if(r>0 && pr>0 && r>pr) s.reps = pr;
+      // (b) floor RPE at the previous set's RPE
+      const e = parseInt(s.rpe), pe = parseInt(prevRpe);
+      if(e>0 && pe>0 && e<pe) s.rpe = pe;
+    }
+    prevW = w!=null ? w : prevW;
+    if(s.reps!=null && s.reps!=="") prevReps = s.reps;
+    if(s.rpe!=null && s.rpe!=="")   prevRpe  = s.rpe;
+  });
+  return sets;
+}
+
 function computeSetTargets(exId, numSets){
   const tgt = computeTarget(exId);
   if(!tgt) return null;
@@ -2832,6 +3039,7 @@ function computeSetTargets(exId, numSets){
     const reps = (ls && ls.reps) ? ls.reps : null;
     sets.push({ weight: tgt.weight!=null?tgt.weight:null, reps, rpe });
   }
+  _sanitizeSetPattern(sets);
   return { level:tgt.level, color:tgt.color, reason:tgt.reason, weight:tgt.weight, sets };
 }
 
@@ -2963,8 +3171,8 @@ async function cloudPull(){
 }
 
 // Pull on load, and whenever the app regains focus (catches phone→computer)
-window.addEventListener("load", ()=>{ cloudPull(); if(typeof resumeRest==="function") resumeRest(); });
-document.addEventListener("visibilitychange", ()=>{ if(!document.hidden){ cloudPull(); if(typeof resumeRest==="function") resumeRest(); } });
+window.addEventListener("load", ()=>{ cloudPull(); if(typeof resumeRest==="function") resumeRest(); if(typeof resumeIso==="function") resumeIso(); });
+document.addEventListener("visibilitychange", ()=>{ if(!document.hidden){ cloudPull(); if(typeof resumeRest==="function") resumeRest(); if(typeof resumeIso==="function") resumeIso(); } });
 </script>
 <script>
 // Proactive update check + reload prompt. iOS home-screen PWAs (standalone mode) don't reliably
