@@ -728,6 +728,13 @@ const TRACKABLE_EXERCISES = [
 // tracked as separate program entries. Stops applying automatically once db_flat_bench builds its
 // own clean (non-excluded) history again.
 const PROGRESSION_FALLBACK = { db_flat_bench: "db_bench_u" };
+// Pull-up modality constants — MUST live up here, not next to their helper functions further down.
+// They are read on the very first render (renderWorkoutContent → computeSetTargets → computeTarget →
+// _sessionData → _effectiveLoad → _pullMode). Declared lower down they sat in their temporal dead
+// zone and threw "Cannot access before initialization" mid-render, truncating the exercise list right
+// at the pull-up (Pull day = 1st exercise → almost nothing rendered; Upper = 4th → cut after three).
+const PULL_POSITION_FREE_MAX = 2;    // 1st or 2nd exercise of the day ⇒ free bar; later ⇒ assisted machine
+const PULL_ASSIST_MAX_RATIO = 0.6;   // logged weight below 60% of bodyweight ⇒ it's machine assistance
 // Same real-world movement, tracked under different IDs because it appears in more than one program
 // day at a different intensity/rep-range (e.g. Push = heavy top-set, Upper = light-volume day). The
 // dashboard's per-exercise and aggregate strength charts merge every id in a group into one series —
@@ -743,6 +750,24 @@ const EXERCISE_ALIAS_GROUPS = [
 ];
 function _groupIdsFor(exId){ const g=EXERCISE_ALIAS_GROUPS.find(g=>g.includes(exId)); return g||[exId]; }
 function _groupKeyFor(exId){ const g=EXERCISE_ALIAS_GROUPS.find(g=>g.includes(exId)); return g?g[0]:exId; }
+// ── declared equipment inventory ──
+// Weights the user has explicitly reported as PHYSICALLY AVAILABLE on a given piece of equipment,
+// even when they never appear in a logged set. Learning increments from history alone (see
+// _observedWeights below) can only ever discover weights he already happened to use, so a target
+// can land on a plate/pin that simply doesn't exist on that machine — which he then has to correct
+// by hand, every single session. These entries come from his own repeated set/exercise notes:
+//   db_curl / hammer_curl  → "יש או 10 או 12.5 או 12 סביב המשקל הזה" (fixed dumbbells, no 11/11.5)
+//   seated_cable_row       → "אין 54 במכשיר שהשתמשתי בו, יש 51.8 או 58.5" (discrete stack)
+//   leg_curl               → "אין 52.5 במכונה — יש 50 ואז 54"
+// Declared here rather than inferred, because "this weight exists" is a fact about the gym, not a
+// fact about his training history. Merged with (never replacing) the observed set.
+// Same TDZ reasoning as the consts above — read from computeTarget() during the first render.
+const EQUIP_WEIGHTS = {
+  db_curl:          [8, 10, 12, 12.5, 15],
+  hammer_curl:      [8, 10, 12, 12.5, 15],
+  seated_cable_row: [45.1, 51.8, 58.5, 65.3],
+  leg_curl:         [45, 50, 54, 58],
+};
 // Same TDZ reasoning — used by the dashboard's chart config, reachable from the same early auto-restore path.
 const CHART_GRID = "rgba(255,255,255,0.06)";
 const CHART_TICK = "#6B7280";
@@ -2197,8 +2222,9 @@ function sessionMaxWeightForIds(log, ids) {
 // technique and scapular control on an already-fatigued back. Declared explicitly per slot (pullMode)
 // rather than inferred, so the intent survives any future re-ordering — but see PULL_POSITION_FREE_MAX:
 // if a slot is ever moved, the position rule is what decides.
-const PULL_POSITION_FREE_MAX = 2;    // 1st or 2nd exercise of the day ⇒ free bar; later ⇒ assisted machine
-const PULL_ASSIST_MAX_RATIO = 0.6;   // logged weight below 60% of bodyweight ⇒ it's machine assistance
+// NOTE: PULL_POSITION_FREE_MAX / PULL_ASSIST_MAX_RATIO are declared in the TDZ-safe zone at the top
+// of the script (next to _BIG_LOWER) — they are read during the very first synchronous render via
+// renderWorkoutContent → computeSetTargets → computeTarget → _sessionData → _effectiveLoad → _pullMode.
 function _bodyweightOn(dateStr){
   if (!WEIGHT || !WEIGHT.length) return 76;                       // profile default
   const sorted=[...WEIGHT].filter(w=>w&&w.date&&parseFloat(w.value)>0).sort((a,b)=>a.date.localeCompare(b.date));
@@ -2461,7 +2487,30 @@ function loadNutrition() {
 }
 function saveNutrition(data) {
   const key = SK.nutrition+"_"+todayKey();
+  data.savedAt = new Date().toISOString();   // lets cloud merge pick the newer copy (phone ↔ computer)
   localStorage.setItem(key, JSON.stringify(data));
+  if(typeof _scheduleCloudPush==="function") _scheduleCloudPush();
+}
+// Nutrition is stored as one localStorage key PER DAY (wt_nutrition_v1_YYYY-MM-DD) rather than a
+// single store, so it needs collecting before it can be synced like the other stores.
+function _collectNutrition(){
+  const out={}; const pfx=SK.nutrition+"_";
+  for(let i=0;i<localStorage.length;i++){
+    const k=localStorage.key(i);
+    if(!k || k.indexOf(pfx)!==0) continue;
+    try{ const v=JSON.parse(localStorage.getItem(k)); if(v) out[k.slice(pfx.length)]=v; }catch(e){}
+  }
+  return out;
+}
+// Newer savedAt wins; a copy with no savedAt predates this field, so it loses to one that has it.
+function _mergeNutrition(local, remote){
+  const out=Object.assign({}, local||{});
+  for(const d in (remote||{})){
+    const a=out[d], b=remote[d];
+    if(!a){ out[d]=b; continue; }
+    if((b&&b.savedAt||"") > (a&&a.savedAt||"")) out[d]=b;
+  }
+  return out;
 }
 
 function calcMealProtein(mealId, nutData) {
@@ -2944,6 +2993,7 @@ function _lastSessionSets(exId){
 function _observedWeights(exId){
   const ids = _groupIdsFor(exId);
   const set = new Set();
+  ids.forEach(id=>{ (EQUIP_WEIGHTS[id]||[]).forEach(w=>{ if(w>0) set.add(w); }); });
   Object.values(LOGS).forEach(log=>{
     if(!log || !log.savedAt) return;
     ids.forEach(id=>{
@@ -2958,14 +3008,39 @@ function _observedWeights(exId){
   });
   return [...set].sort((a,b)=>a-b);
 }
-// direction "up" → nearest observed weight >= naiveTarget; "down" → nearest observed weight <= naiveTarget.
-// Falls back to the naive (flat-increment) value when there isn't enough real history to trust a pattern yet.
+// Snap a naive flat-increment target onto a weight that actually EXISTS on the equipment.
+// The two directions need genuinely different rules — using one rule for both breaks the other:
+//
+// "up" (progression): the result must never sit BELOW the naive target, or an increase silently
+//   turns into a hold. So: lowest known weight >= target, and if the target is above everything
+//   known, keep the naive value — he's moving into new territory and the inventory says nothing
+//   about what lives above his max, so snapping down would stall him at his historical best.
+//
+// "down" (deload): nearest known weight in EITHER direction, because on a coarse rack the nearest
+//   step strictly below a 7.5% deload can be a 20% drop — overshooting the 5-10% the protocol
+//   intends. Candidates are capped just under the original working weight (naive is ~92.5% of it)
+//   so "nearest" can never hand back a weight at or above the one being deloaded from.
+//
+// Only snap where the equipment is actually known to be discrete: either a declared inventory
+// (EQUIP_WEIGHTS) or enough observed history to trust the pattern. On a plate-loaded machine with a
+// thin log, the naive value is usually loadable and snapping to the sparse observed set can turn a
+// 7.5% deload into a 25% one — so in that case leave the naive value alone.
 function _snapToObserved(exId, naiveTarget, direction){
   const obs = _observedWeights(exId);
-  if(obs.length < 3) return naiveTarget;
-  if(direction==="up"){ const c=obs.filter(w=>w>=naiveTarget-0.01); if(c.length) return c[0]; }
-  else { const c=obs.filter(w=>w<=naiveTarget+0.01); if(c.length) return c[c.length-1]; }
-  return naiveTarget;
+  const declared = _groupIdsFor(exId).some(id=>(EQUIP_WEIGHTS[id]||[]).length);
+  if(obs.length < 2 || (!declared && obs.length < 3)) return naiveTarget;
+  if(direction==="up"){
+    const c = obs.filter(w=>w>=naiveTarget-0.01);
+    return c.length ? c[0] : naiveTarget;
+  }
+  const c = obs.filter(w=>w<=naiveTarget*1.06);
+  if(!c.length) return obs[0];
+  let best = c[0];
+  for(const w of c){
+    const d=Math.abs(w-naiveTarget), bd=Math.abs(best-naiveTarget);
+    if(d < bd-0.01 || (Math.abs(d-bd)<=0.01 && w<best)) best = w;
+  }
+  return best;
 }
 // returns {weight, reason, level, color} or null
 function computeTarget(exId){
@@ -3160,7 +3235,7 @@ async function cloudPush(){
   _syncBadge("syncing");
   try{
     const cleanLogs={}; for(const k in LOGS){ if(_logKeep(LOGS[k])) cleanLogs[k]=LOGS[k]; }
-    const body=[{ id:ROW_ID, payload:{ logs:cleanLogs, weekly:WEEKLY, rehab:REHAB, weight:WEIGHT, daily:DAILY, health:HEALTH },
+    const body=[{ id:ROW_ID, payload:{ logs:cleanLogs, weekly:WEEKLY, rehab:REHAB, weight:WEIGHT, daily:DAILY, health:HEALTH, nutrition:_collectNutrition() },
                   updated_at:new Date().toISOString(), updated_by:"app" }];
     const r=await fetch(`${SUPA_URL}/rest/v1/workout_data`, { method:"POST",
       headers:Object.assign({}, SUPA_HEADERS, { Prefer:"resolution=merge-duplicates,return=minimal" }),
@@ -3181,9 +3256,14 @@ async function cloudPull(){
       if(p.weight) WEIGHT = _mergeWeightArr(WEIGHT, p.weight);
       if(p.daily)  DAILY  = _mergeByKey(DAILY,  p.daily, _pickDaily);
       if(p.health) HEALTH = _mergeHealth(HEALTH, p.health);
+      if(p.nutrition){
+        const merged=_mergeNutrition(_collectNutrition(), p.nutrition);
+        for(const d in merged) localStorage.setItem(SK.nutrition+"_"+d, JSON.stringify(merged[d]));
+      }
       cleanupLogs();
       _writeLS(SK.logs,LOGS); _writeLS(SK.rehab,REHAB); _writeLS(SK.weekly,WEEKLY); _writeLS(SK.weight,WEIGHT); _writeLS(SK.daily,DAILY); _writeLS(SK.health,HEALTH);
       if(document.getElementById("view-health") && document.getElementById("view-health").classList.contains("active") && typeof renderHealth==="function") renderHealth();
+      if(document.getElementById("view-nutrition") && document.getElementById("view-nutrition").classList.contains("active") && typeof renderNutrition==="function") renderNutrition();
       if(typeof renderDayPills==="function") renderDayPills();
       if(typeof renderWorkoutContent==="function") renderWorkoutContent();
       _syncBadge("synced");
