@@ -3210,6 +3210,17 @@ function _weightIsExcluded(exId, w){
 // Now, when the known set is too thin to snap onto directly, we fall back to the inferred grid STEP
 // (learned from the gaps between real weights) and round onto that grid instead of inventing a value.
 // Anything explicitly marked non-existent is skipped in both paths.
+//
+// UPDATE 29.07.2026 — snapping must never distort the prescribed dose. With a sparse inventory the
+// "nearest known weight" can be absurdly far from the intended target: hip_thrust_d5 jumped 90→130
+// (+44%, because an alias-group sibling had once used 130) and leg_press deloaded 160→120 (−25%
+// instead of the intended −7.5%). A snap is only accepted inside a sane band around the naive target;
+// outside it we fall back to the grid, and failing that to the naive value itself.
+function _snapAcceptable(candidate, naiveTarget, direction){
+  if(!(candidate>0) || !(naiveTarget>0)) return false;
+  if(direction==="up")   return candidate <= naiveTarget*1.12 + 0.01;   // an increase must stay an increase, not a leap
+  return candidate >= naiveTarget*0.90 - 0.01;                          // a 7.5% deload must not become 25%
+}
 function _snapToObserved(exId, naiveTarget, direction){
   const obs = _observedWeights(exId).filter(w=>!_weightIsExcluded(exId,w));
   const pick = (w)=> _weightIsExcluded(exId,w) ? null : w;
@@ -3217,20 +3228,33 @@ function _snapToObserved(exId, naiveTarget, direction){
   if(obs.length >= 2){
     if(direction==="up"){
       const c = obs.filter(w=>w>=naiveTarget-0.01);
-      if(c.length) return c[0];
+      if(c.length && _snapAcceptable(c[0], naiveTarget, "up")) return c[0];
       // Above everything known: step up on the learned grid rather than repeating his current max.
       const step=_inferGridStep(exId);
-      if(step>0){ const top=obs[obs.length-1]; let w=top; while(w < naiveTarget-0.01) w=Math.round((w+step)*100)/100; return pick(w) ?? Math.round((w+step)*100)/100; }
+      if(step>0){
+        const top=obs[obs.length-1]; let w=top;
+        while(w < naiveTarget-0.01) w=Math.round((w+step)*100)/100;
+        if(_snapAcceptable(w, naiveTarget, "up")) return pick(w) ?? naiveTarget;
+      }
       return naiveTarget;
     }
     const c = obs.filter(w=>w<=naiveTarget*1.06);
-    if(!c.length) return obs[0];
-    let best = c[0];
+    let best = c.length ? c[0] : null;
     for(const w of c){
       const d=Math.abs(w-naiveTarget), bd=Math.abs(best-naiveTarget);
       if(d < bd-0.01 || (Math.abs(d-bd)<=0.01 && w<best)) best = w;
     }
-    return best;
+    if(best!=null && _snapAcceptable(best, naiveTarget, "down")) return best;
+    // Nearest known is a far bigger drop than the protocol intends → try the grid, else keep the
+    // computed dose. Better a loadable-but-unverified number than a 25% unintended deload.
+    const stepD=_inferGridStep(exId);
+    if(stepD>0){
+      const anchor=obs[0];
+      let w=Math.round((anchor + Math.round((naiveTarget-anchor)/stepD)*stepD)*100)/100;
+      if(w>naiveTarget+0.01) w=Math.round((w-stepD)*100)/100;
+      if(_snapAcceptable(w, naiveTarget, "down") && !_weightIsExcluded(exId,w)) return w;
+    }
+    return naiveTarget;
   }
 
   // Thin inventory → round onto the inferred grid, anchored on a real weight when we have one.
