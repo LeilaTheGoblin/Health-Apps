@@ -1471,11 +1471,17 @@ function renderWorkoutContent() {
     const dot = el("div","ex-dot"+(done?" done":"")); if(!done) dot.style.background = day.color;
     const info = el("div",""); info.style.flex="1";
     const restTxt = ex.rest ? ` · מנוחה ${ex.rest>=60?(Math.round(ex.rest/60*10)/10)+"′":ex.rest+"ש"}` : "";
-    const equip = (typeof EQUIP==="object" && EQUIP[ex.id]) ? EQUIP[ex.id] : "";
+    // Decisions the app obeys at render time: a locked implement replaces the generic equipment line,
+    // and a rep-range decision replaces the programmed range — both straight from the user's notes.
+    const _lock = (typeof _decLatest==="function") ? _decLatest(ex.id,"equipment_lock") : null;
+    const _rr   = (typeof _decLatest==="function") ? _decLatest(ex.id,"rep_range") : null;
+    const repsTxt = (_rr && _rr.value) ? String(_rr.value) : ex.reps;
+    const equip = _lock && _lock.value ? String(_lock.value)
+                : ((typeof EQUIP==="object" && EQUIP[ex.id]) ? EQUIP[ex.id] : "");
     const sessDur = (typeof _exSessionDuration==="function") ? _exSessionDuration(log, ex.id) : null;
     const avgDur = (!sessDur && typeof avgExDuration==="function") ? avgExDuration(ex.id) : null;
     const timeTxt = sessDur ? `<span class="ex-time-actual">⏱ ${fmtDur(sessDur)}</span>` : (avgDur ? `<span class="ex-time-est">≈${fmtDur(avgDur)} משוער</span>` : "");
-    info.innerHTML = `<div class="ex-name">${ex.core?'◆ ':''}${ex.name}${isCurrent?' <span class="cur-tag">נוכחי</span>':''}${timeTxt}</div><div class="ex-meta">${ex.sets} × ${ex.reps}${restTxt}${ex.note?" · "+ex.note:""}</div>${equip?`<div class="ex-equip">🏋️ ${equip}</div>`:""}${tgt&&tgt.reason?`<div class="ex-target" style="color:${tgt.color};background:${tgt.color}1A">${tgt.weight?`יעד ${tgt.weight} ק"ג · `:""}${tgt.reason}</div>`:""}`;
+    info.innerHTML = `<div class="ex-name">${ex.core?'◆ ':''}${ex.name}${isCurrent?' <span class="cur-tag">נוכחי</span>':''}${timeTxt}</div><div class="ex-meta">${ex.sets} × ${repsTxt}${restTxt}${ex.note?" · "+ex.note:""}</div>${equip?`<div class="ex-equip">${_lock?"📌":"🏋️"} ${equip}</div>`:""}${tgt&&tgt.reason?`<div class="ex-target" style="color:${tgt.color};background:${tgt.color}1A">${tgt.weight?`יעד ${tgt.weight} ק"ג · `:""}${tgt.reason}</div>`:""}`;
     const dtoggle = el("div","ex-done-toggle"+(done?" on":"")); dtoggle.textContent = done?"✓":""; dtoggle.title="סמן כבוצע";
     dtoggle.onclick=(e)=>{ e.stopPropagation(); exLog.meta.done=!(exLog.meta&&exLog.meta.done); save(SK.logs,LOGS); renderWorkoutContent(); };
     const arrow = el("div","ex-arrow"); arrow.textContent="›"; if(isOpen) arrow.classList.add("open");
@@ -3288,6 +3294,14 @@ function computeTarget(exId){
   const hist = _exHistory(exId);
   if(!hist.length) return null;
   const last = hist[0];
+  // An explicit deload decision (written from the user's own note, e.g. "too heavy for a perfect ROM")
+  // overrides the computed dose for the NEXT session only: once a session newer than the decision is
+  // logged, the normal engine takes over again — it is a correction, not a permanent ceiling.
+  const dl = _decLatest(exId, "deload");
+  if(dl && parseFloat(dl.value)>0 && String(dl.date) > String(last.date)){
+    return { level:"deload", weight:parseFloat(dl.value), color:"#EF4444",
+             reason:`הותאם מהערתך: ${dl.reason||"ירידה מכוונת"}` };
+  }
   const C = { up:"#10B981", hold:"#F59E0B", deload:"#EF4444", pain:"#EF4444", plateau:"#8B5CF6" };
   // plateau: 3 straight sessions with no weight gain
   let plateau = false;
