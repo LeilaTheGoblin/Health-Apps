@@ -697,7 +697,7 @@ const WEEKLY_FIELDS = [
 // ══════════════════════════════════════════════════════════════════
 // STORAGE — localStorage
 // ══════════════════════════════════════════════════════════════════
-const SK = { logs:"wt_logs_v3", weekly:"wt_weekly_v2", rehab:"wt_rehab_v1", nutrition:"wt_nutrition_v1", weight:"wt_weight_v1", daily:"wt_daily_v1", health:"wt_health_v1" };
+const SK = { logs:"wt_logs_v3", weekly:"wt_weekly_v2", rehab:"wt_rehab_v1", nutrition:"wt_nutrition_v1", weight:"wt_weight_v1", daily:"wt_daily_v1", health:"wt_health_v1", decisions:"wt_decisions_v1" };
 // Declared early (not just where used) — computeTarget() runs during the very first render, before the
 // script reaches the "PROGRESSIVE OVERLOAD ENGINE" section further down, so a later `const` here would
 // be in its temporal dead zone and throw the moment real history exists.
@@ -735,6 +735,96 @@ const PROGRESSION_FALLBACK = { db_flat_bench: "db_bench_u" };
 // at the pull-up (Pull day = 1st exercise → almost nothing rendered; Upper = 4th → cut after three).
 const PULL_POSITION_FREE_MAX = 2;    // 1st or 2nd exercise of the day ⇒ free bar; later ⇒ assisted machine
 const PULL_ASSIST_MAX_RATIO = 0.6;   // logged weight below 60% of bodyweight ⇒ it's machine assistance
+
+// ══════════════════════════════════════════════════════════════════
+// DECISIONS — the missing "apply" channel (added 16.07.2026)
+// Until now the nightly agent could only write PROSE into a log file, so every insight it drew from
+// the user's free-text notes ("there's no 52.5 on that machine", "grip is the limiter here") died as
+// a recommendation nobody executed. A DECISION is a structured record the APP ITSELF obeys on every
+// render, which is what actually closes the loop note → understanding → change.
+//
+// Record: { id, date, exId, type, value, reason, source, status, savedAt }
+//   type "weight_exists"    value:number  — this load DOES exist for exId (adds to the grid)
+//   type "weight_missing"   value:number  — this load does NOT exist (negative evidence; never suggested)
+//   type "grid_step"        value:number  — explicit increment for exId when known
+//   type "equipment_lock"   value:string  — the machine/implement actually used, made permanent
+//   type "rep_range"        value:string  — e.g. "6-10"
+//   type "deload"           value:number  — one-off target override for the next session
+//   type "swap"             value:string  — replacement exercise id (medical swaps stay advisory)
+//   type "conflict"         value:string  — quiet record of contradicting evidence (never blocks anything)
+// status: "active" | "superseded" — newer decisions supersede older ones of the same exId+type+value
+// rather than deleting them, so the history of what was decided (and why) is never lost.
+const DECISION_TYPES = ["weight_exists","weight_missing","grid_step","equipment_lock","rep_range","deload","swap","conflict"];
+let DECISIONS = [];   // real value assigned right after load() is defined, below
+function _decActive(exId, type){
+  return DECISIONS.filter(d => d && d.status!=="superseded" && (!exId || d.exId===exId) && (!type || d.type===type));
+}
+// Newest-first, so "what is true now" always beats "what was true before" — this is what lets a later
+// note ("actually there IS an 11kg") override an earlier conclusion without any manual cleanup.
+function _decLatest(exId, type){
+  const arr=_decActive(exId,type).slice().sort((a,b)=>String(b.date||"").localeCompare(String(a.date||"")));
+  return arr[0]||null;
+}
+function addDecision(rec){
+  if(!rec || !rec.type || DECISION_TYPES.indexOf(rec.type)<0) return null;
+  const d = Object.assign({
+    id: "d_"+Date.now().toString(36)+Math.random().toString(36).slice(2,6),
+    date: (typeof todayKey==="function"?todayKey():new Date().toISOString().split("T")[0]),
+    status: "active",
+    savedAt: new Date().toISOString()
+  }, rec);
+  // A new statement about the same load supersedes the opposite one (exists ⇄ missing), so the two
+  // can never both be "true" at once and the newest observation always wins.
+  const opposite = d.type==="weight_exists" ? "weight_missing" : d.type==="weight_missing" ? "weight_exists" : null;
+  if(opposite){
+    DECISIONS.forEach(o=>{
+      if(o.status!=="superseded" && o.exId===d.exId && o.type===opposite && Number(o.value)===Number(d.value)){
+        o.status="superseded"; o.supersededBy=d.id; o.supersededAt=d.savedAt;
+      }
+    });
+  }
+  if(["grid_step","equipment_lock","rep_range","deload","swap"].indexOf(d.type)>=0){
+    DECISIONS.forEach(o=>{ if(o.status!=="superseded" && o.exId===d.exId && o.type===d.type){ o.status="superseded"; o.supersededBy=d.id; o.supersededAt=d.savedAt; } });
+  }
+  DECISIONS.push(d);
+  if(typeof save==="function") save(SK.decisions, DECISIONS);
+  return d;
+}
+// ── unprocessed-note queue ──────────────────────────────────────────
+// Every free-text note the user writes (workout-level, exercise-level, per-set) is collected here with
+// a stable key. The agent marks a key as handled by writing a decision whose `source` is that key, so
+// notes from runs that were BLOCKED are not lost — they simply stay in the queue and get picked up by
+// the next run that succeeds. This is what guarantees nothing the user writes silently disappears.
+function _noteKey(logKey, exId, setIdx){
+  return "note:"+logKey+(exId?("|"+exId):"")+(setIdx!=null?("#"+setIdx):"");
+}
+function _handledNoteKeys(){
+  const s=new Set();
+  DECISIONS.forEach(d=>{ if(d && typeof d.source==="string" && d.source.indexOf("note:")===0) s.add(d.source); });
+  return s;
+}
+function collectNotes(onlyUnprocessed){
+  const handled=_handledNoteKeys();
+  const out=[];
+  Object.keys(LOGS).forEach(logKey=>{
+    const log=LOGS[logKey];
+    if(!log || !log.savedAt) return;
+    const push=(exId,setIdx,text)=>{
+      const t=(text||"").trim(); if(!t) return;
+      const key=_noteKey(logKey,exId,setIdx);
+      if(onlyUnprocessed && handled.has(key)) return;
+      out.push({ key, date:log.date, logKey, exId:exId||null, set:setIdx!=null?setIdx+1:null, text:t, handled:handled.has(key) });
+    };
+    push(null,null,log.notes);
+    Object.keys(log.exercises||{}).forEach(exId=>{
+      const ex=log.exercises[exId];
+      push(exId,null,ex.meta&&ex.meta.note);
+      Object.keys(ex.sets||{}).forEach(k=>{ push(exId, parseInt(k), ex.sets[k].note); });
+    });
+  });
+  return out.sort((a,b)=>String(b.date||"").localeCompare(String(a.date||"")));
+}
+
 // Same real-world movement, tracked under different IDs because it appears in more than one program
 // day at a different intensity/rep-range (e.g. Push = heavy top-set, Upper = light-volume day). The
 // dashboard's per-exercise and aggregate strength charts merge every id in a group into one series —
@@ -990,6 +1080,33 @@ function _normalizeWeeklyKeys(arr){
 let REHAB  = load(SK.rehab);
 let WEIGHT = load(SK.weight);  // array of {date:"YYYY-MM-DD", value, savedAt} — one entry per real calendar day entered, continuous (not week-gated)
 let DAILY  = load(SK.daily);   // object keyed by date "YYYY-MM-DD" -> {sleep, water, savedAt}
+DECISIONS = (function(){ const v=load(SK.decisions); return Array.isArray(v)?v:[]; })();   // declared up top (TDZ-safe), filled here
+// One-time backfill of equipment facts the user already stated in workout notes but which never made
+// it into the engine (they sat as prose recommendations in the agent log from 20.07 and were never
+// applied — the exact gap this whole DECISIONS mechanism exists to close). Version-gated so it runs
+// once; later statements from the user supersede any of these automatically.
+(function(){
+  const SEED_V = 1;
+  if((parseInt(localStorage.getItem("wt_decisions_seed")||"0")||0) >= SEED_V) return;
+  const seed = [
+    { exId:"bulgarian_ss", type:"weight_exists",  value:10,   reason:"מהערת אימון 20.07: יש 10/12/12.5" },
+    { exId:"bulgarian_ss", type:"weight_exists",  value:12,   reason:"מהערת אימון 20.07: יש 10/12/12.5" },
+    { exId:"bulgarian_ss", type:"weight_exists",  value:12.5, reason:"מהערת אימון 20.07: יש 10/12/12.5" },
+    { exId:"bulgarian_ss", type:"weight_missing", value:11,   reason:"מהערת אימון 20.07: אין 11" },
+    { exId:"leg_curl",     type:"weight_exists",  value:50,   reason:"מהערת אימון 20.07: יש 50 ואז 54" },
+    { exId:"leg_curl",     type:"weight_exists",  value:54,   reason:"מהערת אימון 20.07: יש 50 ואז 54" },
+    { exId:"leg_curl",     type:"weight_missing", value:52.5, reason:"מהערת אימון 20.07: אין 52.5 במכונה" },
+    { exId:"calf_raise",   type:"equipment_lock", value:"מכונת תאומים בישיבה", reason:"מהערת אימון 20.07: בוצע בישיבה (סמית תפוס) — שווה כקבע" },
+  ];
+  seed.forEach(r=>{
+    DECISIONS.push(Object.assign({
+      id:"seed_"+r.exId+"_"+r.type+"_"+String(r.value).replace(/\W/g,""),
+      date:"2026-07-20", status:"active", source:"note:seed-2026-07-20", savedAt:new Date().toISOString()
+    }, r));
+  });
+  _writeLS(SK.decisions, DECISIONS);
+  try{ localStorage.setItem("wt_decisions_seed", String(SEED_V)); }catch(e){}
+})();
 // HEALTH: { bloods:{ markerId:{ entries:[{date,value,savedAt}] } }, tests:{ testId:{ lastDate, savedAt } }, notes:"", seedVersion:N }
 let HEALTH = load(SK.health);
 if(!HEALTH.bloods) HEALTH.bloods = {};
@@ -1401,6 +1518,20 @@ function renderWorkoutContent() {
             exLog.sets[si].auto = exLog.sets[si].auto||{};
             exLog.sets[si].auto[f]=false;
             inp.classList.remove("auto-val");
+          }
+          // Contradiction watch: actually performing a load that was previously recorded as
+          // non-existent is newer, stronger evidence than the old statement — so the newer fact wins
+          // (the inventory must never freeze on the past). The clash itself is logged quietly for the
+          // record; nothing pops up and nothing blocks the user mid-set.
+          if(f==="weight"){
+            const w=parseFloat(inp.value);
+            if(w>0 && typeof _weightIsExcluded==="function" && _weightIsExcluded(ex.id, w)){
+              addDecision({ exId:ex.id, type:"conflict", value:w,
+                reason:`נרשם ${w} ק"ג בפועל למרות שסומן קודם כלא קיים — ההזנה החדשה גוברת`,
+                source:_noteKey(logKey, ex.id, si) });
+              addDecision({ exId:ex.id, type:"weight_exists", value:w,
+                reason:"בוצע בפועל באימון", source:_noteKey(logKey, ex.id, si) });
+            }
           }
           save(SK.logs,LOGS); renderDayPills();
         });
@@ -2107,6 +2238,29 @@ function buildSummary() {
   const allItems=[...REHAB_ROUTINE.shoulder.items,...REHAB_ROUTINE.lower.items];
   lines.push("## שיקום — 7 ימים אחרונים");
   last7.forEach(d=>{ const r=REHAB["rehab_"+d]; const cnt=r?allItems.filter(i=>r.done?.[i.id]).length:0; lines.push(`  - ${d}: ${cnt}/${allItems.length}${r?.notes?" — "+r.notes:""}`); });
+
+  // ── agent work queue: notes that have never been turned into a decision ──
+  const pending=collectNotes(true);
+  lines.push("");
+  lines.push("## הערות שטרם טופלו (תור לסוכן)");
+  if(!pending.length) lines.push("  - (אין — כל ההערות תורגמו להחלטות)");
+  pending.slice(0,40).forEach(n=>{
+    const where = n.exId ? (n.exId + (n.set?` · סט ${n.set}`:"")) : "אימון כללי";
+    lines.push(`  - [${n.key}] ${n.date} · ${where}: "${n.text}"`);
+  });
+
+  // ── decisions already applied by the app (so the agent never re-decides the same thing) ──
+  const act=_decActive().slice(-25);
+  lines.push("");
+  lines.push("## החלטות פעילות (מיושמות אוטומטית באפליקציה)");
+  if(!act.length) lines.push("  - (אין עדיין)");
+  act.forEach(d=>lines.push(`  - ${d.date} · ${d.exId||"—"} · ${d.type} = ${d.value}${d.reason?` — ${d.reason}`:""}`));
+  const conflicts=_decActive(null,"conflict");
+  if(conflicts.length){
+    lines.push("");
+    lines.push("## סתירות שנרשמו (לידיעה בלבד)");
+    conflicts.slice(-15).forEach(d=>lines.push(`  - ${d.date} · ${d.exId||"—"}: ${d.value}${d.reason?` — ${d.reason}`:""}`));
+  }
   return lines.join("\n");
 }
 
@@ -3006,7 +3160,31 @@ function _observedWeights(exId){
       });
     });
   });
+  // Decisions layer — this is what makes the inventory self-correcting and always current:
+  // a later "there IS an 11" adds it, a later "there is NO 52.5" removes it even though it was
+  // logged in the past (gyms change, and the user may have used a different machine that day).
+  ids.forEach(id=>{
+    _decActive(id,"weight_exists").forEach(d=>{ const w=parseFloat(d.value); if(w>0) set.add(w); });
+    _decActive(id,"weight_missing").forEach(d=>{ const w=parseFloat(d.value); if(w>0) set.delete(w); });
+  });
   return [...set].sort((a,b)=>a-b);
+}
+// Smallest real increment this exercise's equipment actually moves in, inferred from the gaps between
+// weights that genuinely exist. No manual inventory needed: 10/12/12.5 → 0.5 exists but 11 doesn't;
+// 45.1/51.8/58.5 → a ~6.7kg stack. Explicit grid_step decisions win when present.
+function _inferGridStep(exId){
+  const explicit=_decLatest(exId,"grid_step");
+  if(explicit && parseFloat(explicit.value)>0) return parseFloat(explicit.value);
+  const obs=_observedWeights(exId);
+  if(obs.length<2) return null;
+  const diffs=[];
+  for(let i=1;i<obs.length;i++){ const d=Math.round((obs[i]-obs[i-1])*100)/100; if(d>0.01) diffs.push(d); }
+  if(!diffs.length) return null;
+  return Math.min(...diffs);
+}
+// Is this specific load known to NOT exist? Negative evidence is absolute — never suggest it.
+function _weightIsExcluded(exId, w){
+  return _groupIdsFor(exId).some(id => _decActive(id,"weight_missing").some(d=>Math.abs(parseFloat(d.value)-w)<0.01));
 }
 // Snap a naive flat-increment target onto a weight that actually EXISTS on the equipment.
 // The two directions need genuinely different rules — using one rule for both breaks the other:
@@ -3025,22 +3203,61 @@ function _observedWeights(exId){
 // (EQUIP_WEIGHTS) or enough observed history to trust the pattern. On a plate-loaded machine with a
 // thin log, the naive value is usually loadable and snapping to the sparse observed set can turn a
 // 7.5% deload into a 25% one — so in that case leave the naive value alone.
+//
+// UPDATE 16.07.2026 — the old version bailed out entirely when it had fewer than 2–3 observations and
+// returned the naive number, which is exactly how impossible weights (11.5, 54, 52.5) kept being
+// suggested and never self-corrected: a two-value inventory stays a two-value inventory forever.
+// Now, when the known set is too thin to snap onto directly, we fall back to the inferred grid STEP
+// (learned from the gaps between real weights) and round onto that grid instead of inventing a value.
+// Anything explicitly marked non-existent is skipped in both paths.
 function _snapToObserved(exId, naiveTarget, direction){
-  const obs = _observedWeights(exId);
-  const declared = _groupIdsFor(exId).some(id=>(EQUIP_WEIGHTS[id]||[]).length);
-  if(obs.length < 2 || (!declared && obs.length < 3)) return naiveTarget;
-  if(direction==="up"){
-    const c = obs.filter(w=>w>=naiveTarget-0.01);
-    return c.length ? c[0] : naiveTarget;
+  const obs = _observedWeights(exId).filter(w=>!_weightIsExcluded(exId,w));
+  const pick = (w)=> _weightIsExcluded(exId,w) ? null : w;
+
+  if(obs.length >= 2){
+    if(direction==="up"){
+      const c = obs.filter(w=>w>=naiveTarget-0.01);
+      if(c.length) return c[0];
+      // Above everything known: step up on the learned grid rather than repeating his current max.
+      const step=_inferGridStep(exId);
+      if(step>0){ const top=obs[obs.length-1]; let w=top; while(w < naiveTarget-0.01) w=Math.round((w+step)*100)/100; return pick(w) ?? Math.round((w+step)*100)/100; }
+      return naiveTarget;
+    }
+    const c = obs.filter(w=>w<=naiveTarget*1.06);
+    if(!c.length) return obs[0];
+    let best = c[0];
+    for(const w of c){
+      const d=Math.abs(w-naiveTarget), bd=Math.abs(best-naiveTarget);
+      if(d < bd-0.01 || (Math.abs(d-bd)<=0.01 && w<best)) best = w;
+    }
+    return best;
   }
-  const c = obs.filter(w=>w<=naiveTarget*1.06);
-  if(!c.length) return obs[0];
-  let best = c[0];
-  for(const w of c){
-    const d=Math.abs(w-naiveTarget), bd=Math.abs(best-naiveTarget);
-    if(d < bd-0.01 || (Math.abs(d-bd)<=0.01 && w<best)) best = w;
+
+  // Thin inventory → round onto the inferred grid, anchored on a real weight when we have one.
+  const step=_inferGridStep(exId);
+  if(step>0){
+    const anchor = obs.length ? obs[0] : naiveTarget;
+    const k = Math.round((naiveTarget-anchor)/step);
+    let w = Math.round((anchor + k*step)*100)/100;
+    if(direction==="up" && w < naiveTarget-0.01) w = Math.round((w+step)*100)/100;
+    if(direction==="down" && w > naiveTarget+0.01) w = Math.round((w-step)*100)/100;
+    if(!_weightIsExcluded(exId,w)) return w;
   }
-  return best;
+  // Nothing learned yet: keep the naive value, but never one already known not to exist.
+  if(_weightIsExcluded(exId, naiveTarget)){
+    // Prefer a weight we KNOW exists over inventing a neighbouring number: after "there is no 54",
+    // the honest answer is his real 50, not a fabricated 54.5 that may not exist either.
+    if(obs.length){
+      const up = obs.filter(w=>w>=naiveTarget-0.01);
+      const dn = obs.filter(w=>w<=naiveTarget+0.01);
+      if(direction==="up" && up.length) return up[0];
+      if(dn.length) return dn[dn.length-1];
+      return obs[0];
+    }
+    const s = step>0?step:0.5;
+    return Math.round((naiveTarget + (direction==="down"?-s:s))*100)/100;
+  }
+  return naiveTarget;
 }
 // returns {weight, reason, level, color} or null
 function computeTarget(exId){
@@ -3190,6 +3407,20 @@ function _mergeHealth(local, cloud){
   if(!out.notes && cloud.notes) out.notes=cloud.notes;
   return out;
 }
+// Decisions merge by id (append-only ledger). A decision marked superseded on EITHER device stays
+// superseded — the newest statement about a load must win across phone/computer too, otherwise a
+// stale device could resurrect "this weight exists" after the user said it doesn't.
+function _mergeDecisions(localArr, cloudArr){
+  const byId={};
+  [...(Array.isArray(cloudArr)?cloudArr:[]), ...(Array.isArray(localArr)?localArr:[])].forEach(d=>{
+    if(!d || !d.id) return;
+    const ex=byId[d.id];
+    if(!ex){ byId[d.id]=Object.assign({},d); return; }
+    if(d.status==="superseded" || ex.status==="superseded") ex.status="superseded";
+    if((Date.parse(d.savedAt||0)||0) > (Date.parse(ex.savedAt||0)||0)) Object.assign(ex, d, { status:ex.status });
+  });
+  return Object.values(byId).sort((a,b)=>String(a.date||"").localeCompare(String(b.date||"")));
+}
 function _mergeWeekly(localArr, cloudArr){
   const m={}, richer=w=>Object.values(w.data||{}).filter(v=>v!==""&&v!=null).length;
   (cloudArr||[]).concat(localArr||[]).forEach(w=>{ if(!w||!w.week)return; const p=m[w.week]; if(!p||richer(w)>=richer(p)) m[w.week]=w; });
@@ -3235,7 +3466,7 @@ async function cloudPush(){
   _syncBadge("syncing");
   try{
     const cleanLogs={}; for(const k in LOGS){ if(_logKeep(LOGS[k])) cleanLogs[k]=LOGS[k]; }
-    const body=[{ id:ROW_ID, payload:{ logs:cleanLogs, weekly:WEEKLY, rehab:REHAB, weight:WEIGHT, daily:DAILY, health:HEALTH, nutrition:_collectNutrition() },
+    const body=[{ id:ROW_ID, payload:{ logs:cleanLogs, weekly:WEEKLY, rehab:REHAB, weight:WEIGHT, daily:DAILY, health:HEALTH, nutrition:_collectNutrition(), decisions:DECISIONS },
                   updated_at:new Date().toISOString(), updated_by:"app" }];
     const r=await fetch(`${SUPA_URL}/rest/v1/workout_data`, { method:"POST",
       headers:Object.assign({}, SUPA_HEADERS, { Prefer:"resolution=merge-duplicates,return=minimal" }),
@@ -3256,12 +3487,13 @@ async function cloudPull(){
       if(p.weight) WEIGHT = _mergeWeightArr(WEIGHT, p.weight);
       if(p.daily)  DAILY  = _mergeByKey(DAILY,  p.daily, _pickDaily);
       if(p.health) HEALTH = _mergeHealth(HEALTH, p.health);
+      if(p.decisions) DECISIONS = _mergeDecisions(DECISIONS, p.decisions);
       if(p.nutrition){
         const merged=_mergeNutrition(_collectNutrition(), p.nutrition);
         for(const d in merged) localStorage.setItem(SK.nutrition+"_"+d, JSON.stringify(merged[d]));
       }
       cleanupLogs();
-      _writeLS(SK.logs,LOGS); _writeLS(SK.rehab,REHAB); _writeLS(SK.weekly,WEEKLY); _writeLS(SK.weight,WEIGHT); _writeLS(SK.daily,DAILY); _writeLS(SK.health,HEALTH);
+      _writeLS(SK.logs,LOGS); _writeLS(SK.rehab,REHAB); _writeLS(SK.weekly,WEEKLY); _writeLS(SK.weight,WEIGHT); _writeLS(SK.daily,DAILY); _writeLS(SK.health,HEALTH); _writeLS(SK.decisions,DECISIONS);
       if(document.getElementById("view-health") && document.getElementById("view-health").classList.contains("active") && typeof renderHealth==="function") renderHealth();
       if(document.getElementById("view-nutrition") && document.getElementById("view-nutrition").classList.contains("active") && typeof renderNutrition==="function") renderNutrition();
       if(typeof renderDayPills==="function") renderDayPills();
