@@ -629,6 +629,97 @@ PROGRAM.day1.exercises.push(..._core("1"));
 PROGRAM.day3.exercises.push(..._core("3"));
 PROGRAM.day5.exercises.push(..._core("5"));
 
+// ══════════════════════════════════════════════════════════════════
+// PROGRAM ENGINE (added 12.10.2026) — the program now actually CHANGES over time
+// Until now PROGRAM was a frozen literal: swap recommendations derived from the user's notes sat
+// "awaiting approval" forever, and the 8–12-week refresh policy lived only in the agent's prompt and
+// never fired. Everything deterministic is now done here, on every load, from the synced data:
+//   1. swaps   — active "swap" decisions replace the original exercise in the day (logged under the
+//                substitute's own id, so progression history stays honest per movement);
+//   2. deload  — every 5th pass through the program (microcycle) is a planned deload: −1 set and
+//                ~10% load (see computeTarget);
+//   3. rotation— accessory slots (never the core compounds, never rehab/core) rotate through
+//                constraint-safe alternatives every mesocycle (= 4 work exposures of each),
+//                which matches the evidence that variation itself adds nothing and only needs to
+//                happen often enough to manage boredom / joint irritation.
+// Counting is by COMPLETED SESSIONS, not calendar weeks: with irregular attendance (19 sessions in
+// 14 weeks) calendar-based rotation would swap exercises he has done only 3–4 times.
+// ══════════════════════════════════════════════════════════════════
+const PROGRAM_BASE = JSON.parse(JSON.stringify(PROGRAM));
+const MICRO_LEN = 5;         // one pass = day1..day5
+const MESO_WORK_MICROS = 4;  // 4 work passes, then 1 deload pass
+const ROTATE_EVERY_MESOS = 1;  // = 4 work exposures of each accessory; at 5 sessions/week ≈ 5 weeks (inside the 4–8 wk guidance), and it scales with real attendance
+
+// Constraint-checked substitutes (§3.1 no axial loading; §3.2 shoulder-friendly). Anything that a
+// swap or a rotation can put into the program must be defined here — nothing is invented at runtime.
+const SUBSTITUTES = {
+  pec_deck:            { name:"Pec Deck (פרפר במכונה)", sets:3, reps:"10-12", rest:90, note:"ידידותי לכתף ימין", cue:"גב צמוד למשענת, מרפקים מעט כפופים וקבועים. סגור עד מול החזה וסחוט; בפתיחה אל תעבור את קו הגוף — עצור כשמרגישים מתיחה בחזה, לא בכתף הקדמית. עצור באי-סימטריה בשכמה ימין." },
+  cable_fly:           { name:"Cable Fly (כבלים)", sets:3, reps:"12-15", rest:90, note:"חזה — בידוד", cue:"כבלים בגובה כתף, צעד קדימה, מרפקים כפופים קלות. חבק קשת עד מול החזה. טווח פתיחה מוגבל — בלי מתיחה עמוקה בכתף." },
+  landmine_press:      { name:"Landmine Press (חצי-כריעה)", sets:3, reps:"8-10/צד", rest:90, note:"חלופה ידידותית ל-OHP", cue:"חצי-כריעה, יד אחת על קצה המוט. דחוף למעלה וקדימה בקשת, שכמה מסתובבת למעלה. core נעול, בלי קשת מותנית. מסלול זוויתי — פחות עומס על כתף קדמית מ-OHP אנכי." },
+  cable_lateral_raise: { name:"Cable Lateral Raise", sets:3, reps:"12-15", rest:60, note:"מתח קבוע לאורך הטווח", cue:"כבל נמוך מהצד הנגדי, מרפק מוביל עד גובה כתף. איטי בירידה." },
+  machine_lateral_raise:{ name:"Machine Lateral Raise", sets:3, reps:"12-15", rest:60, note:"", cue:"כריות על הזרוע, הרם עד גובה כתף בלבד, בלי לכווץ טרפז." },
+  cable_curl:          { name:"Cable Curl", sets:3, reps:"10-12", rest:60, note:"", cue:"מרפקים קבועים לצד הגוף, סחיטה למעלה, ירידה איטית." },
+  preacher_curl:       { name:"Preacher Curl (מכונה/משקולת)", sets:3, reps:"10-12", rest:60, note:"בידוד ביצפס", cue:"זרוע צמודה לכרית, ירידה מבוקרת עד כמעט יישור — בלי לנעול בכוח." },
+  rope_hammer_curl:    { name:"Rope Hammer Curl (כבל)", sets:2, reps:"12", rest:60, note:"Brachialis", cue:"חבל בכבל נמוך, אחיזה ניטרלית, מרפקים קבועים." },
+  rope_pushdown:       { name:"Rope Pushdown", sets:3, reps:"12-15", rest:60, note:"", cue:"פתח את החבל בסוף התנועה, מרפקים קבועים לגוף." },
+  cable_oh_ext:        { name:"Cable Overhead Extension", sets:2, reps:"12-15", rest:60, note:"", cue:"גב לכבל, מרפקים ליד הראש, יישור מלא. אם הכתף מגיבה — עבור ל-Pushdown." },
+  seated_calf_raise:   { name:"Seated Calf Raise", sets:3, reps:"15", rest:60, note:"", cue:"ROM מלא, החזקה שנייה למעלה, ירידה איטית." },
+  belt_squat:          { name:"Belt Squat", sets:3, reps:"8-12", rest:150, note:"עומס מהאגן — אפס עומס אקסיאלי ואפס אחיזה", cue:"חגורה סביב האגן, גו זקוף, ירידה עד ירכיים מקבילות בגב ניטרלי." },
+  leg_extension:       { name:"Leg Extension", sets:3, reps:"10-12", rest:90, note:"", cue:"גב צמוד, יישור מלא וסחיטה, ירידה איטית." },
+};
+// Rotation pools for ACCESSORY slots only. The first entry is the original exercise.
+const ROTATION_POOLS = {
+  lateral_raise:   ["lateral_raise","cable_lateral_raise","machine_lateral_raise"],
+  lateral_raise_u: ["lateral_raise_u","machine_lateral_raise","cable_lateral_raise"],
+  db_curl:         ["db_curl","cable_curl","preacher_curl"],
+  hammer_curl:     ["hammer_curl","rope_hammer_curl"],
+  tricep_pushdown: ["tricep_pushdown","rope_pushdown"],
+  overhead_ext:    ["overhead_ext","cable_oh_ext"],
+  calf_raise:      ["calf_raise","seated_calf_raise"],
+};
+
+function _exDef(id){
+  for(const dk in PROGRAM_BASE){ const e=PROGRAM_BASE[dk].exercises.find(x=>x.id===id); if(e) return e; }
+  if(SUBSTITUTES[id]) return Object.assign({ id }, SUBSTITUTES[id]);
+  return null;
+}
+// Completed = saved AND at least one set actually performed (auto-filled targets don't count).
+function _sessionDone(l){
+  if(!l || !l.savedAt) return false;
+  return Object.values(l.exercises||{}).some(e=>Object.values(e.sets||{}).some(s=>s.done || (s.reps && !(s.auto&&s.auto.reps))));
+}
+function programState(){
+  const bs = (typeof _decLatest==="function") ? _decLatest(null,"block_start") : null;
+  const start = bs ? String(bs.value) : "0000";
+  const done = Object.keys(LOGS||{}).filter(k=>{ const l=LOGS[k]; return _sessionDone(l) && String(l.date)>=start; }).length;
+  const micro = Math.floor(done / MICRO_LEN);                 // completed passes
+  const mesoLen = MESO_WORK_MICROS + 1;
+  const meso = Math.floor(micro / mesoLen);
+  const microInMeso = micro % mesoLen;                         // 0..4 ; 4 = deload pass
+  return { sessions:done, micro, meso, microInMeso, isDeload: microInMeso===MESO_WORK_MICROS,
+           rotationIndex: Math.floor(meso / ROTATE_EVERY_MESOS), start };
+}
+// Rebuilds PROGRAM from the pristine base every time — idempotent, safe to call after each sync.
+function applyProgramState(){
+  const st = programState();
+  for(const dk in PROGRAM_BASE){
+    PROGRAM[dk].exercises = PROGRAM_BASE[dk].exercises.map(base=>{
+      let id = base.id, src = "";
+      // explicit swap from a note wins over scheduled rotation
+      const sw = (typeof _decLatest==="function") ? _decLatest(base.id,"swap") : null;
+      if(sw && !sw.needsApproval && _exDef(sw.value)) { id = sw.value; src = "swap"; }
+      else if(ROTATION_POOLS[base.id]){ const pool=ROTATION_POOLS[base.id]; id = pool[st.rotationIndex % pool.length]; if(id!==base.id) src="rotation"; }
+      const def = id===base.id ? base : Object.assign({}, _exDef(id), { id });
+      const out = JSON.parse(JSON.stringify(def));
+      out.slot = base.id;                 // which program slot this occupies
+      if(src) out.replaced = { from: base.id, fromName: base.name, by: src };
+      if(st.isDeload && !out.core && !base.core){ out.sets = Math.max(2, (out.sets||3) - 1); out.deloadWeek = true; }
+      return out;
+    });
+  }
+  return st;
+}
+
 // ציוד/אביזר מומלץ לכל תרגיל
 const EQUIP = {
   db_flat_bench:"משקולות יד + ספסל שטוח", db_incline:"משקולות יד + ספסל משופע 30-45°", ohp_seated:"משקולות יד + ספסל עם משענת",
@@ -754,7 +845,12 @@ const PULL_ASSIST_MAX_RATIO = 0.6;   // logged weight below 60% of bodyweight �
 //   type "conflict"         value:string  — quiet record of contradicting evidence (never blocks anything)
 // status: "active" | "superseded" — newer decisions supersede older ones of the same exId+type+value
 // rather than deleting them, so the history of what was decided (and why) is never lost.
-const DECISION_TYPES = ["weight_exists","weight_missing","grid_step","equipment_lock","rep_range","deload","swap","conflict"];
+// "info"        — note understood, nothing to change (keeps "conflict" for genuine contradictions only;
+//                 it had become a dumping ground: 59 of 157 decisions, none of which changed anything)
+// "swap"        — value = substitute exercise id (see SUBSTITUTES). needsApproval:true → shown in the
+//                 exercise card with approve/reject; otherwise applied to the program immediately.
+// "block_start" — value = YYYY-MM-DD; restarts mesocycle counting (e.g. back at the regular gym).
+const DECISION_TYPES = ["weight_exists","weight_missing","grid_step","equipment_lock","rep_range","deload","swap","conflict","info","block_start"];
 let DECISIONS = [];   // real value assigned right after load() is defined, below
 function _decActive(exId, type){
   return DECISIONS.filter(d => d && d.status!=="superseded" && (!exId || d.exId===exId) && (!type || d.type===type));
@@ -783,7 +879,7 @@ function addDecision(rec){
       }
     });
   }
-  if(["grid_step","equipment_lock","rep_range","deload","swap"].indexOf(d.type)>=0){
+  if(["grid_step","equipment_lock","rep_range","deload","swap","block_start"].indexOf(d.type)>=0){
     DECISIONS.forEach(o=>{ if(o.status!=="superseded" && o.exId===d.exId && o.type===d.type){ o.status="superseded"; o.supersededBy=d.id; o.supersededAt=d.savedAt; } });
   }
   DECISIONS.push(d);
@@ -1107,6 +1203,8 @@ DECISIONS = (function(){ const v=load(SK.decisions); return Array.isArray(v)?v:[
   _writeLS(SK.decisions, DECISIONS);
   try{ localStorage.setItem("wt_decisions_seed", String(SEED_V)); }catch(e){}
 })();
+// Program reflects decisions (swaps), planned deloads and accessory rotation from the very first render.
+if(typeof applyProgramState==="function") applyProgramState();
 // HEALTH: { bloods:{ markerId:{ entries:[{date,value,savedAt}] } }, tests:{ testId:{ lastDate, savedAt } }, notes:"", seedVersion:N }
 let HEALTH = load(SK.health);
 if(!HEALTH.bloods) HEALTH.bloods = {};
@@ -1481,7 +1579,22 @@ function renderWorkoutContent() {
     const sessDur = (typeof _exSessionDuration==="function") ? _exSessionDuration(log, ex.id) : null;
     const avgDur = (!sessDur && typeof avgExDuration==="function") ? avgExDuration(ex.id) : null;
     const timeTxt = sessDur ? `<span class="ex-time-actual">⏱ ${fmtDur(sessDur)}</span>` : (avgDur ? `<span class="ex-time-est">≈${fmtDur(avgDur)} משוער</span>` : "");
-    info.innerHTML = `<div class="ex-name">${ex.core?'◆ ':''}${ex.name}${isCurrent?' <span class="cur-tag">נוכחי</span>':''}${timeTxt}</div><div class="ex-meta">${ex.sets} × ${repsTxt}${restTxt}${ex.note?" · "+ex.note:""}</div>${equip?`<div class="ex-equip">${_lock?"📌":"🏋️"} ${equip}</div>`:""}${tgt&&tgt.reason?`<div class="ex-target" style="color:${tgt.color};background:${tgt.color}1A">${tgt.weight?`יעד ${tgt.weight} ק"ג · `:""}${tgt.reason}</div>`:""}`;
+    info.innerHTML = `<div class="ex-name">${ex.core?'◆ ':''}${ex.name}${isCurrent?' <span class="cur-tag">נוכחי</span>':''}${timeTxt}</div><div class="ex-meta">${ex.sets} × ${repsTxt}${restTxt}${ex.note?" · "+ex.note:""}</div>${equip?`<div class="ex-equip">${_lock?"📌":"🏋️"} ${equip}</div>`:""}${tgt&&tgt.reason?`<div class="ex-target" style="color:${tgt.color};background:${tgt.color}1A">${tgt.weight?`יעד ${tgt.weight} ק"ג · `:""}${tgt.reason}</div>`:""}${ex.replaced?`<div style="font-size:10px;color:#A78BFA;margin-top:3px">↻ ${ex.replaced.by==="rotation"?"רוטציה מתוכננת":"הוחלף בעקבות הערתך"} — במקום ${ex.replaced.fromName}</div>`:""}${ex.deloadWeek?`<div style="font-size:10px;color:#F59E0B;margin-top:3px">⬇ מחזור דילוד מתוכנן — סט אחד פחות ועומס מופחת</div>`:""}`;
+    // Pending swap that touches a medical constraint: the only thing the system will not do alone.
+    // Shown in context (inside this exercise only), one tap to decide — never a global banner.
+    const _pend = (typeof _decLatest==="function") ? _decLatest(ex.slot||ex.id,"swap") : null;
+    if(_pend && _pend.needsApproval && _exDef(_pend.value)){
+      const box=el("div"); box.style.cssText="margin-top:5px;padding:6px 8px;border-radius:7px;background:rgba(167,139,250,0.10);border:1px solid rgba(167,139,250,0.3);font-size:11px;color:#DDD6FE";
+      box.innerHTML=`הצעה: <b>${_exDef(_pend.value).name}</b> במקום התרגיל — ${_pend.reason||""} <span data-a="ok" style="margin-right:8px;color:#10B981;font-weight:700;cursor:pointer">✓ אשר</span><span data-a="no" style="margin-right:6px;color:#EF4444;font-weight:700;cursor:pointer">✕ דחה</span>`;
+      box.addEventListener("click", ev=>{
+        const a=ev.target && ev.target.dataset && ev.target.dataset.a; if(!a) return;
+        ev.stopPropagation();
+        if(a==="ok"){ _pend.needsApproval=false; _pend.approvedAt=new Date().toISOString(); _pend.savedAt=_pend.approvedAt; }
+        else { _pend.status="superseded"; _pend.rejectedAt=new Date().toISOString(); _pend.savedAt=_pend.rejectedAt; }
+        save(SK.decisions, DECISIONS); applyProgramState(); renderWorkoutContent();
+      });
+      info.appendChild(box);
+    }
     const dtoggle = el("div","ex-done-toggle"+(done?" on":"")); dtoggle.textContent = done?"✓":""; dtoggle.title="סמן כבוצע";
     dtoggle.onclick=(e)=>{ e.stopPropagation(); exLog.meta.done=!(exLog.meta&&exLog.meta.done); save(SK.logs,LOGS); renderWorkoutContent(); };
     const arrow = el("div","ex-arrow"); arrow.textContent="›"; if(isOpen) arrow.classList.add("open");
@@ -2183,7 +2296,7 @@ function renderHistory() {
           const wt = log.warmup.completedAt ? new Date(log.warmup.completedAt).toLocaleTimeString("he-IL",{hour:"2-digit",minute:"2-digit"}) : "";
           parts.push(`<div style="margin-bottom:6px;font-size:11px;color:#F59E0B">🔥 חימום בוצע${wt?` · ${wt}`:""}</div>`);
         }
-        day.exercises.forEach(ex=>{
+        Object.keys(log.exercises||{}).map(id=>day.exercises.find(e=>e.id===id)||_exDef(id)||{id,name:id}).forEach(ex=>{
           const exLog = log.exercises && log.exercises[ex.id]; if(!exLog) return;
           const setsTxt = Object.keys(exLog.sets||{}).sort((a,b)=>a-b).map(kk=>exLog.sets[kk])
             .filter(s=>s.reps||s.weight)
@@ -2193,6 +2306,19 @@ function renderHistory() {
           parts.push(`<div style="margin-bottom:6px"><div style="font-size:11px;font-weight:700;color:#D1D5DB">${ex.name}${dur?` <span style="font-weight:400;color:#6B7280">· ⏱ ${fmtDur(dur)}</span>`:""}</div><div style="font-size:11px;color:#6B7280">${setsTxt||"—"}</div></div>`);
         });
         detailsEl.innerHTML = parts.join("") || `<div style="font-size:11px;color:#4B5563">אין נתוני תרגילים לאימון הזה</div>`;
+        // Delete — for a session saved by mistake. Two-tap confirm inside the card (no native
+        // confirm() dialog, which iOS standalone PWAs handle badly), and it stops propagation so the
+        // tap doesn't also collapse the card.
+        const delBtn=el("button"); delBtn.textContent="🗑 מחק אימון זה מההיסטוריה";
+        delBtn.style.cssText="margin-top:8px;width:100%;padding:8px;border-radius:8px;border:1px solid rgba(239,68,68,0.35);background:rgba(239,68,68,0.08);color:#FCA5A5;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit";
+        let armed=false;
+        delBtn.addEventListener("click", ev=>{
+          ev.stopPropagation();
+          if(!armed){ armed=true; delBtn.textContent="⚠️ לחץ שוב לאישור מחיקה סופית"; delBtn.style.background="rgba(239,68,68,0.25)"; setTimeout(()=>{ if(armed){ armed=false; delBtn.textContent="🗑 מחק אימון זה מההיסטוריה"; delBtn.style.background="rgba(239,68,68,0.08)"; } },4000); return; }
+          deleteWorkout(k);
+          renderHistory();
+        });
+        detailsEl.appendChild(delBtn);
       }
     });
     hw2.appendChild(card);
@@ -2232,7 +2358,7 @@ function buildSummary() {
       lines.push(`- כאב כללי: ${log.pain||"—"}/10 | אנרגיה: ${log.energy||"—"}/10`);
       if(log.notes) lines.push(`- הערות: ${log.notes}`);
       Object.entries(log.exercises||{}).forEach(([exId,exLog])=>{
-        const ex=day.exercises.find(e=>e.id===exId); if(!ex)return;
+        const ex=day.exercises.find(e=>e.id===exId)||_exDef(exId); if(!ex)return;
         const sets=Object.entries(exLog.sets||{}).filter(([,s])=>s.reps||s.weight).map(([,s])=>`${s.weight||"?"}ק"ג×${s.reps||"?"} RPE${s.rpe||"?"}`).join(" | ");
         if(sets) lines.push(`  - ${ex.name}: ${sets}${exLog.meta?.pain?` (כאב ${exLog.meta.pain}/10)`:""}`);
       });
@@ -3326,6 +3452,12 @@ function computeTarget(exId){
   // hypertrophy advantage to routine exercise variation, so swapping the exercise is the LAST resort —
   // change the rep range / volume first and keep the movement (and its measurable history) intact.
   if(plateau && level==="up"){ level="plateau"; reason=`תקוע 3 אימונים — שנה קודם טווח חזרות/נפח; החלפת תרגיל רק אם זה לא עזר`; }
+  // Planned deload pass (every 5th pass through the program): ~10% lighter, regardless of RPE —
+  // the point is dissipating accumulated fatigue on schedule, not reacting to a bad day.
+  if(typeof programState==="function" && level!=="pain" && weight!=null && programState().isDeload){
+    weight = _snapToObserved(exId, _round05(weight*0.9), "down");
+    level = "deload"; reason = "מחזור דילוד מתוכנן (כל מחזור 5) — ~10% פחות, איכות תנועה";
+  }
   // Pull-ups: the math above runs on EFFECTIVE kg moved, but the box the user types into expects the
   // logged convention of the modality he last used — assistance kg on the machine (where progress means
   // a SMALLER number), or bodyweight on the free bar (which he doesn't control by loading plates).
@@ -3495,16 +3627,40 @@ function _logKeep(l){ return !!(l && (l.savedAt || (l.date===todayKey() && _logH
 // Removes phantom entries (viewed-but-never-saved days, and past unsaved workouts). Mutates LOGS.
 function cleanupLogs(){
   let changed=false;
-  for(const k in LOGS){ if(!_logKeep(LOGS[k])){ delete LOGS[k]; changed=true; } }
+  for(const k in LOGS){ if(!_logKeep(LOGS[k]) || _isDeletedLog(k)){ delete LOGS[k]; changed=true; } }
   return changed;
+}
+
+// ── deleted workouts (tombstones) ──
+// Deleting a key locally is not enough: the next cloudPull merges the cloud copy straight back, and
+// any other device that still holds it re-pushes it. A synced tombstone list {logKey: deletedAt}
+// makes the deletion stick everywhere. A tombstone only kills a log saved BEFORE the deletion, so if
+// the user later genuinely trains that day-type on the same date and saves, the new session survives.
+// (no top-level const here on purpose: cleanupLogs() runs at line ~1679 during startup, long before
+// this point — a const would be in its temporal dead zone and crash the whole render.)
+function _deletedLogs(){ try{ return JSON.parse(localStorage.getItem("wt_deleted_logs_v1")||"{}")||{}; }catch(e){ return {}; } }
+function _isDeletedLog(k){
+  const ts=_deletedLogs()[k]; if(!ts) return false;
+  const l=LOGS[k]; if(!l || !l.savedAt) return true;
+  return (Date.parse(l.savedAt)||0) <= (Date.parse(ts)||0);
+}
+function deleteWorkout(k){
+  const t=_deletedLogs(); t[k]=new Date().toISOString();
+  try{ localStorage.setItem("wt_deleted_logs_v1", JSON.stringify(t)); }catch(e){}
+  const l=LOGS[k];
+  delete LOGS[k];
+  // If this session was what marked the day as done in the cycle tracker, clear that mark too.
+  if(l && typeof UI==="object" && UI.cycle && l.dayKey && UI.cycle[l.dayKey]===l.date){ delete UI.cycle[l.dayKey]; if(typeof saveUI==="function") saveUI(); }
+  save(SK.logs, LOGS);
+  if(typeof renderDayPills==="function") renderDayPills();
 }
 
 async function cloudPush(){
   if(_pulling) return;
   _syncBadge("syncing");
   try{
-    const cleanLogs={}; for(const k in LOGS){ if(_logKeep(LOGS[k])) cleanLogs[k]=LOGS[k]; }
-    const body=[{ id:ROW_ID, payload:{ logs:cleanLogs, weekly:WEEKLY, rehab:REHAB, weight:WEIGHT, daily:DAILY, health:HEALTH, nutrition:_collectNutrition(), decisions:DECISIONS },
+    const cleanLogs={}; for(const k in LOGS){ if(_logKeep(LOGS[k]) && !_isDeletedLog(k)) cleanLogs[k]=LOGS[k]; }
+    const body=[{ id:ROW_ID, payload:{ logs:cleanLogs, weekly:WEEKLY, rehab:REHAB, weight:WEIGHT, daily:DAILY, health:HEALTH, nutrition:_collectNutrition(), decisions:DECISIONS, deletedLogs:_deletedLogs() },
                   updated_at:new Date().toISOString(), updated_by:"app" }];
     const r=await fetch(`${SUPA_URL}/rest/v1/workout_data`, { method:"POST",
       headers:Object.assign({}, SUPA_HEADERS, { Prefer:"resolution=merge-duplicates,return=minimal" }),
@@ -3526,11 +3682,17 @@ async function cloudPull(){
       if(p.daily)  DAILY  = _mergeByKey(DAILY,  p.daily, _pickDaily);
       if(p.health) HEALTH = _mergeHealth(HEALTH, p.health);
       if(p.decisions) DECISIONS = _mergeDecisions(DECISIONS, p.decisions);
+      if(p.deletedLogs){   // union of tombstones; the later deletion time wins
+        const t=_deletedLogs();
+        for(const k in p.deletedLogs){ if(!t[k] || String(p.deletedLogs[k])>String(t[k])) t[k]=p.deletedLogs[k]; }
+        try{ localStorage.setItem("wt_deleted_logs_v1", JSON.stringify(t)); }catch(e){}
+      }
       if(p.nutrition){
         const merged=_mergeNutrition(_collectNutrition(), p.nutrition);
         for(const d in merged) localStorage.setItem(SK.nutrition+"_"+d, JSON.stringify(merged[d]));
       }
       cleanupLogs();
+      if(typeof applyProgramState==="function") applyProgramState();
       _writeLS(SK.logs,LOGS); _writeLS(SK.rehab,REHAB); _writeLS(SK.weekly,WEEKLY); _writeLS(SK.weight,WEIGHT); _writeLS(SK.daily,DAILY); _writeLS(SK.health,HEALTH); _writeLS(SK.decisions,DECISIONS);
       if(document.getElementById("view-health") && document.getElementById("view-health").classList.contains("active") && typeof renderHealth==="function") renderHealth();
       if(document.getElementById("view-nutrition") && document.getElementById("view-nutrition").classList.contains("active") && typeof renderNutrition==="function") renderNutrition();
