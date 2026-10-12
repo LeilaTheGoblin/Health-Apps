@@ -375,7 +375,7 @@
   .warmup-card { background:#FFF8EE; border-color:rgba(217,119,6,0.30); }
   .warmup-card.done { background:#F1FAF6; border-color:rgba(16,185,129,0.35); }
   .ex-card.current { border-color:var(--bd); box-shadow:0 0 0 2px rgba(122,31,46,0.12), 0 3px 10px rgba(80,10,25,0.06); }
-  .ex-card.core-card { border-right:3px solid #8B5CF6; }
+  .ex-card.core-card { border-right:3px solid #B4566E; }
   .ex-name { color:var(--ink); font-size:14px; }
   .ex-header { padding:12px 14px; }
   .ex-body { border-top:1px solid var(--line); padding:0 14px 14px; }
@@ -620,7 +620,7 @@ function _core(sfx){ return [
 ]; }
 const PROGRAM = {
   day1: {
-    label: "Push", tag: "חזה · כתפיים · טריצפס", color: "#EF4444",
+    label: "Push", tag: "חזה · כתפיים · טריצפס", color: "#9B1B30",
     exercises: [
       { id: "db_flat_bench",   name: "DB Flat Bench Press",   sets: 4, reps: "8-10",  rest:180, note: "RPE 7-8 — לא לכישלון", cue:"שכמות אחורה ולמטה, כלואות לספסל לכל אורך הסט. הורד לצדי החזה בשליטה, מרפקים ~45° מהגוף (לא מפושקים). דחוף בקשת קלה. שליטה בירידה, לא ליפול." },
       { id: "db_incline",      name: "DB Incline Press",      sets: 3, reps: "10-12", rest:120, note: "30-45° — בטוח על כתף", cue:"ספסל 30-45°. שכמות מכונסות. דחיפה לכיוון החזה העליון, לא לכיוון הפנים. ללא כאב קדמי בכתף — אם יש, הורד זווית/משקל." },
@@ -631,7 +631,7 @@ const PROGRAM = {
     ]
   },
   day2: {
-    label: "Pull", tag: "גב · ביצפס", color: "#8B5CF6",
+    label: "Pull", tag: "גב · ביצפס", color: "#5E2340",
     exercises: [
       { id: "pullup",           name: "מתח חופשי (מוט)",        sets: 3, reps: "6-10",  rest:150, pullType:true, pullMode:"free", note: "תרגיל ראשון → מוט, לא מכונה", cue:"מוט מתח, אחיזת פרונציה (כפות לפנים) ברוחב כתפיים או מעט יותר. ⚑ כאן אתה טרי — זה התרגיל הראשון ביום, ולכן מבוצע במוט חופשי עם משקל גוף (רשום את משקל גופך בשדה המשקל). התחל במשיכת שכמות למטה (depression) לפני כיפוף מרפק. ROM מלא בשליטה, בלי נדנוד. עצור מיד באי-סימטריה בשכמה ימין או כאב חד." },
       { id: "lat_pulldown",     name: "Lat Pulldown",           sets: 3, reps: "8-10",  rest:120, note: "משלים למתח", cue:"חזה מעט מורם, משוך את המוט לחלק העליון של החזה עם מרפקים למטה. שכמות נמשכות למטה-אחורה. הימנע מכיפוף מוגזם של הצוואר לאחור." },
@@ -654,7 +654,7 @@ const PROGRAM = {
     ]
   },
   day4: {
-    label: "Upper", tag: "עליון · נפח · חזרה על קבוצות", color: "#D97706",
+    label: "Upper", tag: "עליון · נפח · חזרה על קבוצות", color: "#A0503A",
     exercises: [
       { id: "db_bench_u",      name: "DB Bench Press",     sets: 3, reps: "10-12", rest:120, note: "נפח — RPE 6-7", cue:"נפח קל יותר מיום Push. שכמות כלואות, מרפקים ~45°. דגש על שליטה וכיווץ, לא על משקל מקסימלי." },
       { id: "cable_row_u",     name: "Cable Row / DB Row", sets: 3, reps: "10-12", rest:120, note: "", cue:"גב ניטרלי. משוך מרפקים אחורה, סחוט שכמות. אם DB Row — יד אחת, ברך וכף יד על ספסל, גב מקביל לרצפה." },
@@ -668,7 +668,7 @@ const PROGRAM = {
     ]
   },
   day5: {
-    label: "Lower", tag: "אחורי · hinge · גלוטאוס", color: "#10B981",
+    label: "Lower", tag: "אחורי · hinge · גלוטאוס", color: "#B4566E",
     exercises: [
       { id: "rdl_db",        name: "Romanian Deadlift (DB)", sets: 4, reps: "10-12", rest:180, note: "DB בלבד — hinge, גב ישר", cue:"תנועת hinge מהירך — דחוף אגן אחורה, לא כיפוף מהגב. גב ניטרלי-ישר לחלוטין לכל אורך התנועה (קריטי לבלט הדיסק). DB קרובים לרגליים, ירידה עד מתיחה בהמסטרינג, בלי לעגל גב תחתון." },
       { id: "hip_thrust_d5", name: "Hip Thrust (DB/Plate)",  sets: 4, reps: "10-12", rest:150, note: "דגש על גלוטאוס", cue:"גב עליון על ספסל, סנטר לחזה. דחוף דרך עקבים, סחוט גלוטאוס עד קו ישר — לא לקמר גב תחתון. החזק שנייה למעלה." },
