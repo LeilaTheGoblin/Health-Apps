@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>מנטור בריאותי — לוח אימונים</title>
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#3B82F6">
+<meta name="theme-color" content="#7A1F2E">
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -16,7 +16,7 @@
   /* ── RESET & BASE ── */
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body {
-    background: #0F1117; color: #F9FAFB;
+    background: #FBF8F8; color: #2B0B14;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     font-size: 14px; direction: rtl;
     min-height: 100vh;
@@ -26,19 +26,19 @@
   /* ── HEADER ── */
   .header {
     padding: 16px 16px 0;
-    background: linear-gradient(180deg, #111827 0%, #0F1117 100%);
-    border-bottom: 1px solid rgba(255,255,255,0.06);
+    background: linear-gradient(180deg, #FFFFFF 0%, #FBF8F8 100%);
+    border-bottom: 1px solid rgba(122,31,46,0.06);
     position: sticky; top: 0; z-index: 10;
   }
-  .header-eyebrow { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; color: #6B7280; text-transform: uppercase; margin-bottom: 3px; }
-  .header-title   { font-size: 21px; font-weight: 800; color: #F9FAFB; margin-bottom: 12px; }
-  .tabs { display: flex; border-bottom: 1px solid rgba(255,255,255,0.06); overflow-x: auto; }
+  .header-eyebrow { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; color: #85747A; text-transform: uppercase; margin-bottom: 3px; }
+  .header-title   { font-size: 21px; font-weight: 800; color: #2B0B14; margin-bottom: 12px; }
+  .tabs { display: flex; border-bottom: 1px solid rgba(122,31,46,0.06); overflow-x: auto; }
   .tab {
     padding: 8px 14px; font-size: 13px; font-weight: 600; cursor: pointer;
-    color: #6B7280; border-bottom: 2px solid transparent;
+    color: #85747A; border-bottom: 2px solid transparent;
     white-space: nowrap; transition: all 0.15s; flex-shrink: 0;
   }
-  .tab.active { color: #F9FAFB; border-bottom-color: #3B82F6; }
+  .tab.active { color: #2B0B14; border-bottom-color: #7A1F2E; }
 
   /* ── CONTENT ── */
   .content { padding: 16px; }
@@ -47,23 +47,23 @@
 
   /* ── CARDS ── */
   .card {
-    background: rgba(255,255,255,0.03);
-    border: 1px solid rgba(255,255,255,0.07);
+    background: rgba(122,31,46,0.03);
+    border: 1px solid rgba(122,31,46,0.07);
     border-radius: 10px; padding: 10px 12px; margin-bottom: 8px;
   }
   .card.done   { background: rgba(16,185,129,0.05); border-color: rgba(16,185,129,0.25); }
-  .card.rehab  { border-color: rgba(6,182,212,0.2); }
+  .card.rehab  { border-color: rgba(166,77,99,0.2); }
 
   /* ── SECTION TITLE ── */
-  .section-title { font-size: 20px; font-weight: 800; color: #F9FAFB; margin-bottom: 4px; }
-  .section-sub   { font-size: 12px; color: #6B7280; margin-bottom: 16px; }
+  .section-title { font-size: 20px; font-weight: 800; color: #2B0B14; margin-bottom: 4px; }
+  .section-sub   { font-size: 12px; color: #85747A; margin-bottom: 16px; }
 
   /* ── BADGE ── */
   .badge {
-    font-size: 11px; color: #6B7280;
-    background: rgba(255,255,255,0.05);
+    font-size: 11px; color: #85747A;
+    background: rgba(122,31,46,0.05);
     padding: 4px 10px; border-radius: 20px;
-    border: 1px solid rgba(255,255,255,0.08);
+    border: 1px solid rgba(122,31,46,0.08);
   }
 
   /* ── DAY SELECTOR ── */
@@ -71,27 +71,27 @@
   .day-pills    { display: flex; gap: 6px; padding-bottom: 4px; }
   .day-pill {
     flex-shrink: 0; padding: 7px 12px; border-radius: 8px; cursor: pointer;
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.07);
+    background: rgba(122,31,46,0.04);
+    border: 1px solid rgba(122,31,46,0.07);
     transition: all 0.15s;
   }
-  .day-pill .pill-label { font-size: 11px; font-weight: 700; color: #6B7280; white-space: nowrap; }
-  .day-pill .pill-sub   { font-size: 9px; color: #4B5563; margin-top: 1px; white-space: nowrap; }
+  .day-pill .pill-label { font-size: 11px; font-weight: 700; color: #85747A; white-space: nowrap; }
+  .day-pill .pill-sub   { font-size: 9px; color: #A39398; margin-top: 1px; white-space: nowrap; }
 
   /* ── EXERCISE CARD ── */
-  .ex-card { border-radius: 10px; margin-bottom: 8px; overflow: hidden; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.07); }
+  .ex-card { border-radius: 10px; margin-bottom: 8px; overflow: hidden; background: rgba(122,31,46,0.02); border: 1px solid rgba(122,31,46,0.07); }
   .ex-card.done-card { background: rgba(16,185,129,0.04); border-color: rgba(16,185,129,0.25); }
   .ex-header { display: flex; align-items: center; gap: 10px; padding: 10px 12px; cursor: pointer; user-select: none; }
   .ex-dot    { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; opacity: 0.45; }
   .ex-dot.done { opacity: 1; background: #10B981 !important; }
-  .ex-name   { font-size: 13px; font-weight: 600; color: #F9FAFB; }
-  .ex-meta   { font-size: 11px; color: #6B7280; margin-top: 1px; }
+  .ex-name   { font-size: 13px; font-weight: 600; color: #2B0B14; }
+  .ex-meta   { font-size: 11px; color: #85747A; margin-top: 1px; }
   .ex-target { font-size: 11px; font-weight: 700; margin-top: 5px; padding: 3px 8px; border-radius: 6px; display: inline-block; }
-  .ex-equip  { font-size: 11px; color: #93C5FD; margin-top: 3px; }
-  #sync-badge { position: fixed; bottom: 10px; left: 10px; z-index: 9999; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 999px; background: #1F2937; color: #9CA3AF; border: 1px solid rgba(255,255,255,0.08); }
-  .ex-arrow  { font-size: 18px; color: #4B5563; margin-right: auto; transition: transform 0.2s; flex-shrink: 0; }
+  .ex-equip  { font-size: 11px; color: #8E2A3B; margin-top: 3px; }
+  #sync-badge { position: fixed; bottom: 10px; left: 10px; z-index: 9999; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 999px; background: #F4ECEE; color: #6E5B60; border: 1px solid rgba(122,31,46,0.08); }
+  .ex-arrow  { font-size: 18px; color: #A39398; margin-right: auto; transition: transform 0.2s; flex-shrink: 0; }
   .ex-arrow.open { transform: rotate(90deg); }
-  .ex-body   { display: none; padding: 0 12px 12px; border-top: 1px solid rgba(255,255,255,0.06); }
+  .ex-body   { display: none; padding: 0 12px 12px; border-top: 1px solid rgba(122,31,46,0.06); }
   .ex-body.open { display: block; }
 
   /* ── SET ROW ── */
@@ -99,74 +99,74 @@
     display: grid; grid-template-columns: 15px 1fr 1fr 46px 1.05fr 28px;
     gap: 4px; align-items: end; margin-bottom: 4px;
     padding: 5px 6px;
-    background: rgba(255,255,255,0.03); border-radius: 6px;
+    background: rgba(122,31,46,0.03); border-radius: 6px;
   }
   .set-row.set-done { background: rgba(16,185,129,0.09); }
-  .set-num  { font-size: 10px; color: #6B7280; font-weight: 700; }
-  .set-lbl  { font-size: 9px; color: #6B7280; margin-bottom: 2px; }
+  .set-num  { font-size: 10px; color: #85747A; font-weight: 700; }
+  .set-lbl  { font-size: 9px; color: #85747A; margin-bottom: 2px; }
   .set-row input, .set-row select {
-    width: 100%; background: rgba(255,255,255,0.08);
-    border: 1px solid rgba(255,255,255,0.12); border-radius: 4px;
-    color: #F9FAFB; font-size: 12px; padding: 4px 5px;
+    width: 100%; background: rgba(122,31,46,0.08);
+    border: 1px solid rgba(122,31,46,0.12); border-radius: 4px;
+    color: #2B0B14; font-size: 12px; padding: 4px 5px;
     outline: none; font-family: inherit;
   }
-  .set-row select { background: rgba(20,20,30,0.95); }
-  .set-row input.auto-val, .set-row select.auto-val { color: #60A5FA; font-style: italic; border-color: rgba(96,165,250,0.35); }
-  .ex-time-actual { font-size: 10px; color: #6B7280; font-weight: 500; margin-right: 4px; }
-  .ex-time-est { font-size: 10px; color: #4B5563; font-weight: 400; margin-right: 4px; }
+  .set-row select { background: rgba(255,255,255,1); }
+  .set-row input.auto-val, .set-row select.auto-val { color: #9B2C3F; font-style: italic; border-color: rgba(155,44,63,0.35); }
+  .ex-time-actual { font-size: 10px; color: #85747A; font-weight: 500; margin-right: 4px; }
+  .ex-time-est { font-size: 10px; color: #A39398; font-weight: 400; margin-right: 4px; }
 
   /* ── WARM-UP ── */
-  .warmup-card { border-radius: 10px; margin-bottom: 10px; overflow: hidden; background: rgba(245,158,11,0.05); border: 1px solid rgba(245,158,11,0.25); padding: 10px 12px; }
+  .warmup-card { border-radius: 10px; margin-bottom: 10px; overflow: hidden; background: rgba(217,119,6,0.05); border: 1px solid rgba(217,119,6,0.25); padding: 10px 12px; }
   .warmup-card.done { background: rgba(16,185,129,0.05); border-color: rgba(16,185,129,0.25); }
   .warmup-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
-  .warmup-title { font-size: 13px; font-weight: 700; color: #F59E0B; }
+  .warmup-title { font-size: 13px; font-weight: 700; color: #D97706; }
   .warmup-card.done .warmup-title { color: #10B981; }
-  .warmup-item { font-size: 11px; color: #D1D5DB; margin-bottom: 4px; line-height: 1.5; }
-  .warmup-item b { color: #F9FAFB; }
+  .warmup-item { font-size: 11px; color: #4A2B33; margin-bottom: 4px; line-height: 1.5; }
+  .warmup-item b { color: #2B0B14; }
   .warmup-btn {
     padding: 7px 14px; border-radius: 7px; cursor: pointer; font-size: 12px; font-weight: 700;
-    background: rgba(245,158,11,0.15); border: 1px solid #F59E0B; color: #FBBF24;
+    background: rgba(217,119,6,0.15); border: 1px solid #D97706; color: #A16207;
     font-family: inherit; margin-top: 6px; width: 100%; text-align: center;
   }
   .warmup-btn.done { background: #10B981; border-color: #10B981; color: #fff; }
   .set-done-btn {
     height: 30px; border-radius: 5px; cursor: pointer; user-select: none;
     display: flex; align-items: center; justify-content: center;
-    font-size: 14px; font-weight: 800; color: #4B5563;
-    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
+    font-size: 14px; font-weight: 800; color: #A39398;
+    background: rgba(122,31,46,0.06); border: 1px solid rgba(122,31,46,0.12);
   }
   .set-done-btn.on { background: #10B981; color: #fff; border-color: #10B981; }
   /* isometric hold timer (Side Plank etc) — replaces counting reps with time under tension */
   .iso-btn {
     padding: 5px 9px; border-radius: 7px; cursor: pointer; white-space: nowrap;
-    background: rgba(59,130,246,0.12); border: 1px solid rgba(59,130,246,0.35);
-    color: #93C5FD; font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums;
+    background: rgba(122,31,46,0.12); border: 1px solid rgba(122,31,46,0.35);
+    color: #8E2A3B; font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums;
     display: flex; align-items: center; justify-content: center; min-width: 62px;
   }
-  .iso-btn.running { background: rgba(239,68,68,0.15); border-color: rgba(239,68,68,0.45); color: #FCA5A5; }
+  .iso-btn.running { background: rgba(239,68,68,0.15); border-color: rgba(239,68,68,0.45); color: #B42318; }
 
   /* ── WORKOUT HEADER + TIMER ── */
   .wk-hdr { margin-bottom: 14px; }
   .wk-hdr-top { display: flex; align-items: flex-start; justify-content: space-between; padding: 10px 0 8px; }
-  .wk-title { font-size: 20px; font-weight: 800; color: #F9FAFB; }
+  .wk-title { font-size: 20px; font-weight: 800; color: #2B0B14; }
   .wk-sub   { font-size: 12px; margin-top: 2px; }
   .wk-timer-row { display: flex; align-items: center; gap: 10px; justify-content: space-between; }
-  .wk-dur { font-size: 13px; font-weight: 700; color: #9CA3AF; }
+  .wk-dur { font-size: 13px; font-weight: 700; color: #6E5B60; }
   .wk-dur #wk-timer-disp { color: #10B981; font-variant-numeric: tabular-nums; }
   .wk-btn { border: none; border-radius: 8px; color: #fff; font-size: 13px; font-weight: 700; padding: 9px 16px; cursor: pointer; font-family: inherit; }
   .wk-btn.end { background: #EF4444; }
 
   /* ── CURRENT / CORE / DONE-TOGGLE / CUE ── */
-  .ex-card.current { border-color: rgba(96,165,250,0.55); box-shadow: 0 0 0 1px rgba(96,165,250,0.35) inset; }
-  .cur-tag { font-size: 9px; font-weight: 700; color: #93C5FD; background: rgba(96,165,250,0.18); padding: 1px 6px; border-radius: 999px; margin-right: 6px; vertical-align: middle; }
+  .ex-card.current { border-color: rgba(155,44,63,0.55); box-shadow: 0 0 0 1px rgba(155,44,63,0.35) inset; }
+  .cur-tag { font-size: 9px; font-weight: 700; color: #8E2A3B; background: rgba(155,44,63,0.18); padding: 1px 6px; border-radius: 999px; margin-right: 6px; vertical-align: middle; }
   .ex-card.core-card { border-right: 3px solid #8B5CF6; }
   .ex-done-toggle {
     width: 24px; height: 24px; border-radius: 6px; flex-shrink: 0; cursor: pointer;
     display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; color: #fff;
-    background: rgba(255,255,255,0.06); border: 1.5px solid rgba(255,255,255,0.2);
+    background: rgba(122,31,46,0.06); border: 1.5px solid rgba(122,31,46,0.2);
   }
   .ex-done-toggle.on { background: #10B981; border-color: #10B981; }
-  .ex-cue { font-size: 12px; color: #D1D5DB; line-height: 1.65; margin: 10px 0 6px; background: rgba(255,255,255,0.03); border-radius: 7px; padding: 8px 10px; border-right: 2px solid #06B6D4; }
+  .ex-cue { font-size: 12px; color: #4A2B33; line-height: 1.65; margin: 10px 0 6px; background: rgba(122,31,46,0.03); border-radius: 7px; padding: 8px 10px; border-right: 2px solid #A64D63; }
   .ex-cue .cue-label { display: block; margin-bottom: 3px; }
 
   /* ── REST TIMER(S) (floating, supports several running in parallel — e.g. supersets) ── */
@@ -176,12 +176,12 @@
   }
   #rest-timer .rest-pill {
     display: flex; align-items: center; gap: 12px;
-    background: #111827; border: 1px solid rgba(16,185,129,0.5); border-radius: 999px;
-    padding: 8px 14px; box-shadow: 0 6px 24px rgba(0,0,0,0.5);
+    background: #FFFFFF; border: 1px solid rgba(16,185,129,0.5); border-radius: 999px;
+    padding: 8px 14px; box-shadow: 0 6px 24px rgba(80,10,25,0.175);
   }
-  #rest-timer .rt-name { font-size: 11px; color: #9CA3AF; font-weight: 600; }
+  #rest-timer .rt-name { font-size: 11px; color: #6E5B60; font-weight: 600; }
   #rest-timer .rt-time { font-size: 20px; font-weight: 800; color: #10B981; font-variant-numeric: tabular-nums; min-width: 52px; text-align: center; }
-  #rest-timer .rt-add { font-size: 11px; font-weight: 700; color: #93C5FD; cursor: pointer; padding: 3px 7px; border: 1px solid rgba(96,165,250,0.4); border-radius: 999px; }
+  #rest-timer .rt-add { font-size: 11px; font-weight: 700; color: #8E2A3B; cursor: pointer; padding: 3px 7px; border: 1px solid rgba(155,44,63,0.4); border-radius: 999px; }
   #rest-timer .rt-x { font-size: 11px; font-weight: 700; color: #EF4444; cursor: pointer; }
 
   /* ── SCALE ROW ── */
@@ -190,24 +190,24 @@
     width: 28px; height: 28px; border-radius: 5px; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
     font-size: 12px; font-weight: 600;
-    background: rgba(255,255,255,0.06); color: #6B7280;
-    border: 1px solid rgba(255,255,255,0.08); transition: all 0.12s;
+    background: rgba(122,31,46,0.06); color: #85747A;
+    border: 1px solid rgba(122,31,46,0.08); transition: all 0.12s;
     flex-shrink: 0;
   }
   .scale-btn.sel { color: #fff; border-color: transparent; }
 
   /* ── PAIN LABEL ── */
-  .field-label { font-size: 11px; color: #6B7280; margin-bottom: 4px; margin-top: 8px; }
+  .field-label { font-size: 11px; color: #85747A; margin-bottom: 4px; margin-top: 8px; }
 
   /* ── SUMMARY CARD ── */
-  .summary-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 10px; padding: 12px; margin-top: 12px; }
-  .summary-title { font-size: 12px; color: #9CA3AF; font-weight: 700; margin-bottom: 10px; }
+  .summary-card { background: rgba(122,31,46,0.03); border: 1px solid rgba(122,31,46,0.07); border-radius: 10px; padding: 12px; margin-top: 12px; }
+  .summary-title { font-size: 12px; color: #6E5B60; font-weight: 700; margin-bottom: 10px; }
 
   /* ── INPUTS ── */
   textarea, input[type=text], input[type=number] {
-    background: rgba(255,255,255,0.08);
-    border: 1px solid rgba(255,255,255,0.12); border-radius: 6px;
-    color: #F9FAFB; font-size: 13px; padding: 6px 8px;
+    background: rgba(122,31,46,0.08);
+    border: 1px solid rgba(122,31,46,0.12); border-radius: 6px;
+    color: #2B0B14; font-size: 13px; padding: 6px 8px;
     outline: none; font-family: inherit; width: 100%;
   }
   textarea { resize: vertical; }
@@ -221,7 +221,7 @@
   }
 
   /* ── PROGRESS BAR ── */
-  .progress-track { height: 4px; background: rgba(255,255,255,0.08); border-radius: 2px; margin-bottom: 16px; }
+  .progress-track { height: 4px; background: rgba(122,31,46,0.08); border-radius: 2px; margin-bottom: 16px; }
   .progress-fill  { height: 100%; border-radius: 2px; transition: width 0.4s; }
 
   /* ── REHAB ITEM ── */
@@ -229,129 +229,184 @@
   .rehab-header { display: flex; align-items: center; gap: 10px; padding: 10px 12px; }
   .rehab-check {
     width: 22px; height: 22px; border-radius: 5px; flex-shrink: 0; cursor: pointer;
-    background: rgba(255,255,255,0.08); border: 1.5px solid rgba(255,255,255,0.2);
+    background: rgba(122,31,46,0.08); border: 1.5px solid rgba(122,31,46,0.2);
     display: flex; align-items: center; justify-content: center;
     font-size: 13px; color: #fff; transition: all 0.15s;
   }
   .rehab-check.checked { background: #10B981; border-color: #10B981; }
-  .rehab-name  { font-size: 13px; font-weight: 600; color: #D1D5DB; }
-  .rehab-name.checked { color: #D1FAE5; }
-  .rehab-reps  { font-size: 11px; color: #6B7280; margin-top: 1px; }
-  .rehab-expand { font-size: 18px; color: #4B5563; cursor: pointer; margin-right: auto; flex-shrink: 0; transition: transform 0.2s; }
+  .rehab-name  { font-size: 13px; font-weight: 600; color: #4A2B33; }
+  .rehab-name.checked { color: #0F8A5F; }
+  .rehab-reps  { font-size: 11px; color: #85747A; margin-top: 1px; }
+  .rehab-expand { font-size: 18px; color: #A39398; cursor: pointer; margin-right: auto; flex-shrink: 0; transition: transform 0.2s; }
   .rehab-expand.open { transform: rotate(90deg); }
-  .rehab-body  { display: none; padding: 0 12px 12px; border-top: 1px solid rgba(255,255,255,0.06); }
+  .rehab-body  { display: none; padding: 0 12px 12px; border-top: 1px solid rgba(122,31,46,0.06); }
   .rehab-body.open { display: block; }
-  .cue-label   { font-size: 10px; font-weight: 700; color: #06B6D4; letter-spacing: 0.6px; text-transform: uppercase; margin: 8px 0 4px; }
-  .cue-text    { font-size: 12px; color: #D1D5DB; line-height: 1.6; }
-  .why-box     { background: rgba(255,255,255,0.04); border-radius: 6px; padding: 7px 10px; border-right: 2px solid #F59E0B; margin-top: 8px; }
-  .why-label   { font-size: 10px; font-weight: 700; color: #F59E0B; letter-spacing: 0.6px; text-transform: uppercase; margin-bottom: 3px; }
-  .why-text    { font-size: 11px; color: #9CA3AF; line-height: 1.5; }
+  .cue-label   { font-size: 10px; font-weight: 700; color: #A64D63; letter-spacing: 0.6px; text-transform: uppercase; margin: 8px 0 4px; }
+  .cue-text    { font-size: 12px; color: #4A2B33; line-height: 1.6; }
+  .why-box     { background: rgba(122,31,46,0.04); border-radius: 6px; padding: 7px 10px; border-right: 2px solid #D97706; margin-top: 8px; }
+  .why-label   { font-size: 10px; font-weight: 700; color: #D97706; letter-spacing: 0.6px; text-transform: uppercase; margin-bottom: 3px; }
+  .why-text    { font-size: 11px; color: #6E5B60; line-height: 1.5; }
 
   /* ── WEEKLY ── */
-  .weekly-item { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; }
+  .weekly-item { background: rgba(122,31,46,0.03); border: 1px solid rgba(122,31,46,0.06); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; }
   .weekly-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-  .weekly-label { font-size: 13px; font-weight: 600; color: #D1D5DB; }
-  .weekly-unit  { font-size: 11px; color: #6B7280; }
+  .weekly-label { font-size: 13px; font-weight: 600; color: #4A2B33; }
+  .weekly-unit  { font-size: 11px; color: #85747A; }
   .bool-row { display: flex; gap: 8px; }
   .bool-btn {
     flex: 1; padding: 8px 0; border-radius: 6px; cursor: pointer;
     text-align: center; font-size: 12px; font-weight: 600;
-    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
-    color: #6B7280; transition: all 0.15s;
+    background: rgba(122,31,46,0.05); border: 1px solid rgba(122,31,46,0.08);
+    color: #85747A; transition: all 0.15s;
   }
 
   /* ── HISTORY TABLE ── */
   .hist-table { width: 100%; border-collapse: collapse; font-size: 11px; }
-  .hist-table th { text-align: center; color: #6B7280; padding: 4px 6px; border-bottom: 1px solid rgba(255,255,255,0.06); white-space: nowrap; }
-  .hist-table td { text-align: center; padding: 6px; border-bottom: 1px solid rgba(255,255,255,0.04); }
+  .hist-table th { text-align: center; color: #85747A; padding: 4px 6px; border-bottom: 1px solid rgba(122,31,46,0.06); white-space: nowrap; }
+  .hist-table td { text-align: center; padding: 6px; border-bottom: 1px solid rgba(122,31,46,0.04); }
   .hist-table tr:first-child td { text-align: right; padding-right: 8px; }
   .overflow-x { overflow-x: auto; }
 
   /* ── WORKOUT LOG CARD ── */
-  .wlog-card { background: rgba(255,255,255,0.03); border-radius: 10px; padding: 12px; margin-bottom: 8px; }
+  .wlog-card { background: rgba(122,31,46,0.03); border-radius: 10px; padding: 12px; margin-bottom: 8px; }
 
   /* ── EXPORT ── */
   .mode-toggle { display: flex; gap: 6px; margin-bottom: 14px; }
   .mode-btn {
     flex: 1; padding: 8px 0; border-radius: 7px; cursor: pointer;
     text-align: center; font-size: 12px; font-weight: 600;
-    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
-    color: #6B7280; transition: all 0.15s;
+    background: rgba(122,31,46,0.04); border: 1px solid rgba(122,31,46,0.08);
+    color: #85747A; transition: all 0.15s;
   }
-  .mode-btn.active { background: rgba(59,130,246,0.2); border-color: #3B82F6; color: #93C5FD; }
-  .info-box { background: rgba(59,130,246,0.08); border: 1px solid rgba(59,130,246,0.2); border-radius: 8px; padding: 10px 12px; margin-bottom: 12px; }
-  .info-title { font-size: 11px; font-weight: 700; color: #93C5FD; margin-bottom: 4px; }
-  .info-text  { font-size: 11px; color: #6B7280; line-height: 1.7; }
+  .mode-btn.active { background: rgba(122,31,46,0.2); border-color: #7A1F2E; color: #8E2A3B; }
+  .info-box { background: rgba(122,31,46,0.08); border: 1px solid rgba(122,31,46,0.2); border-radius: 8px; padding: 10px 12px; margin-bottom: 12px; }
+  .info-title { font-size: 11px; font-weight: 700; color: #8E2A3B; margin-bottom: 4px; }
+  .info-text  { font-size: 11px; color: #85747A; line-height: 1.7; }
   .stat-row   { display: flex; gap: 6px; margin-bottom: 12px; }
-  .stat-box   { flex: 1; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 10px; padding: 8px 4px; text-align: center; }
-  .stat-val   { font-size: 18px; font-weight: 800; color: #F9FAFB; }
-  .stat-lbl   { font-size: 10px; color: #6B7280; margin-top: 2px; }
-  .export-preview { width: 100%; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; color: #9CA3AF; font-size: 10px; line-height: 1.6; font-family: monospace; padding: 8px; resize: none; outline: none; direction: ltr; text-align: left; }
+  .stat-box   { flex: 1; background: rgba(122,31,46,0.03); border: 1px solid rgba(122,31,46,0.07); border-radius: 10px; padding: 8px 4px; text-align: center; }
+  .stat-val   { font-size: 18px; font-weight: 800; color: #2B0B14; }
+  .stat-lbl   { font-size: 10px; color: #85747A; margin-top: 2px; }
+  .export-preview { width: 100%; background: rgba(80,10,25,0.105); border: 1px solid rgba(122,31,46,0.08); border-radius: 6px; color: #6E5B60; font-size: 10px; line-height: 1.6; font-family: monospace; padding: 8px; resize: none; outline: none; direction: ltr; text-align: left; }
 
   /* ── ALERT ── */
   .alert-red { background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.3); border-radius: 8px; padding: 10px 12px; margin-bottom: 10px; }
   .alert-red-title { font-size: 13px; font-weight: 700; color: #EF4444; }
-  .alert-red-body  { font-size: 12px; color: #FCA5A5; margin-top: 3px; }
+  .alert-red-body  { font-size: 12px; color: #B42318; margin-top: 3px; }
 
   /* ── FOOTER ── */
-  .footer { padding: 10px 16px 28px; font-size: 10px; color: #374151; text-align: center; border-top: 1px solid rgba(255,255,255,0.04); margin-top: 8px; }
+  .footer { padding: 10px 16px 28px; font-size: 10px; color: #B8AAAE; text-align: center; border-top: 1px solid rgba(122,31,46,0.04); margin-top: 8px; }
 
   /* ── SECTION EYEBROW ── */
   .eyebrow { font-size: 11px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 8px; }
 
   /* ── DASHBOARD ── */
-  .chart-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 10px; padding: 12px; margin-bottom: 12px; }
-  .chart-title { font-size: 12px; font-weight: 700; color: #9CA3AF; margin-bottom: 10px; }
-  .chart-subtitle { font-size: 10px; color: #4B5563; margin-bottom: 8px; }
+  .chart-card { background: rgba(122,31,46,0.03); border: 1px solid rgba(122,31,46,0.07); border-radius: 10px; padding: 12px; margin-bottom: 12px; }
+  .chart-title { font-size: 12px; font-weight: 700; color: #6E5B60; margin-bottom: 10px; }
+  .chart-subtitle { font-size: 10px; color: #A39398; margin-bottom: 8px; }
   .ex-select {
-    background: rgba(20,20,30,0.95); border: 1px solid rgba(255,255,255,0.12);
-    border-radius: 6px; color: #F9FAFB; font-size: 12px; padding: 4px 8px;
+    background: rgba(255,255,255,1); border: 1px solid rgba(122,31,46,0.12);
+    border-radius: 6px; color: #2B0B14; font-size: 12px; padding: 4px 8px;
     outline: none; font-family: inherit; width: 100%;
   }
   .dash-kpi-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 6px; margin-bottom: 12px; }
-  .kpi-box { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 10px; padding: 10px 6px; text-align: center; }
-  .kpi-val { font-size: 20px; font-weight: 800; color: #F9FAFB; }
-  .kpi-lbl { font-size: 10px; color: #6B7280; margin-top: 2px; }
+  .kpi-box { background: rgba(122,31,46,0.03); border: 1px solid rgba(122,31,46,0.07); border-radius: 10px; padding: 10px 6px; text-align: center; }
+  .kpi-val { font-size: 20px; font-weight: 800; color: #2B0B14; }
+  .kpi-lbl { font-size: 10px; color: #85747A; margin-top: 2px; }
   .str-mode-row { display: flex; gap: 5px; margin-bottom: 10px; }
   .str-mode-btn {
     flex: 1; padding: 6px 0; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: 600;
-    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); color: #6B7280;
+    background: rgba(122,31,46,0.04); border: 1px solid rgba(122,31,46,0.08); color: #85747A;
     transition: all 0.15s; font-family: inherit;
   }
   .str-mode-btn.active { background: rgba(16,185,129,0.15); border-color: #10B981; color: #34D399; }
 
   /* ── NUTRITION ── */
-  .nut-goal-bar { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 10px; padding: 12px; margin-bottom: 12px; }
+  .nut-goal-bar { background: rgba(122,31,46,0.03); border: 1px solid rgba(122,31,46,0.07); border-radius: 10px; padding: 12px; margin-bottom: 12px; }
   .nut-goal-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
-  .nut-goal-label { font-size: 12px; font-weight: 700; color: #9CA3AF; }
-  .nut-goal-value { font-size: 20px; font-weight: 800; color: #F9FAFB; }
-  .nut-goal-target { font-size: 11px; color: #6B7280; }
-  .nut-track { height: 6px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden; }
+  .nut-goal-label { font-size: 12px; font-weight: 700; color: #6E5B60; }
+  .nut-goal-value { font-size: 20px; font-weight: 800; color: #2B0B14; }
+  .nut-goal-target { font-size: 11px; color: #85747A; }
+  .nut-track { height: 6px; background: rgba(122,31,46,0.06); border-radius: 3px; overflow: hidden; }
   .nut-track-fill { height: 100%; border-radius: 3px; transition: width 0.4s, background 0.3s; }
-  .nut-meal { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.07); border-radius: 10px; margin-bottom: 10px; overflow: hidden; }
-  .nut-meal-header { padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; }
+  .nut-meal { background: rgba(122,31,46,0.02); border: 1px solid rgba(122,31,46,0.07); border-radius: 10px; margin-bottom: 10px; overflow: hidden; }
+  .nut-meal-header { padding: 10px 12px; border-bottom: 1px solid rgba(122,31,46,0.05); display: flex; justify-content: space-between; align-items: center; }
   .nut-meal-title { font-size: 13px; font-weight: 700; }
-  .nut-meal-note { font-size: 10px; color: #6B7280; margin-top: 2px; }
+  .nut-meal-note { font-size: 10px; color: #85747A; margin-top: 2px; }
   .nut-meal-total { font-size: 12px; font-weight: 700; }
-  .nut-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-bottom: 1px solid rgba(255,255,255,0.04); }
+  .nut-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-bottom: 1px solid rgba(122,31,46,0.04); }
   .nut-item:last-child { border-bottom: none; }
   .nut-chk {
     width: 20px; height: 20px; border-radius: 5px; flex-shrink: 0; cursor: pointer;
-    background: rgba(255,255,255,0.07); border: 1.5px solid rgba(255,255,255,0.18);
+    background: rgba(122,31,46,0.07); border: 1.5px solid rgba(122,31,46,0.18);
     display: flex; align-items: center; justify-content: center; font-size: 12px;
     transition: all 0.15s;
   }
   .nut-chk.checked { background: #10B981; border-color: #10B981; color: #fff; }
   .nut-item-info { flex: 1; cursor: pointer; }
-  .nut-item-name { font-size: 13px; color: #D1D5DB; }
-  .nut-item-name.checked { color: #6EE7B7; text-decoration: line-through; opacity: 0.7; }
-  .nut-item-meta { font-size: 11px; color: #6B7280; margin-top: 1px; }
+  .nut-item-name { font-size: 13px; color: #4A2B33; }
+  .nut-item-name.checked { color: #0F8A5F; text-decoration: line-through; opacity: 0.7; }
+  .nut-item-meta { font-size: 11px; color: #85747A; margin-top: 1px; }
   .nut-item-protein { font-size: 13px; font-weight: 700; }
   .nut-custom { display: flex; align-items: center; gap: 8px; padding: 9px 12px; }
-  .nut-custom label { font-size: 11px; color: #6B7280; flex-shrink: 0; }
-  .nut-custom input { width: 60px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); border-radius: 5px; color: #F9FAFB; font-size: 12px; padding: 4px 6px; outline: none; font-family: inherit; }
+  .nut-custom label { font-size: 11px; color: #85747A; flex-shrink: 0; }
+  .nut-custom input { width: 60px; background: rgba(122,31,46,0.08); border: 1px solid rgba(122,31,46,0.12); border-radius: 5px; color: #2B0B14; font-size: 12px; padding: 4px 6px; outline: none; font-family: inherit; }
   /* Agent-readable protein summary */
-  .protein-agent-block { background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 8px 12px; margin-top: 12px; font-family: monospace; font-size: 11px; color: #4B5563; }
+  .protein-agent-block { background: rgba(80,10,25,0.105); border: 1px solid rgba(122,31,46,0.06); border-radius: 8px; padding: 8px 12px; margin-top: 12px; font-family: monospace; font-size: 11px; color: #A39398; }
+
+  /* ══════════════ THEME: בורדו ולבן (12.10.2026) ══════════════
+     Layered on top of the remapped palette: burgundy header, white cards with soft depth,
+     clearer hierarchy and touch targets. Semantic colors (green done / red pain / amber warn) kept. */
+  :root { --bd:#7A1F2E; --bd-dark:#5C1421; --bd-soft:#F6ECEE; --line:#EEE1E4; --ink:#2B0B14; --muted:#85747A; }
+  body { background:#FBF8F8; color:var(--ink); -webkit-font-smoothing:antialiased; }
+  .header { background:linear-gradient(160deg, var(--bd) 0%, var(--bd-dark) 100%); border-bottom:none; padding:18px 16px 0; box-shadow:0 2px 12px rgba(92,20,33,0.18); }
+  .header-eyebrow { color:rgba(255,255,255,0.65); }
+  .header-title { color:#fff; letter-spacing:-0.2px; }
+  .tabs { border-bottom:none; gap:2px; scrollbar-width:none; }
+  .tabs::-webkit-scrollbar { display:none; }
+  .tab { color:rgba(255,255,255,0.68); border-bottom:3px solid transparent; padding:10px 13px; }
+  .tab.active { color:#fff; border-bottom-color:#fff; }
+  .content { padding:18px 16px 90px; }
+  .section-title { color:var(--bd-dark); letter-spacing:-0.3px; }
+  .card, .ex-card, .weekly-item, .chart-card, .wlog-card, .summary-card, .stat-box, .warmup-card, .rehab-item {
+    background:#fff; border:1px solid var(--line); border-radius:14px;
+    box-shadow:0 1px 2px rgba(80,10,25,0.04), 0 3px 10px rgba(80,10,25,0.04);
+  }
+  .ex-card.done-card, .card.done { background:#F1FAF6; border-color:rgba(16,185,129,0.35); }
+  .warmup-card { background:#FFF8EE; border-color:rgba(217,119,6,0.30); }
+  .warmup-card.done { background:#F1FAF6; border-color:rgba(16,185,129,0.35); }
+  .ex-card.current { border-color:var(--bd); box-shadow:0 0 0 2px rgba(122,31,46,0.12), 0 3px 10px rgba(80,10,25,0.06); }
+  .ex-card.core-card { border-right:3px solid #8B5CF6; }
+  .ex-name { color:var(--ink); font-size:14px; }
+  .ex-header { padding:12px 14px; }
+  .ex-body { border-top:1px solid var(--line); padding:0 14px 14px; }
+  .ex-cue { background:var(--bd-soft); color:#4A2B33; }
+  .set-row { background:#FBF6F7; border-radius:8px; padding:6px 7px; }
+  .set-row.set-done { background:#E9F7F0; }
+  .set-row input, .set-row select, textarea, input[type=text], input[type=number], .ex-select {
+    background:#fff; border:1px solid #E6D6DA; color:var(--ink); border-radius:8px;
+  }
+  .set-row input:focus, .set-row select:focus, textarea:focus, input:focus, .ex-select:focus {
+    border-color:var(--bd); box-shadow:0 0 0 3px rgba(122,31,46,0.12);
+  }
+  .set-done-btn { background:#fff; border:1px solid #E6D6DA; color:#C4B4B9; border-radius:8px; }
+  .btn { border-radius:12px; box-shadow:0 2px 6px rgba(80,10,25,0.12); }
+  .wk-btn { border-radius:10px; }
+  .day-pill { background:#fff; border:1px solid var(--line); border-radius:10px; }
+  .scale-btn { background:#fff; border:1px solid #E6D6DA; border-radius:7px; }
+  .bool-btn, .mode-btn { background:#fff; border:1px solid #E6D6DA; border-radius:9px; }
+  .mode-btn.active { background:var(--bd); border-color:var(--bd); color:#fff; }
+  .info-box { background:var(--bd-soft); border:1px solid rgba(122,31,46,0.15); border-radius:12px; }
+  .badge { background:var(--bd-soft); color:var(--bd); border-color:transparent; font-weight:700; }
+  .rehab-check, .ex-done-toggle { background:#fff; border:1.5px solid #D9C7CC; }
+  .rehab-check.checked, .ex-done-toggle.on { background:#10B981; border-color:#10B981; }
+  .rehab-body { border-top:1px solid var(--line); }
+  .why-box { background:#FFF8EE; }
+  .export-preview { background:#FBF6F7; color:#4A2B33; border:1px solid var(--line); }
+  .progress-track { background:#EFE3E6; }
+  #sync-badge { background:#fff; border:1px solid var(--line); box-shadow:0 2px 8px rgba(80,10,25,0.10); }
+  #rest-timer .rest-pill { background:#fff; box-shadow:0 8px 28px rgba(80,10,25,0.18); }
+  .hist-table th { color:var(--muted); }
+  .footer { color:#B8AAAE; border-top:1px solid var(--line); }
 </style>
 </head>
 <body>
@@ -393,10 +448,10 @@
         </div>
         <span class="badge" id="rehab-count">0/14</span>
       </div>
-      <div class="progress-track"><div class="progress-fill" id="rehab-progress" style="width:0%;background:#06B6D4"></div></div>
+      <div class="progress-track"><div class="progress-fill" id="rehab-progress" style="width:0%;background:#A64D63"></div></div>
       <div id="rehab-content"></div>
       <textarea id="rehab-notes" rows="2" placeholder="הערות שיקום — כאב, תחושה, מה היה קשה..." style="margin-bottom:10px"></textarea>
-      <button class="btn" id="rehab-save" style="background:#06B6D4">שמור שיקום היום</button>
+      <button class="btn" id="rehab-save" style="background:#A64D63">שמור שיקום היום</button>
     </div>
 
     <!-- ══════════════════════════════════════════════════
@@ -417,7 +472,7 @@
       <div class="section-title">מדדים שבועיים</div>
       <div class="section-sub" id="weekly-subtitle"></div>
       <div id="weekly-content"></div>
-      <button class="btn" id="weekly-save" style="background:#3B82F6">שמור מדדים</button>
+      <button class="btn" id="weekly-save" style="background:#7A1F2E">שמור מדדים</button>
     </div>
 
     <!-- ══════════════════════════════════════════════════
@@ -488,7 +543,7 @@
             <div class="nut-goal-label">חלבון יומי</div>
             <div class="nut-goal-target">יעד: 130–167 גרם</div>
           </div>
-          <div class="nut-goal-value"><span id="nut-total-display">0</span><span style="font-size:14px;color:#6B7280">g</span></div>
+          <div class="nut-goal-value"><span id="nut-total-display">0</span><span style="font-size:14px;color:#85747A">g</span></div>
         </div>
         <div class="nut-track"><div class="nut-track-fill" id="nut-bar" style="width:0%;background:#EF4444"></div></div>
       </div>
@@ -505,8 +560,8 @@
         <div id="protein-agent-block">TOTAL:0g|BREAKFAST:0g|LUNCH:0g|DINNER:0g|DATE:—|GOAL:130-167g</div>
       </div>
 
-      <button class="btn" id="nut-reset" style="background:#374151;margin-top:12px;color:#9CA3AF">↺ אפס יום חדש</button>
-      <button class="btn" id="nut-agent-save" style="background:#1F2937;margin-top:6px;color:#6B7280;font-size:12px">📤 שמור לסוכן (data_export.json)</button>
+      <button class="btn" id="nut-reset" style="background:#B8AAAE;margin-top:12px;color:#6E5B60">↺ אפס יום חדש</button>
+      <button class="btn" id="nut-agent-save" style="background:#F4ECEE;margin-top:6px;color:#85747A;font-size:12px">📤 שמור לסוכן (data_export.json)</button>
     </div>
 
     <!-- ══════════════════════════════════════════════════
@@ -525,9 +580,9 @@
       </div>
       <div class="stat-row" id="export-stats"></div>
       <textarea class="export-preview" id="export-preview" rows="12" readonly></textarea>
-      <button class="btn" id="export-copy" style="background:#3B82F6">העתק הכל</button>
-      <button class="btn" id="export-agent-save" style="background:#1F2937;margin-top:6px;color:#6B7280;font-size:12px">📤 שמור לסוכן (data_export.json)</button>
-      <div style="font-size:10px;color:#374151;margin-top:8px;text-align:center">
+      <button class="btn" id="export-copy" style="background:#7A1F2E">העתק הכל</button>
+      <button class="btn" id="export-agent-save" style="background:#F4ECEE;margin-top:6px;color:#85747A;font-size:12px">📤 שמור לסוכן (data_export.json)</button>
+      <div style="font-size:10px;color:#B8AAAE;margin-top:8px;text-align:center">
         בפעם הראשונה: בחר שמירה בתיקיית הפרויקט (Projects/Fitness). לאחר מכן — שמירה אוטומטית בכל שינוי.
       </div>
 
@@ -545,7 +600,7 @@
       </div>
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
         <input type="text" id="ntfy-topic-inp" readonly style="flex:1;font-family:monospace;font-size:12px">
-        <button class="btn" id="ntfy-copy-btn" style="width:auto;margin-top:0;padding:8px 14px;background:#1F2937;color:#9CA3AF;font-size:12px">העתק נושא</button>
+        <button class="btn" id="ntfy-copy-btn" style="width:auto;margin-top:0;padding:8px 14px;background:#F4ECEE;color:#6E5B60;font-size:12px">העתק נושא</button>
       </div>
     </div>
   </div>
@@ -588,7 +643,7 @@ const PROGRAM = {
     ]
   },
   day3: {
-    label: "Legs", tag: "קוואד · גלוטאוס · המסטרינג", color: "#3B82F6",
+    label: "Legs", tag: "קוואד · גלוטאוס · המסטרינג", color: "#7A1F2E",
     exercises: [
       { id: "goblet_squat",  name: "Goblet Squat",          sets: 4, reps: "8-10",  rest:180, note: "DB/KC — ללא ברבל על עמ\"ש", cue:"החזק משקל אנכי מול החזה. core נעול, גב ניטרלי (לא לקמר/לעגל). רד עד שהירכיים מקבילות אם נוח, ברכיים בכיוון האצבעות. עלייה דרך העקבים." },
       { id: "bulgarian_ss",  name: "Bulgarian Split Squat", sets: 3, reps: "8/צד",  rest:150, note: "DB בכל יד — עומס סימטרי", cue:"רגל אחורית על ספסל. גו זקוף, רד ישר למטה על הרגל הקדמית. ברך קדמית מעל האצבעות. DB בכל יד לעומס סימטרי ופחות עומס על עמ\"ש." },
@@ -599,7 +654,7 @@ const PROGRAM = {
     ]
   },
   day4: {
-    label: "Upper", tag: "עליון · נפח · חזרה על קבוצות", color: "#F59E0B",
+    label: "Upper", tag: "עליון · נפח · חזרה על קבוצות", color: "#D97706",
     exercises: [
       { id: "db_bench_u",      name: "DB Bench Press",     sets: 3, reps: "10-12", rest:120, note: "נפח — RPE 6-7", cue:"נפח קל יותר מיום Push. שכמות כלואות, מרפקים ~45°. דגש על שליטה וכיווץ, לא על משקל מקסימלי." },
       { id: "cable_row_u",     name: "Cable Row / DB Row", sets: 3, reps: "10-12", rest:120, note: "", cue:"גב ניטרלי. משוך מרפקים אחורה, סחוט שכמות. אם DB Row — יד אחת, ברך וכף יד על ספסל, גב מקביל לרצפה." },
@@ -745,7 +800,7 @@ const WARMUP = [
 
 const REHAB_ROUTINE = {
   shoulder: {
-    label: "שכמה ימנית", color: "#06B6D4",
+    label: "שכמה ימנית", color: "#A64D63",
     why: "מטרה: תיקון dyskinesis, חיזוק Serratus + Trapezius, הפחתת עומס על Rotator Cuff",
     items: [
       { id:"r_chin_tuck",      name:"Cervical Chin Tucks",    sets:3, reps:"10",             cue:"עמוד/שב ישר. משוך סנטר אחורה (כפול סנטר קל). החזק 3 שניות.",                                                                    why:"מתקן קדמת ראש — מוריד עומס על C5-C6" },
@@ -761,7 +816,7 @@ const REHAB_ROUTINE = {
     ]
   },
   lower: {
-    label: "גב תחתון + אגן", color: "#F59E0B",
+    label: "גב תחתון + אגן", color: "#D97706",
     why: "מטרה: core stability, הפחתת לחץ על L4-L5, תיקון לורדוזה, שחרור Psoas",
     items: [
       { id:"r_cat_cow",       name:"Cat-Cow (טווח אמצע)",     sets:3, reps:"10",             cue:"על ארבע, תנועה איטית בטווח אמצע ונוח בלבד. ⚠️ בלט L4-L5/L5-S1 רגיש לפלקסיה — אל תגיע לקצה טווח ה-Cat (גב עגול מלא), בעיקר בהתלקחות; הדגש את שלב ה-Cow/נייטרלי. עצור על זרמים לרגל.",                                        why:"ניידות עמ\"ש — אך בלט דיסקלי רגיש לפלקסיה בקצה טווח; טווח אמצע בלבד" },
@@ -955,8 +1010,8 @@ const EQUIP_WEIGHTS = {
   leg_curl:         [45, 50, 54, 58],
 };
 // Same TDZ reasoning — used by the dashboard's chart config, reachable from the same early auto-restore path.
-const CHART_GRID = "rgba(255,255,255,0.06)";
-const CHART_TICK = "#6B7280";
+const CHART_GRID = "rgba(122,31,46,0.06)";
+const CHART_TICK = "#85747A";
 const CHART_FONT = { family:"-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif", size:11 };
 // Chart.js auto-generated tick/tooltip values can carry binary floating-point artifacts
 // (e.g. 78.00000000000001) — round to 2 decimals purely for display. Same TDZ reasoning as
@@ -966,7 +1021,7 @@ function _round2(v){ return Math.round(v*100)/100; }
 const NUTRITION_PLAN = {
   breakfast: {
     id:"breakfast", label:"☀️ בוקר (קלה — Atent XR)",
-    color:"#F59E0B", note:"תיאבון מדוכא — ארוחה קטנה וקלה לעיכול",
+    color:"#D97706", note:"תיאבון מדוכא — ארוחה קטנה וקלה לעיכול",
     items:[
       { id:"b_shake",   name:"שייק חלבון Whey 30g",    protein:30, cal:150, note:"עם חצי בננה / חלב" },
       { id:"b_yogurt",  name:"יוגורט יווני 170g",       protein:17, cal:100, note:"0–2% שומן" },
@@ -976,7 +1031,7 @@ const NUTRITION_PLAN = {
   },
   lunch: {
     id:"lunch", label:"☁️ צהריים (קלה)",
-    color:"#3B82F6", note:"ארוחת ביניים — השיאבון עדיין פעיל",
+    color:"#7A1F2E", note:"ארוחת ביניים — השיאבון עדיין פעיל",
     items:[
       { id:"l_shake",   name:"שייק חלבון Whey 30g",    protein:30, cal:150, note:"" },
       { id:"l_tuna",    name:"טונה פחית 85g",           protein:20, cal:130, note:"+ לחם שיפון" },
@@ -1004,7 +1059,7 @@ const NUTRITION_PLAN = {
 // Flag verdicts. Reference ranges are conventional-unit clinical consensus (Israel labs commonly
 // report these units); ranges vary slightly by lab/assay — treat borderline as advisory, not diagnostic.
 const _HF_GRN = { label:"תקין",  color:"#10B981" };
-const _HF_AMB = { label:"גבולי", color:"#F59E0B" };
+const _HF_AMB = { label:"גבולי", color:"#D97706" };
 const _HF_RED = { label:"חריג",  color:"#EF4444" };
 // within [lo,hi] → תקין; within a 10% margin outside → גבולי; beyond → חריג
 function _hRange(v,lo,hi){ if(v>=lo&&v<=hi) return _HF_GRN; const m=(hi-lo)*0.10; return (v>=lo-m&&v<=hi+m)?_HF_AMB:_HF_RED; }
@@ -1279,8 +1334,8 @@ function weekDatesSunday(sundayKey) {
   return out;
 }
 function scaleColor(v,good) {
-  if(good==="high") return v>=7?"#10B981":v>=4?"#F59E0B":"#EF4444";
-  return v<=3?"#10B981":v<=6?"#F59E0B":"#EF4444";
+  if(good==="high") return v>=7?"#10B981":v>=4?"#D97706":"#EF4444";
+  return v<=3?"#10B981":v<=6?"#D97706":"#EF4444";
 }
 function el(tag,cls,html) { const e=document.createElement(tag); if(cls)e.className=cls; if(html)e.innerHTML=html; return e; }
 
@@ -1482,7 +1537,7 @@ function renderDayPills() {
     const hasLog = !!(UI.cycle && UI.cycle[dk]);
     const est = avgDuration(dk);
     const pill = el("div","day-pill");
-    pill.innerHTML = `<div class="pill-label" style="color:${dk===selectedDay?day.color:"#6B7280"}">${day.label}${hasLog?" ✓":""}</div><div class="pill-sub">${day.tag.split(" · ")[0]}${est?` · ~${Math.round(est/60)}′`:""}</div>`;
+    pill.innerHTML = `<div class="pill-label" style="color:${dk===selectedDay?day.color:"#85747A"}">${day.label}${hasLog?" ✓":""}</div><div class="pill-sub">${day.tag.split(" · ")[0]}${est?` · ~${Math.round(est/60)}′`:""}</div>`;
     if (dk===selectedDay) { pill.style.background=day.color+"22"; pill.style.borderColor=day.color; }
     pill.onclick = () => { selectedDay=dk; UI.day=dk; saveUI(); renderDayPills(); renderWorkoutContent(); };
     container.appendChild(pill);
@@ -1524,7 +1579,7 @@ function renderWorkoutContent() {
   // duration measurement reflects real training time, not warm-up time.
   const wu = el("div","warmup-card"+(log.warmup.done?" done":""));
   wu.innerHTML = `<div class="warmup-hdr"><div class="warmup-title">${log.warmup.done?"✓ חימום בוצע":"🔥 חימום"}</div></div>
-    ${WARMUP.map(w=>`<div class="warmup-item">• <b>${w.name}</b> — ${w.reps}<br><span style="color:#6B7280">${w.cue}</span></div>`).join("")}
+    ${WARMUP.map(w=>`<div class="warmup-item">• <b>${w.name}</b> — ${w.reps}<br><span style="color:#85747A">${w.cue}</span></div>`).join("")}
     <div class="warmup-btn${log.warmup.done?' done':''}" id="warmup-toggle">${log.warmup.done?'✓ חימום בוצע — לחץ לביטול':'סמן חימום כבוצע'}</div>`;
   wu.querySelector("#warmup-toggle").onclick = () => {
     const turningOn = !log.warmup.done;
@@ -1579,12 +1634,12 @@ function renderWorkoutContent() {
     const sessDur = (typeof _exSessionDuration==="function") ? _exSessionDuration(log, ex.id) : null;
     const avgDur = (!sessDur && typeof avgExDuration==="function") ? avgExDuration(ex.id) : null;
     const timeTxt = sessDur ? `<span class="ex-time-actual">⏱ ${fmtDur(sessDur)}</span>` : (avgDur ? `<span class="ex-time-est">≈${fmtDur(avgDur)} משוער</span>` : "");
-    info.innerHTML = `<div class="ex-name">${ex.core?'◆ ':''}${ex.name}${isCurrent?' <span class="cur-tag">נוכחי</span>':''}${timeTxt}</div><div class="ex-meta">${ex.sets} × ${repsTxt}${restTxt}${ex.note?" · "+ex.note:""}</div>${equip?`<div class="ex-equip">${_lock?"📌":"🏋️"} ${equip}</div>`:""}${tgt&&tgt.reason?`<div class="ex-target" style="color:${tgt.color};background:${tgt.color}1A">${tgt.weight?`יעד ${tgt.weight} ק"ג · `:""}${tgt.reason}</div>`:""}${ex.replaced?`<div style="font-size:10px;color:#A78BFA;margin-top:3px">↻ ${ex.replaced.by==="rotation"?"רוטציה מתוכננת":"הוחלף בעקבות הערתך"} — במקום ${ex.replaced.fromName}</div>`:""}${ex.deloadWeek?`<div style="font-size:10px;color:#F59E0B;margin-top:3px">⬇ מחזור דילוד מתוכנן — סט אחד פחות ועומס מופחת</div>`:""}`;
+    info.innerHTML = `<div class="ex-name">${ex.core?'◆ ':''}${ex.name}${isCurrent?' <span class="cur-tag">נוכחי</span>':''}${timeTxt}</div><div class="ex-meta">${ex.sets} × ${repsTxt}${restTxt}${ex.note?" · "+ex.note:""}</div>${equip?`<div class="ex-equip">${_lock?"📌":"🏋️"} ${equip}</div>`:""}${tgt&&tgt.reason?`<div class="ex-target" style="color:${tgt.color};background:${tgt.color}1A">${tgt.weight?`יעד ${tgt.weight} ק"ג · `:""}${tgt.reason}</div>`:""}${ex.replaced?`<div style="font-size:10px;color:#6D28D9;margin-top:3px">↻ ${ex.replaced.by==="rotation"?"רוטציה מתוכננת":"הוחלף בעקבות הערתך"} — במקום ${ex.replaced.fromName}</div>`:""}${ex.deloadWeek?`<div style="font-size:10px;color:#D97706;margin-top:3px">⬇ מחזור דילוד מתוכנן — סט אחד פחות ועומס מופחת</div>`:""}`;
     // Pending swap that touches a medical constraint: the only thing the system will not do alone.
     // Shown in context (inside this exercise only), one tap to decide — never a global banner.
     const _pend = (typeof _decLatest==="function") ? _decLatest(ex.slot||ex.id,"swap") : null;
     if(_pend && _pend.needsApproval && _exDef(_pend.value)){
-      const box=el("div"); box.style.cssText="margin-top:5px;padding:6px 8px;border-radius:7px;background:rgba(167,139,250,0.10);border:1px solid rgba(167,139,250,0.3);font-size:11px;color:#DDD6FE";
+      const box=el("div"); box.style.cssText="margin-top:5px;padding:6px 8px;border-radius:7px;background:rgba(167,139,250,0.10);border:1px solid rgba(167,139,250,0.3);font-size:11px;color:#5B21B6";
       box.innerHTML=`הצעה: <b>${_exDef(_pend.value).name}</b> במקום התרגיל — ${_pend.reason||""} <span data-a="ok" style="margin-right:8px;color:#10B981;font-weight:700;cursor:pointer">✓ אשר</span><span data-a="no" style="margin-right:6px;color:#EF4444;font-weight:700;cursor:pointer">✕ דחה</span>`;
       box.addEventListener("click", ev=>{
         const a=ev.target && ev.target.dataset && ev.target.dataset.a; if(!a) return;
@@ -1824,19 +1879,19 @@ function renderRehab() {
     document.getElementById("rehab-count").textContent = done+"/"+allItems.length;
     const fill = document.getElementById("rehab-progress");
     fill.style.width = pct+"%";
-    fill.style.background = pct===100?"#10B981":pct>50?"#F59E0B":"#06B6D4";
+    fill.style.background = pct===100?"#10B981":pct>50?"#D97706":"#A64D63";
   }
 
   Object.values(REHAB_ROUTINE).forEach(section => {
     const secEl = el("div",""); secEl.style.marginBottom="20px";
     const secHdr = el("div","");
-    secHdr.innerHTML = `<div class="eyebrow" style="color:${section.color}">${section.label}</div><div style="font-size:11px;color:#4B5563;margin-bottom:8px">${section.why}</div>`;
+    secHdr.innerHTML = `<div class="eyebrow" style="color:${section.color}">${section.label}</div><div style="font-size:11px;color:#A39398;margin-bottom:8px">${section.why}</div>`;
     secEl.appendChild(secHdr);
 
     section.items.forEach(item => {
       const checked = !!rehabLog.done[item.id];
       const itemEl = el("div","rehab-item");
-      itemEl.style.cssText = `background:${checked?"rgba(16,185,129,0.05)":"rgba(255,255,255,0.02)"};border:1px solid ${checked?"rgba(16,185,129,0.25)":"rgba(255,255,255,0.07)"};`;
+      itemEl.style.cssText = `background:${checked?"rgba(16,185,129,0.05)":"rgba(122,31,46,0.02)"};border:1px solid ${checked?"rgba(16,185,129,0.25)":"rgba(122,31,46,0.07)"};`;
 
       const hdr = el("div","rehab-header");
       const chk = el("div","rehab-check"+(checked?" checked":"")); chk.textContent=checked?"✓":"";
@@ -1853,8 +1908,8 @@ function renderRehab() {
         const c = rehabLog.done[item.id];
         chk.className="rehab-check"+(c?" checked":""); chk.textContent=c?"✓":"";
         info.querySelector(".rehab-name").className="rehab-name"+(c?" checked":"");
-        itemEl.style.background = c?"rgba(16,185,129,0.05)":"rgba(255,255,255,0.02)";
-        itemEl.style.borderColor = c?"rgba(16,185,129,0.25)":"rgba(255,255,255,0.07)";
+        itemEl.style.background = c?"rgba(16,185,129,0.05)":"rgba(122,31,46,0.02)";
+        itemEl.style.borderColor = c?"rgba(16,185,129,0.25)":"rgba(122,31,46,0.07)";
         updateProgress();
       }
       chk.onclick = toggleCheck;
@@ -1874,7 +1929,7 @@ function renderRehab() {
     rehabLog.savedAt = new Date().toISOString();
     save(SK.rehab, REHAB);
     saveBtn.textContent="✓ נשמר"; saveBtn.style.background="#10B981";
-    setTimeout(()=>{ saveBtn.textContent="שמור שיקום היום"; saveBtn.style.background="#06B6D4"; },2500);
+    setTimeout(()=>{ saveBtn.textContent="שמור שיקום היום"; saveBtn.style.background="#A64D63"; },2500);
   };
 }
 
@@ -1927,7 +1982,7 @@ function renderDaily(){
   const done = _didRehab(today);
   const rehabItem = el("div","weekly-item");
   rehabItem.innerHTML = `<div class="weekly-header"><div class="weekly-label">שיקום היום</div><div class="weekly-unit"></div></div>
-    <div style="font-size:13px;font-weight:700;color:${done?"#10B981":"#6B7280"}">${done?"✓ בוצע":"טרם בוצע — לבצע בטאב שיקום"}</div>`;
+    <div style="font-size:13px;font-weight:700;color:${done?"#10B981":"#85747A"}">${done?"✓ בוצע":"טרם בוצע — לבצע בטאב שיקום"}</div>`;
   container.appendChild(rehabItem);
 
   renderDailyWeekMini();
@@ -1948,8 +2003,8 @@ function renderDailyWeekMini(){
     const d = DAILY[dt]||{};
     const future = dt>today;
     const rehabTxt = future?"—":(_didRehab(dt)?"✓":"✕");
-    const rehabColor = future?"#4B5563":(_didRehab(dt)?"#10B981":"#EF4444");
-    tbody.innerHTML += `<tr${dt===today?' style="color:#93C5FD"':''}>
+    const rehabColor = future?"#A39398":(_didRehab(dt)?"#10B981":"#EF4444");
+    tbody.innerHTML += `<tr${dt===today?' style="color:#8E2A3B"':''}>
       <td>${dayNames[i]} ${dt.slice(5)}</td>
       <td>${d.sleep!=null?d.sleep:"—"}</td>
       <td>${d.water!=null?d.water:"—"}</td>
@@ -2085,7 +2140,7 @@ function renderWeekly() {
     updateWeekly(week,data);
     const btn=document.getElementById("weekly-save");
     btn.textContent="✓ נשמר"; btn.style.background="#10B981";
-    setTimeout(()=>{ btn.textContent="שמור מדדים"; btn.style.background="#3B82F6"; },2500);
+    setTimeout(()=>{ btn.textContent="שמור מדדים"; btn.style.background="#7A1F2E"; },2500);
   };
 }
 function renderWeeklyObjectiveSummary(week, data){
@@ -2104,8 +2159,8 @@ function renderWeeklyObjectiveSummary(week, data){
     ["ימי שיקום שפוספסו", s.rehabMissed],
   ];
   rows.forEach(([label,val])=>{
-    const row=el("div"); row.style.cssText="display:flex;justify-content:space-between;font-size:12px;color:#D1D5DB;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.05)";
-    row.innerHTML = `<span style="color:#9CA3AF">${label}</span><span style="font-weight:700">${val}</span>`;
+    const row=el("div"); row.style.cssText="display:flex;justify-content:space-between;font-size:12px;color:#4A2B33;padding:4px 0;border-bottom:1px solid rgba(122,31,46,0.05)";
+    row.innerHTML = `<span style="color:#6E5B60">${label}</span><span style="font-weight:700">${val}</span>`;
     card.appendChild(row);
   });
   holder.appendChild(card);
@@ -2202,7 +2257,7 @@ function _buildWeekEditForm(container, week, onSaved){
   wrap.appendChild(scaleField("תחושה כללית השבוע","/10","overall_feeling","high"));
 
   const saveBtn = document.createElement("button");
-  saveBtn.className="btn"; saveBtn.style.background="#3B82F6"; saveBtn.textContent="שמור שינויים";
+  saveBtn.className="btn"; saveBtn.style.background="#7A1F2E"; saveBtn.textContent="שמור שינויים";
   saveBtn.onclick = () => {
     if (weightVal!=="" && weightVal!=null) _saveWeightForWeek(week, weightVal, week);
     updateWeekly(week, data);
@@ -2221,7 +2276,7 @@ function renderHistory() {
   const hw=document.getElementById("history-weekly");
   hw.innerHTML="";
   if(weekKeys.length>0){
-    hw.innerHTML=`<div class="eyebrow" style="color:#6B7280;margin-bottom:8px">מדדים שבועיים</div>`;
+    hw.innerHTML=`<div class="eyebrow" style="color:#85747A;margin-bottom:8px">מדדים שבועיים</div>`;
     const wrap=el("div","overflow-x");
     const tbl=document.createElement("table"); tbl.className="hist-table";
     tbl.innerHTML=`<thead><tr>${["שבוע","⚖️","כאב","חלבון","תחושה","שינה","מים","אימונים","שיקום",""].map(h=>`<th>${h}</th>`).join("")}</tr></thead>`;
@@ -2231,18 +2286,18 @@ function renderHistory() {
       const d=wRec?wRec.data:{};
       const wEntry=_weightEntryForWeek(week);
       const s=_weekObjectiveSummary(week);
-      const c=(v,g)=>!v?"#4B5563":scaleColor(v,g);
+      const c=(v,g)=>!v?"#A39398":scaleColor(v,g);
       const row=document.createElement("tr");
       row.innerHTML=`
-        <td style="color:#9CA3AF;text-align:right;padding:6px 8px;font-size:10px">${week}</td>
-        <td style="color:#D1D5DB">${wEntry?wEntry.value:"—"}</td>
+        <td style="color:#6E5B60;text-align:right;padding:6px 8px;font-size:10px">${week}</td>
+        <td style="color:#4A2B33">${wEntry?wEntry.value:"—"}</td>
         <td style="color:${c(d.back_pain,"low")}">${d.back_pain||"—"}</td>
-        <td style="color:#D1D5DB">${d.protein_avg||"—"}</td>
+        <td style="color:#4A2B33">${d.protein_avg||"—"}</td>
         <td style="color:${c(d.overall_feeling,"high")}">${d.overall_feeling||"—"}</td>
-        <td style="color:#9CA3AF">${s.avgSleep!=null?s.avgSleep:"—"}</td>
-        <td style="color:#9CA3AF">${s.avgWater!=null?s.avgWater:"—"}</td>
-        <td style="color:#9CA3AF">${s.workoutCount}</td>
-        <td style="color:#9CA3AF">${s.rehabDone}/${s.rehabDone+s.rehabMissed}</td>
+        <td style="color:#6E5B60">${s.avgSleep!=null?s.avgSleep:"—"}</td>
+        <td style="color:#6E5B60">${s.avgWater!=null?s.avgWater:"—"}</td>
+        <td style="color:#6E5B60">${s.workoutCount}</td>
+        <td style="color:#6E5B60">${s.rehabDone}/${s.rehabDone+s.rehabMissed}</td>
         <td></td>
       `;
       const editCell = row.lastElementChild;
@@ -2271,19 +2326,19 @@ function renderHistory() {
 
   // Workouts — only sessions the user actually pressed "שמור אימון" on (savedAt). Just viewing/opening a day must never create a history entry.
   const hw2=document.getElementById("history-workouts");
-  hw2.innerHTML=`<div class="eyebrow" style="color:#6B7280;margin-bottom:8px">אימונים אחרונים</div>`;
+  hw2.innerHTML=`<div class="eyebrow" style="color:#85747A;margin-bottom:8px">אימונים אחרונים</div>`;
   const sorted=Object.entries(LOGS).filter(([,l])=>l&&l.savedAt).sort((a,b)=>b[0].localeCompare(a[0])).slice(0,20);
-  if(!sorted.length){ hw2.innerHTML+="<div style='color:#4B5563;text-align:center;padding:24px'>עדיין אין אימונים</div>"; return; }
+  if(!sorted.length){ hw2.innerHTML+="<div style='color:#A39398;text-align:center;padding:24px'>עדיין אין אימונים</div>"; return; }
   sorted.forEach(([k,log])=>{
     const day=PROGRAM[log.dayKey]; if(!day)return;
     const st=workoutStats(log);
     const card=el("div","wlog-card"); card.style.borderRight=`3px solid ${day.color}44`; card.style.cursor="pointer";
     card.innerHTML=`<div style="display:flex;justify-content:space-between;margin-bottom:4px">
-      <div><div style="font-size:12px;font-weight:700;color:${day.color}">${day.label} — ${day.tag}</div><div style="font-size:11px;color:#6B7280;margin-top:1px">${log.date}</div></div>
-      <div style="text-align:right">${log.pain?`<div style="font-size:11px;color:${scaleColor(log.pain,"low")}">כאב ${log.pain}/10</div>`:""}${log.energy?`<div style="font-size:11px;color:#3B82F6">אנרגיה ${log.energy}/10</div>`:""}</div>
-    </div>${log.notes?`<div style="font-size:11px;color:#9CA3AF;font-style:italic">"${log.notes}"</div>`:""}
-    ${st?`<div style="font-size:11px;color:#6B7280;margin-top:5px">בוצע ${st.pctSets}% מהאימון (${st.doneSets}/${st.totalSets} סטים)${st.pctSuccess!=null?` · הצלחה ${st.pctSuccess}%`:""}${st.duration?` · ⏱ ${fmtDur(st.duration)}`:""}</div>`:""}
-    <div class="wlog-details" style="display:none;margin-top:8px;border-top:1px solid rgba(255,255,255,0.06);padding-top:8px"></div>`;
+      <div><div style="font-size:12px;font-weight:700;color:${day.color}">${day.label} — ${day.tag}</div><div style="font-size:11px;color:#85747A;margin-top:1px">${log.date}</div></div>
+      <div style="text-align:right">${log.pain?`<div style="font-size:11px;color:${scaleColor(log.pain,"low")}">כאב ${log.pain}/10</div>`:""}${log.energy?`<div style="font-size:11px;color:#7A1F2E">אנרגיה ${log.energy}/10</div>`:""}</div>
+    </div>${log.notes?`<div style="font-size:11px;color:#6E5B60;font-style:italic">"${log.notes}"</div>`:""}
+    ${st?`<div style="font-size:11px;color:#85747A;margin-top:5px">בוצע ${st.pctSets}% מהאימון (${st.doneSets}/${st.totalSets} סטים)${st.pctSuccess!=null?` · הצלחה ${st.pctSuccess}%`:""}${st.duration?` · ⏱ ${fmtDur(st.duration)}`:""}</div>`:""}
+    <div class="wlog-details" style="display:none;margin-top:8px;border-top:1px solid rgba(122,31,46,0.06);padding-top:8px"></div>`;
     const detailsEl = card.querySelector(".wlog-details");
     let detailsBuilt=false;
     card.addEventListener("click", ()=>{
@@ -2294,7 +2349,7 @@ function renderHistory() {
         const parts=[];
         if(log.warmup && log.warmup.done){
           const wt = log.warmup.completedAt ? new Date(log.warmup.completedAt).toLocaleTimeString("he-IL",{hour:"2-digit",minute:"2-digit"}) : "";
-          parts.push(`<div style="margin-bottom:6px;font-size:11px;color:#F59E0B">🔥 חימום בוצע${wt?` · ${wt}`:""}</div>`);
+          parts.push(`<div style="margin-bottom:6px;font-size:11px;color:#D97706">🔥 חימום בוצע${wt?` · ${wt}`:""}</div>`);
         }
         Object.keys(log.exercises||{}).map(id=>day.exercises.find(e=>e.id===id)||_exDef(id)||{id,name:id}).forEach(ex=>{
           const exLog = log.exercises && log.exercises[ex.id]; if(!exLog) return;
@@ -2303,14 +2358,14 @@ function renderHistory() {
             .map(s=>`${s.weight||"?"}ק"ג×${s.reps||"?"}${s.rpe?` RPE${s.rpe}`:""}`).join(" · ");
           const dur = (typeof _exSessionDuration==="function") ? _exSessionDuration(log, ex.id) : null;
           if(!setsTxt && !dur) return;
-          parts.push(`<div style="margin-bottom:6px"><div style="font-size:11px;font-weight:700;color:#D1D5DB">${ex.name}${dur?` <span style="font-weight:400;color:#6B7280">· ⏱ ${fmtDur(dur)}</span>`:""}</div><div style="font-size:11px;color:#6B7280">${setsTxt||"—"}</div></div>`);
+          parts.push(`<div style="margin-bottom:6px"><div style="font-size:11px;font-weight:700;color:#4A2B33">${ex.name}${dur?` <span style="font-weight:400;color:#85747A">· ⏱ ${fmtDur(dur)}</span>`:""}</div><div style="font-size:11px;color:#85747A">${setsTxt||"—"}</div></div>`);
         });
-        detailsEl.innerHTML = parts.join("") || `<div style="font-size:11px;color:#4B5563">אין נתוני תרגילים לאימון הזה</div>`;
+        detailsEl.innerHTML = parts.join("") || `<div style="font-size:11px;color:#A39398">אין נתוני תרגילים לאימון הזה</div>`;
         // Delete — for a session saved by mistake. Two-tap confirm inside the card (no native
         // confirm() dialog, which iOS standalone PWAs handle badly), and it stops propagation so the
         // tap doesn't also collapse the card.
         const delBtn=el("button"); delBtn.textContent="🗑 מחק אימון זה מההיסטוריה";
-        delBtn.style.cssText="margin-top:8px;width:100%;padding:8px;border-radius:8px;border:1px solid rgba(239,68,68,0.35);background:rgba(239,68,68,0.08);color:#FCA5A5;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit";
+        delBtn.style.cssText="margin-top:8px;width:100%;padding:8px;border-radius:8px;border:1px solid rgba(239,68,68,0.35);background:rgba(239,68,68,0.08);color:#B42318;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit";
         let armed=false;
         delBtn.addEventListener("click", ev=>{
           ev.stopPropagation();
@@ -2441,7 +2496,7 @@ function renderExport() {
     navigator.clipboard.writeText(text).then(()=>{
       const btn=document.getElementById("export-copy");
       btn.textContent="✓ הועתק ללוח"; btn.style.background="#10B981";
-      setTimeout(()=>{ btn.textContent="העתק הכל"; btn.style.background="#3B82F6"; },2500);
+      setTimeout(()=>{ btn.textContent="העתק הכל"; btn.style.background="#7A1F2E"; },2500);
     }).catch(()=>{
       document.getElementById("export-preview").select();
       document.execCommand("copy");
@@ -2665,7 +2720,7 @@ function makeChartCfg(labels, data, color, yUnit) {
 
 function drawEmpty(ctx, msg) {
   ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);
-  ctx.fillStyle="#4B5563"; ctx.font="13px sans-serif";
+  ctx.fillStyle="#A39398"; ctx.font="13px sans-serif";
   ctx.textAlign="center"; ctx.textBaseline="middle";
   ctx.fillText(msg, ctx.canvas.width/2, ctx.canvas.height/2);
 }
@@ -2693,7 +2748,7 @@ function updateStrengthChart() {
                 : (ex?.name||exId);
     sub.textContent = `1RM משוער (עומס אפקטיבי × חזרות) · ${label}`;
     if (d.data.some(v=>v!==null))
-      strengthChartInst = new Chart(sCtx, makeChartCfg(d.labels, d.data, "#F59E0B", " kg"));
+      strengthChartInst = new Chart(sCtx, makeChartCfg(d.labels, d.data, "#D97706", " kg"));
     else
       drawEmpty(sCtx, "אין נתונים עדיין לתרגיל זה — שמור אימון עם משקלים");
   }
@@ -2722,7 +2777,7 @@ function renderDashboard() {
     const delta = validW.length>=2 ? (validW.at(-1)-validW[0]).toFixed(1) : null;
     document.getElementById("weight-chart-sub").textContent =
       delta!=null ? `שינוי כולל: ${delta>0?"+":""}${delta} ק"ג` : "";
-    weightChartInst = new Chart(wCtx, makeChartCfg(wData.labels, wData.data, "#3B82F6", " kg"));
+    weightChartInst = new Chart(wCtx, makeChartCfg(wData.labels, wData.data, "#7A1F2E", " kg"));
   } else {
     document.getElementById("weight-chart-sub").textContent = "";
     drawEmpty(wCtx, "הזן משקל בטאב 'שבועי' — הגרף יופיע כאן");
@@ -2812,7 +2867,7 @@ function updateNutUI(nutData) {
   const dinner    = calcMealProtein("dinner", nutData);
   const total     = breakfast + lunch + dinner;
   const pct       = Math.min(100, Math.round(total/167*100));
-  const barColor  = total >= 130 ? "#10B981" : total >= 90 ? "#F59E0B" : "#EF4444";
+  const barColor  = total >= 130 ? "#10B981" : total >= 90 ? "#D97706" : "#EF4444";
 
   document.getElementById("nut-total-display").textContent = total;
   document.getElementById("nut-bar").style.width = pct+"%";
@@ -2900,12 +2955,12 @@ function _hBadge(st){ return `<span style="font-size:11px;font-weight:700;color:
 function _hTestStatus(t){
   const rec = HEALTH.tests[t.id] || {};
   const last = rec.lastDate;
-  if(t.freqM===null){ return last ? {label:"בוצע "+last, color:"#10B981"} : {label:"ממתין", color:"#F59E0B"}; }
-  if(!last) return {label:"אין נתון", color:"#6B7280"};
+  if(t.freqM===null){ return last ? {label:"בוצע "+last, color:"#10B981"} : {label:"ממתין", color:"#D97706"}; }
+  if(!last) return {label:"אין נתון", color:"#85747A"};
   const due = new Date(last); due.setMonth(due.getMonth()+t.freqM);
   const days = Math.round((due - new Date())/86400000);
   if(days<0)   return {label:"פג ("+(-days)+" ימ')",  color:"#EF4444"};
-  if(days<=30) return {label:"מתקרב ("+days+" ימ')",  color:"#F59E0B"};
+  if(days<=30) return {label:"מתקרב ("+days+" ימ')",  color:"#D97706"};
   return {label:"בתוקף", color:"#10B981"};
 }
 
@@ -2925,11 +2980,11 @@ function _hRoutineSection(){
       const st = _hTestStatus(t);
       const freqTxt = t.freqM===null ? "חד-פעמי" : t.freqM<12 ? t.freqM+" ח'" : (t.freqM/12)+" ש'";
       const tr = document.createElement("tr");
-      tr.innerHTML = `<td style="text-align:right"><div style="font-weight:600;color:#E5E7EB">${t.name}</div>${t.note?`<div style="font-size:10px;color:#6B7280">${t.note}</div>`:""}</td>
+      tr.innerHTML = `<td style="text-align:right"><div style="font-weight:600;color:#33141C">${t.name}</div>${t.note?`<div style="font-size:10px;color:#85747A">${t.note}</div>`:""}</td>
         <td>${freqTxt}</td><td></td><td>${_hBadge(st)}</td>`;
       const dCell = tr.children[2];
       const inp = document.createElement("input");
-      inp.type="date"; inp.value=rec.lastDate||""; inp.style.cssText="background:#111827;border:1px solid rgba(255,255,255,0.12);color:#E5E7EB;border-radius:6px;padding:4px 6px;font-size:11px;font-family:inherit";
+      inp.type="date"; inp.value=rec.lastDate||""; inp.style.cssText="background:#FFFFFF;border:1px solid rgba(122,31,46,0.12);color:#33141C;border-radius:6px;padding:4px 6px;font-size:11px;font-family:inherit";
       inp.onchange=()=>{ if(!HEALTH.tests[t.id]) HEALTH.tests[t.id]={}; HEALTH.tests[t.id].lastDate=inp.value; HEALTH.tests[t.id].savedAt=new Date().toISOString(); _hSave(); renderHealth(); };
       dCell.appendChild(inp);
       tb.appendChild(tr);
@@ -2954,9 +3009,9 @@ function _hBloodSection(){
   _cats.forEach(cat=>{ const og=document.createElement("optgroup"); og.label=cat;
     BLOOD_PANEL.filter(m=>m.cat===cat).forEach(m=>{ const o=document.createElement("option"); o.value=m.id; o.textContent=m.name; og.appendChild(o); });
     sel.appendChild(og); });
-  const valInp = document.createElement("input"); valInp.type="number"; valInp.step="any"; valInp.placeholder="ערך"; valInp.style.cssText="width:80px;background:#111827;border:1px solid rgba(255,255,255,0.12);color:#E5E7EB;border-radius:6px;padding:6px;font-family:inherit";
-  const dInp = document.createElement("input"); dInp.type="date"; dInp.value=todayKey(); dInp.style.cssText="background:#111827;border:1px solid rgba(255,255,255,0.12);color:#E5E7EB;border-radius:6px;padding:6px;font-size:12px;font-family:inherit";
-  const addBtn = document.createElement("button"); addBtn.className="wk-btn"; addBtn.style.background="#3B82F6"; addBtn.textContent="הוסף";
+  const valInp = document.createElement("input"); valInp.type="number"; valInp.step="any"; valInp.placeholder="ערך"; valInp.style.cssText="width:80px;background:#FFFFFF;border:1px solid rgba(122,31,46,0.12);color:#33141C;border-radius:6px;padding:6px;font-family:inherit";
+  const dInp = document.createElement("input"); dInp.type="date"; dInp.value=todayKey(); dInp.style.cssText="background:#FFFFFF;border:1px solid rgba(122,31,46,0.12);color:#33141C;border-radius:6px;padding:6px;font-size:12px;font-family:inherit";
+  const addBtn = document.createElement("button"); addBtn.className="wk-btn"; addBtn.style.background="#7A1F2E"; addBtn.textContent="הוסף";
   addBtn.onclick=()=>{
     const v=parseFloat(valInp.value); if(isNaN(v)||!dInp.value){ return; }
     const mk=sel.value; if(!HEALTH.bloods[mk]) HEALTH.bloods[mk]={entries:[]};
@@ -2971,8 +3026,8 @@ function _hBloodSection(){
   const flagged = BLOOD_PANEL.map(m=>{ const l=_hLatest(m.id); return l?{m,l,st:m.flag(l.value)}:null; })
     .filter(x=>x && x.st.color!=="#10B981");
   if(flagged.length){
-    const strip=el("div","info-box"); strip.style.cssText+=";border-color:rgba(245,158,11,0.3);background:rgba(245,158,11,0.07)";
-    strip.innerHTML=`<div class="info-title" style="color:#F59E0B">דורש תשומת לב (${flagged.length})</div><div class="info-text" style="color:#D1D5DB">`+
+    const strip=el("div","info-box"); strip.style.cssText+=";border-color:rgba(217,119,6,0.3);background:rgba(217,119,6,0.07)";
+    strip.innerHTML=`<div class="info-title" style="color:#D97706">דורש תשומת לב (${flagged.length})</div><div class="info-text" style="color:#4A2B33">`+
       flagged.map(x=>`${x.m.name}: <b style="color:${x.st.color}">${x.l.value} ${x.m.unit}</b> (${x.st.label}, ייחוס ${x.m.ref})`).join(" · ")+`</div>`;
     wrap.appendChild(strip);
   }
@@ -2984,22 +3039,22 @@ function _hBloodSection(){
   const tb = document.createElement("tbody");
   [...new Set(BLOOD_PANEL.map(m=>m.cat))].forEach(cat=>{
     const hr=document.createElement("tr");
-    hr.innerHTML=`<td colspan="4" style="text-align:right;color:#06B6D4;font-weight:700;font-size:10px;letter-spacing:0.6px;padding-top:10px">${cat}</td>`;
+    hr.innerHTML=`<td colspan="4" style="text-align:right;color:#A64D63;font-weight:700;font-size:10px;letter-spacing:0.6px;padding-top:10px">${cat}</td>`;
     tb.appendChild(hr);
     BLOOD_PANEL.filter(m=>m.cat===cat).forEach(m=>{
     const last=_hLatest(m.id);
-    const st = last ? m.flag(last.value) : {label:"—",color:"#6B7280"};
+    const st = last ? m.flag(last.value) : {label:"—",color:"#85747A"};
     const tr = document.createElement("tr");
     tr.style.cursor="pointer";
-    tr.innerHTML = `<td style="text-align:right"><div style="font-weight:600;color:${_hSelMarker===m.id?'#93C5FD':'#E5E7EB'}">${m.name}</div><div style="font-size:10px;color:#6B7280">${m.unit}${m.note?" · "+m.note:""}</div></td>
-      <td style="font-size:11px;color:#9CA3AF">${m.ref}</td>
-      <td>${last?`<span style="font-weight:700;color:#F9FAFB">${last.value}</span><div style="font-size:9px;color:#6B7280">${last.date.slice(5)}</div>`:"—"}</td>
+    tr.innerHTML = `<td style="text-align:right"><div style="font-weight:600;color:${_hSelMarker===m.id?'#8E2A3B':'#33141C'}">${m.name}</div><div style="font-size:10px;color:#85747A">${m.unit}${m.note?" · "+m.note:""}</div></td>
+      <td style="font-size:11px;color:#6E5B60">${m.ref}</td>
+      <td>${last?`<span style="font-weight:700;color:#2B0B14">${last.value}</span><div style="font-size:9px;color:#85747A">${last.date.slice(5)}</div>`:"—"}</td>
       <td>${_hBadge(st)}</td>`;
     tr.onclick=()=>{ _hSelMarker = _hSelMarker===m.id?null:m.id; renderHealth(); };
     tb.appendChild(tr);
     if(_hSelMarker===m.id){
       const dtr=document.createElement("tr");
-      const td=document.createElement("td"); td.colSpan=4; td.style.background="rgba(96,165,250,0.05)";
+      const td=document.createElement("td"); td.colSpan=4; td.style.background="rgba(155,44,63,0.05)";
       td.appendChild(_hTrendPanel(m));
       dtr.appendChild(td); tb.appendChild(dtr);
     }
@@ -3016,19 +3071,19 @@ function _hTrendPanel(m){
   const info = BLOOD_INFO[m.id];
   if(info){
     const ib=el("div"); ib.style.cssText="margin-bottom:10px;font-size:12px;line-height:1.6";
-    ib.innerHTML = `<div style="color:#D1D5DB;margin-bottom:6px">${info.about}</div>
-      <div style="color:#9CA3AF"><span style="color:#EF4444;font-weight:700">▲ גבוה:</span> ${info.hi}</div>
-      <div style="color:#9CA3AF"><span style="color:#3B82F6;font-weight:700">▼ נמוך:</span> ${info.lo}</div>`;
+    ib.innerHTML = `<div style="color:#4A2B33;margin-bottom:6px">${info.about}</div>
+      <div style="color:#6E5B60"><span style="color:#EF4444;font-weight:700">▲ גבוה:</span> ${info.hi}</div>
+      <div style="color:#6E5B60"><span style="color:#7A1F2E;font-weight:700">▼ נמוך:</span> ${info.lo}</div>`;
     box.appendChild(ib);
     const last = entries.length ? entries[entries.length-1] : null;
     const st = last ? m.flag(last.value) : null;
     if(st && st.color!=="#10B981"){
-      const rb=el("div"); rb.style.cssText="margin:8px 0 4px;padding:8px 10px;border-radius:8px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);font-size:12px;line-height:1.6;color:#E5E7EB";
-      rb.innerHTML = `<div style="color:#F59E0B;font-weight:700;margin-bottom:4px">רלוונטיות אליך</div>${info.mine || "לא נמצא הסבר סביר וישיר במידע הקיים עליך — לעקוב אחר מגמה בבדיקה הבאה."}`;
+      const rb=el("div"); rb.style.cssText="margin:8px 0 4px;padding:8px 10px;border-radius:8px;background:rgba(217,119,6,0.08);border:1px solid rgba(217,119,6,0.25);font-size:12px;line-height:1.6;color:#33141C";
+      rb.innerHTML = `<div style="color:#D97706;font-weight:700;margin-bottom:4px">רלוונטיות אליך</div>${info.mine || "לא נמצא הסבר סביר וישיר במידע הקיים עליך — לעקוב אחר מגמה בבדיקה הבאה."}`;
       box.appendChild(rb);
     }
   }
-  if(entries.length<1){ box.appendChild(el("div","",`<span style="color:#6B7280;font-size:12px">אין נתונים ל${m.name} עדיין</span>`)); return box; }
+  if(entries.length<1){ box.appendChild(el("div","",`<span style="color:#85747A;font-size:12px">אין נתונים ל${m.name} עדיין</span>`)); return box; }
   if(entries.length>=2){
     const cv=document.createElement("canvas"); cv.height=140; box.appendChild(cv);
     if(healthChartInst){ healthChartInst.destroy(); healthChartInst=null; }
@@ -3036,9 +3091,9 @@ function _hTrendPanel(m){
   }
   // history list with delete
   entries.slice().reverse().forEach(e=>{
-    const row=el("div"); row.style.cssText="display:flex;justify-content:space-between;align-items:center;padding:4px 2px;border-bottom:1px solid rgba(255,255,255,0.04);font-size:12px";
+    const row=el("div"); row.style.cssText="display:flex;justify-content:space-between;align-items:center;padding:4px 2px;border-bottom:1px solid rgba(122,31,46,0.04);font-size:12px";
     const st=m.flag(e.value);
-    row.innerHTML=`<span style="color:#9CA3AF">${e.date}</span><span style="color:${st.color};font-weight:700">${e.value} ${m.unit}</span>`;
+    row.innerHTML=`<span style="color:#6E5B60">${e.date}</span><span style="color:${st.color};font-weight:700">${e.value} ${m.unit}</span>`;
     const del=document.createElement("span"); del.textContent="✕"; del.style.cssText="color:#EF4444;cursor:pointer;font-size:11px;padding:0 4px";
     del.onclick=(ev)=>{ ev.stopPropagation(); HEALTH.bloods[m.id].entries=HEALTH.bloods[m.id].entries.filter(x=>x.date!==e.date); _hSave(); renderHealth(); };
     row.appendChild(del);
@@ -3168,7 +3223,7 @@ async function saveAgentExport(btn) {
     try {
       const w = await handle.createWritable();
       await w.write(json); await w.close();
-      if (btn) { btn.textContent="✓ נשמר!"; btn.style.color="#10B981"; setTimeout(()=>{ btn.textContent=origText; btn.style.color="#6B7280"; }, 2500); }
+      if (btn) { btn.textContent="✓ נשמר!"; btn.style.color="#10B981"; setTimeout(()=>{ btn.textContent=origText; btn.style.color="#85747A"; }, 2500); }
     } catch (e) {
       console.error("Agent export write error:", e);
       _fallbackDownload(json);
@@ -3428,7 +3483,7 @@ function computeTarget(exId){
     return { level:"deload", weight:parseFloat(dl.value), color:"#EF4444",
              reason:`הותאם מהערתך: ${dl.reason||"ירידה מכוונת"}` };
   }
-  const C = { up:"#10B981", hold:"#F59E0B", deload:"#EF4444", pain:"#EF4444", plateau:"#8B5CF6" };
+  const C = { up:"#10B981", hold:"#D97706", deload:"#EF4444", pain:"#EF4444", plateau:"#8B5CF6" };
   // plateau: 3 straight sessions with no weight gain
   let plateau = false;
   if(hist.length>=3 && hist[0].topWeight<=hist[1].topWeight && hist[1].topWeight<=hist[2].topWeight)
@@ -3539,8 +3594,8 @@ const ROW_ID = "gal";
 function _syncBadge(state){
   let b = document.getElementById("sync-badge");
   if(!b){ b=document.createElement("div"); b.id="sync-badge"; document.body.appendChild(b); }
-  const map = { syncing:["⟳ מסנכרן…","#9CA3AF"], synced:["☁︎ מסונכרן","#10B981"],
-                offline:["⚠︎ לא מקוון","#F59E0B"], error:["✕ שגיאת סנכרון","#EF4444"] };
+  const map = { syncing:["⟳ מסנכרן…","#6E5B60"], synced:["☁︎ מסונכרן","#10B981"],
+                offline:["⚠︎ לא מקוון","#D97706"], error:["✕ שגיאת סנכרון","#EF4444"] };
   const [txt,col] = map[state]||map.synced;
   b.textContent = txt; b.style.color = col;
 }
@@ -3718,8 +3773,8 @@ function _showUpdateBanner(){
   if (document.getElementById('update-banner')) return;
   const b = document.createElement('div');
   b.id = 'update-banner';
-  b.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:20000;background:#111827;border-top:1px solid rgba(59,130,246,0.5);color:#F9FAFB;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:13px;box-shadow:0 -6px 24px rgba(0,0,0,0.5)';
-  b.innerHTML = '<span>🔄 גרסה חדשה זמינה</span><button style="background:#3B82F6;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-weight:700;cursor:pointer">רענן עכשיו</button>';
+  b.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:20000;background:#FFFFFF;border-top:1px solid rgba(122,31,46,0.5);color:#2B0B14;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:13px;box-shadow:0 -6px 24px rgba(80,10,25,0.175)';
+  b.innerHTML = '<span>🔄 גרסה חדשה זמינה</span><button style="background:#7A1F2E;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-weight:700;cursor:pointer">רענן עכשיו</button>';
   b.querySelector('button').onclick = () => window.location.reload();
   document.body.appendChild(b);
 }
