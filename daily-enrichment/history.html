@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>היסטוריה ופוליטיקה · העשרה יומית</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0F1117">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="העשרה יומית">
+<link rel="icon" href="icon-192.png">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0F1117; --ink: #F9FAFB; --ink-2: #D1D5DB; --ink-3: #9CA3AF; --ink-4: #6B7280; --ink-5: #4B5563;
+    --line: rgba(255,255,255,0.07); --card: rgba(255,255,255,0.02);
+    --accent: #F59E0B; --accent-soft: #FCD34D; --accent-deep: #B45309;
+  }
+  body {
+    background: var(--bg); color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 14px; direction: rtl; min-height: 100vh;
+  }
+  #app { max-width: 640px; margin: 0 auto; }
+
+  /* ── HEADER + RUBRIC TABS ── */
+  .header {
+    padding: 14px 16px 16px;
+    background: linear-gradient(180deg, #111827 0%, #0F1117 100%);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    position: sticky; top: 0; z-index: 10;
+  }
+  .rubric-tabs { display: flex; gap: 6px; margin-bottom: 12px; }
+  .rubric-tab {
+    flex: 1; text-align: center; padding: 7px 0; border-radius: 8px;
+    font-size: 12px; font-weight: 700; text-decoration: none;
+    color: var(--ink-4); background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06);
+  }
+  .rubric-tab.active { color: var(--accent-soft); background: rgba(245,158,11,0.10); border-color: rgba(245,158,11,0.35); }
+  .header-eyebrow { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; color: var(--ink-4); margin-bottom: 3px; }
+  .header-title { font-size: 22px; font-weight: 800; color: var(--ink); }
+  .header-sub { font-size: 11px; color: var(--ink-5); margin-top: 3px; line-height: 1.5; }
+  .header-date { font-size: 11px; color: var(--ink-5); margin-top: 3px; }
+
+  .content { padding: 16px; }
+
+  /* ── DID YOU KNOW ── */
+  .dyk-card {
+    background: linear-gradient(135deg, rgba(245,158,11,0.10), rgba(180,83,9,0.07));
+    border: 1px solid rgba(245,158,11,0.22);
+    border-radius: 12px; padding: 14px 16px; margin-bottom: 16px;
+    position: relative; overflow: hidden;
+  }
+  .dyk-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent-deep));
+  }
+  .dyk-label { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; color: var(--accent-soft); margin-bottom: 7px; }
+  .dyk-text { font-size: 14px; color: #E5E7EB; line-height: 1.7; }
+  .dyk-source { font-size: 10px; color: var(--ink-5); margin-top: 9px; line-height: 1.5; }
+
+  /* ── ARTICLE ── */
+  .article-card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; margin-bottom: 16px; }
+  .article-header { padding: 14px 16px 12px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+  .article-tag {
+    display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: 1px;
+    padding: 3px 9px; border-radius: 20px; margin-bottom: 9px;
+    background: rgba(245,158,11,0.12); color: var(--accent-soft);
+  }
+  .article-title { font-size: 18px; font-weight: 800; color: var(--ink); line-height: 1.35; margin-bottom: 8px; }
+  .article-topics { font-size: 11px; color: var(--ink-4); margin-bottom: 8px; line-height: 1.5; }
+  .article-meta { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+  .article-meta-item { font-size: 11px; color: var(--ink-4); display: flex; align-items: center; gap: 4px; }
+  .archive-notice {
+    display: none; margin-top: 10px; font-size: 11px; color: var(--accent-soft);
+    background: rgba(245,158,11,0.08); border-radius: 6px; padding: 6px 9px;
+  }
+  .archive-notice button { background: none; border: none; color: var(--ink); font: inherit; font-weight: 700; text-decoration: underline; cursor: pointer; margin-right: 4px; }
+
+  .article-body { padding: 16px; }
+  .article-body h3 {
+    font-size: 15px; font-weight: 800; color: var(--ink); margin: 22px 0 8px;
+    padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.06);
+  }
+  .article-body h3:first-child { margin-top: 0; padding-top: 0; border-top: none; }
+  .article-body h4 { font-size: 13.5px; font-weight: 700; color: var(--accent-soft); margin: 16px 0 6px; }
+  .article-body p { font-size: 13px; color: var(--ink-3); line-height: 1.8; margin-bottom: 10px; }
+  .article-body ul { margin: 0 18px 12px 0; }
+  .article-body li { font-size: 13px; color: var(--ink-3); line-height: 1.75; margin-bottom: 7px; }
+  .article-body strong { color: var(--ink-2); }
+  .article-body em { color: var(--ink-2); }
+  .claim {
+    display: inline-block; font-size: 10px; font-weight: 700; padding: 1px 7px; border-radius: 10px;
+    margin: 0 2px; vertical-align: 1px; white-space: nowrap;
+  }
+  .claim.fact   { background: rgba(16,185,129,0.12); color: #6EE7B7; }
+  .claim.interp { background: rgba(59,130,246,0.14); color: #93C5FD; }
+  .claim.value  { background: rgba(236,72,153,0.13); color: #F9A8D4; }
+
+  /* ── SOURCES ── */
+  .sources-section { border-top: 1px solid rgba(255,255,255,0.06); padding: 12px 16px 14px; }
+  .sources-label { font-size: 10px; font-weight: 700; letter-spacing: 1px; color: var(--ink-5); margin-bottom: 8px; }
+  .source-grade { font-size: 10.5px; font-weight: 700; color: var(--ink-4); margin: 10px 0 5px; }
+  .source-item { font-size: 11px; color: var(--ink-4); margin-bottom: 5px; padding-right: 12px; position: relative; line-height: 1.55; overflow-wrap: anywhere; }
+  .source-item::before { content: '›'; position: absolute; right: 0; color: #374151; font-weight: 700; }
+  .source-item a { color: #93C5FD; text-decoration: none; }
+
+  /* ── QUIZ ── */
+  .quiz-card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+  .quiz-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; }
+  .quiz-title { font-size: 15px; font-weight: 800; color: var(--ink); }
+  .quiz-sub { font-size: 11px; color: var(--ink-4); margin-top: 2px; }
+  .quiz-score { font-size: 12px; font-weight: 700; color: var(--ink-3); background: rgba(255,255,255,0.05); padding: 4px 10px; border-radius: 20px; white-space: nowrap; flex-shrink: 0; margin-right: 10px; }
+  .quiz-q-block { margin-bottom: 18px; padding-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+  .quiz-q-block:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+  .quiz-q-text { font-size: 13px; font-weight: 600; color: #E5E7EB; margin-bottom: 10px; line-height: 1.6; }
+  .quiz-options { display: flex; flex-direction: column; gap: 7px; }
+  .quiz-option {
+    text-align: right; padding: 9px 12px; border-radius: 8px;
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+    color: var(--ink-2); font-size: 12.5px; cursor: pointer; transition: all 0.15s; font-family: inherit; line-height: 1.5;
+  }
+  .quiz-option:hover:not(.disabled) { background: rgba(255,255,255,0.07); }
+  .quiz-option.correct { background: rgba(16,185,129,0.15); border-color: #10B981; color: #6EE7B7; }
+  .quiz-option.incorrect { background: rgba(239,68,68,0.15); border-color: #EF4444; color: #FCA5A5; }
+  .quiz-option.disabled { cursor: default; }
+  .quiz-explain {
+    font-size: 11.5px; color: var(--ink-3); margin-top: 8px; line-height: 1.6;
+    background: rgba(255,255,255,0.03); padding: 8px 10px; border-radius: 6px; border-right: 2px solid var(--accent);
+  }
+  .quiz-start-btn {
+    width: 100%; padding: 11px 0; border-radius: 8px; border: none; cursor: pointer;
+    background: linear-gradient(135deg, #D97706, #92400E); color: #fff;
+    font-size: 13px; font-weight: 700; font-family: inherit; transition: opacity 0.2s;
+  }
+  .quiz-start-btn:active { opacity: 0.85; }
+  #daily-quiz-content, #general-quiz-content { margin-top: 14px; }
+  .quiz-analysis { margin-top: 16px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.06); }
+  .quiz-analysis-title { font-size: 12px; font-weight: 700; color: var(--ink-3); margin-bottom: 8px; }
+  .topic-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; font-size: 12px; gap: 10px; }
+  .topic-name { color: var(--ink-2); }
+  .topic-score { font-weight: 700; }
+  .topic-score.good { color: #10B981; } .topic-score.mid { color: #F59E0B; } .topic-score.bad { color: #EF4444; }
+
+  /* ── READ ── */
+  .read-section { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; margin-bottom: 16px; }
+  .read-checkbox-row { display: flex; align-items: center; gap: 13px; cursor: pointer; user-select: none; }
+  .read-checkbox {
+    width: 26px; height: 26px; border-radius: 7px; flex-shrink: 0;
+    background: rgba(255,255,255,0.08); border: 1.5px solid rgba(255,255,255,0.2);
+    display: flex; align-items: center; justify-content: center; font-size: 15px; transition: all 0.2s;
+  }
+  .read-checkbox.checked { background: var(--accent); border-color: var(--accent); color: #111827; }
+  .read-label { font-size: 14px; font-weight: 600; color: var(--ink-2); }
+  .read-label.checked { color: var(--accent-soft); }
+  .read-sub { font-size: 11px; color: var(--ink-5); margin-top: 3px; }
+  .streak-badge {
+    display: inline-flex; align-items: center; gap: 5px; margin-top: 10px;
+    padding: 5px 11px; border-radius: 20px; font-size: 12px; font-weight: 700;
+    background: rgba(245,158,11,0.10); border: 1px solid rgba(245,158,11,0.25); color: #FBBF24;
+  }
+  .streak-badge.zero { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.08); color: var(--ink-4); }
+
+  /* ── ARCHIVE ── */
+  .archive-card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; margin-bottom: 16px; }
+  .archive-title { font-size: 15px; font-weight: 800; color: var(--ink); margin-bottom: 10px; }
+  .archive-item {
+    display: block; width: 100%; text-align: right; background: none; border: none; font-family: inherit;
+    padding: 9px 0; border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer;
+  }
+  .archive-item:last-child { border-bottom: none; }
+  .archive-item-meta { font-size: 10.5px; color: var(--ink-4); margin-bottom: 2px; }
+  .archive-item-title { font-size: 13px; color: var(--ink-2); line-height: 1.45; }
+  .archive-item.current .archive-item-title { color: var(--accent-soft); font-weight: 700; }
+
+  .footer { padding: 10px 16px 30px; font-size: 10px; color: #374151; text-align: center; border-top: 1px solid rgba(255,255,255,0.04); margin-top: 8px; line-height: 1.6; }
+  .empty { padding: 40px 16px; text-align: center; color: var(--ink-4); }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div class="header">
+    <nav class="rubric-tabs" aria-label="רובריקות">
+      <a class="rubric-tab" href="./">🩺 בריאות</a>
+      <a class="rubric-tab active" href="./history.html" aria-current="page">📜 היסטוריה</a>
+    </nav>
+    <div class="header-eyebrow">מנטור היסטורי-פוליטי</div>
+    <div class="header-title">היסטוריה ופוליטיקה</div>
+    <div class="header-sub">השורשים של היום · רגע מכריע · דמות · רעיון · שתי פרשנויות · היום בהיסטוריה</div>
+    <div class="header-date" id="header-date"></div>
+  </div>
+
+  <div class="content" id="content">
+
+    <div class="dyk-card">
+      <div class="dyk-label">💡 הידעת?</div>
+      <div class="dyk-text" id="dyk-text"></div>
+      <div class="dyk-source" id="dyk-source"></div>
+    </div>
+
+    <div class="article-card">
+      <div class="article-header">
+        <div class="article-tag" id="article-tag"></div>
+        <div class="article-title" id="article-title"></div>
+        <div class="article-topics" id="article-topics"></div>
+        <div class="article-meta">
+          <div class="article-meta-item">⏱ <span id="reading-time"></span></div>
+          <div class="article-meta-item">📅 <span id="article-date"></span></div>
+        </div>
+        <div class="archive-notice" id="archive-notice">קטע מהארכיון<button type="button" id="back-to-today">חזרה לקטע של היום</button></div>
+      </div>
+      <div class="article-body" id="article-body"></div>
+      <div class="sources-section">
+        <div class="sources-label">מקורות</div>
+        <div id="article-sources"></div>
+      </div>
+    </div>
+
+    <div class="quiz-card">
+      <div class="quiz-header">
+        <div>
+          <div class="quiz-title">🧠 בוחן יומי</div>
+          <div class="quiz-sub">על הקטע שמוצג</div>
+        </div>
+        <div class="quiz-score" id="daily-quiz-score">0/0</div>
+      </div>
+      <button class="quiz-start-btn" id="daily-quiz-start">▶ התחל שאלון</button>
+      <div id="daily-quiz-content" style="display:none"></div>
+    </div>
+
+    <div class="quiz-card">
+      <div class="quiz-header">
+        <div>
+          <div class="quiz-title">📚 בוחן מצטבר</div>
+          <div class="quiz-sub">מכל קטעי ההיסטוריה עד היום</div>
+        </div>
+        <div class="quiz-score" id="general-quiz-score">0/0</div>
+      </div>
+      <button class="quiz-start-btn" id="general-quiz-start">▶ התחל מבחן מצטבר</button>
+      <div id="general-quiz-content" style="display:none"></div>
+      <div id="general-quiz-analysis" class="quiz-analysis" style="display:none"></div>
+    </div>
+
+    <div class="read-section">
+      <div class="read-checkbox-row" id="read-toggle" role="checkbox" aria-checked="false" tabindex="0">
+        <div class="read-checkbox" id="read-checkbox"></div>
+        <div>
+          <div class="read-label" id="read-label">קראתי את הקטע של היום</div>
+          <div class="read-sub">קטע היסטוריה חדש מתפרסם כל בוקר</div>
+          <div class="streak-badge zero" id="streak-badge"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="archive-card">
+      <div class="archive-title">🗂 ארכיון הרובריקה</div>
+      <div id="archive-list"></div>
+    </div>
+
+  </div>
+
+  <div class="footer">רובריקת היסטוריה · מתעדכנת יומית על-ידי המנטור ההיסטורי-פוליטי<br>כל טענה מסווגת: <span class="claim fact">עובדה</span><span class="claim interp">פרשנות</span><span class="claim value">ערכי</span> · מקורות מדורגים A–D</div>
+</div>
+
+<script src="history-data.js"></script>
+<script>
+(function () {
+  const PIECES = Array.isArray(window.HISTORY_PIECES) ? window.HISTORY_PIECES : [];
+  const $ = (id) => document.getElementById(id);
+
+  // Local calendar date (Israel), not UTC — the piece of "today" is the morning's piece.
+  const now = new Date();
+  const pad = (n) => String(n).padStart(2, '0');
+  const todayStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  $('header-date').textContent = now.toLocaleDateString('he-IL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+  const heDate = (iso) => {
+    const [y, m, d] = iso.split('-').map(Number);
+    return new Date(y, m - 1, d).toLocaleDateString('he-IL', { day: 'numeric', month: 'long', year: 'numeric' });
+  };
+
+  if (!PIECES.length) {
+    $('content').innerHTML = '<div class="empty">עדיין אין קטעים ברובריקה.</div>';
+    return;
+  }
+
+  // ── storage (same origin as the other apps: keys are prefixed) ──
+  const store = {
+    get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } },
+    set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+    keys() { try { return Object.keys(localStorage); } catch { return []; } }
+  };
+
+  let current = 0;
+
+  function renderPiece(i) {
+    current = i;
+    const p = PIECES[i];
+    $('dyk-text').innerHTML = p.dyk ? p.dyk.html : '';
+    $('dyk-source').textContent = p.dyk ? p.dyk.source : '';
+    $('article-tag').textContent = `${p.typeNo ? p.typeNo + ' · ' : ''}${p.type}`;
+    $('article-title').textContent = p.title;
+    $('article-topics').textContent = p.topics || '';
+    $('reading-time').textContent = p.readingTime || '';
+    $('article-date').textContent = heDate(p.date);
+    $('article-body').innerHTML = p.body;
+    $('archive-notice').style.display = i === 0 ? 'none' : 'block';
+
+    const src = $('article-sources');
+    src.innerHTML = '';
+    (p.sources || []).forEach((g) => {
+      const h = document.createElement('div');
+      h.className = 'source-grade';
+      h.textContent = g.grade;
+      src.appendChild(h);
+      g.items.forEach((html) => {
+        const it = document.createElement('div');
+        it.className = 'source-item';
+        it.innerHTML = html;
+        src.appendChild(it);
+      });
+    });
+
+    // reset quizzes for the shown piece
+    $('daily-quiz-content').style.display = 'none';
+    $('daily-quiz-start').textContent = '▶ התחל שאלון';
+    $('daily-quiz-score').textContent = `0/${(p.quiz || []).length}`;
+    renderArchive();
+  }
+
+  function renderArchive() {
+    const list = $('archive-list');
+    list.innerHTML = '';
+    PIECES.forEach((p, i) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'archive-item' + (i === current ? ' current' : '');
+      b.innerHTML = `<div class="archive-item-meta"></div><div class="archive-item-title"></div>`;
+      b.firstChild.textContent = `${heDate(p.date)} · ${p.type}`;
+      b.lastChild.textContent = p.title;
+      b.onclick = () => { renderPiece(i); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+      list.appendChild(b);
+    });
+  }
+  $('back-to-today').onclick = () => { renderPiece(0); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+
+  // ── read state + streak ──
+  const READ_PREFIX = 'history_read_';
+  function readDates() {
+    const s = new Set();
+    store.keys().forEach((k) => {
+      if (k.startsWith(READ_PREFIX)) { const d = store.get(k); if (d && d.status === 'READ') s.add(k.slice(READ_PREFIX.length)); }
+    });
+    return s;
+  }
+  function streak() {
+    const dates = readDates();
+    const c = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const iso = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    if (!dates.has(iso(c))) c.setDate(c.getDate() - 1);
+    let n = 0;
+    while (dates.has(iso(c))) { n++; c.setDate(c.getDate() - 1); }
+    return n;
+  }
+  function renderRead() {
+    const r = store.get(READ_PREFIX + todayStr);
+    const isRead = !!(r && r.status === 'READ');
+    $('read-checkbox').className = 'read-checkbox' + (isRead ? ' checked' : '');
+    $('read-checkbox').textContent = isRead ? '✓' : '';
+    $('read-label').className = 'read-label' + (isRead ? ' checked' : '');
+    $('read-label').textContent = isRead ? 'קראתי — קטע חדש מחר ✓' : 'קראתי את הקטע של היום';
+    $('read-toggle').setAttribute('aria-checked', String(isRead));
+    const n = streak();
+    $('streak-badge').textContent = n > 0 ? `🔥 רצף: ${n} ${n === 1 ? 'יום' : 'ימים'}` : '— אין רצף פעיל כרגע';
+    $('streak-badge').className = 'streak-badge' + (n > 0 ? '' : ' zero');
+  }
+  function toggleRead() {
+    const r = store.get(READ_PREFIX + todayStr);
+    const next = !(r && r.status === 'READ');
+    store.set(READ_PREFIX + todayStr, { status: next ? 'READ' : 'UNREAD', date: todayStr, pieceId: PIECES[0].id });
+    renderRead();
+  }
+  $('read-toggle').addEventListener('click', toggleRead);
+  $('read-toggle').addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleRead(); } });
+
+  // ── quiz engine (same mechanics as the health page) ──
+  function shuffle(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+    return a;
+  }
+  function shuffleOptions(item) {
+    const order = shuffle(item.options.map((_, i) => i));
+    return { ...item, options: order.map((i) => item.options[i]), correct: order.indexOf(item.correct) };
+  }
+  function renderQuiz(contentId, scoreId, source, analysisId) {
+    const box = $(contentId), scoreEl = $(scoreId), analysis = analysisId ? $(analysisId) : null;
+    if (analysis) { analysis.style.display = 'none'; analysis.innerHTML = ''; }
+    const qs = shuffle(source).map(shuffleOptions);
+    box.innerHTML = ''; box.style.display = 'block';
+    let answered = 0, right = 0;
+    const tally = {};
+    scoreEl.textContent = `0/${qs.length}`;
+    qs.forEach((item, qi) => {
+      const block = document.createElement('div'); block.className = 'quiz-q-block';
+      const qt = document.createElement('div'); qt.className = 'quiz-q-text'; qt.textContent = `${qi + 1}. ${item.q}`;
+      const wrap = document.createElement('div'); wrap.className = 'quiz-options';
+      const ex = document.createElement('div'); ex.className = 'quiz-explain'; ex.style.display = 'none'; ex.textContent = item.explain || '';
+      item.options.forEach((txt, oi) => {
+        const b = document.createElement('button'); b.className = 'quiz-option'; b.textContent = txt;
+        b.onclick = () => {
+          if (b.classList.contains('locked')) return;
+          wrap.querySelectorAll('.quiz-option').forEach((x) => x.classList.add('disabled', 'locked'));
+          const t = item.topic || 'כללי';
+          tally[t] = tally[t] || { c: 0, n: 0 }; tally[t].n++;
+          if (oi === item.correct) { b.classList.add('correct'); right++; tally[t].c++; }
+          else { b.classList.add('incorrect'); wrap.children[item.correct].classList.add('correct'); }
+          answered++; scoreEl.textContent = `${right}/${qs.length}`; ex.style.display = 'block';
+          if (analysis && answered === qs.length) {
+            analysis.innerHTML = '<div class="quiz-analysis-title">📊 ניתוח לפי נושא</div>';
+            Object.entries(tally).forEach(([name, s]) => {
+              const pct = s.c / s.n, cls = pct >= 0.8 ? 'good' : pct >= 0.5 ? 'mid' : 'bad';
+              const row = document.createElement('div'); row.className = 'topic-row';
+              row.innerHTML = '<span class="topic-name"></span><span class="topic-score ' + cls + '"></span>';
+              row.firstChild.textContent = name; row.lastChild.textContent = `${s.c}/${s.n}`;
+              analysis.appendChild(row);
+            });
+            analysis.style.display = 'block';
+          }
+        };
+        wrap.appendChild(b);
+      });
+      block.append(qt, wrap, ex); box.appendChild(block);
+    });
+  }
+  const allQuestions = () => PIECES.flatMap((p) => p.quiz || []);
+  $('general-quiz-score').textContent = `0/${allQuestions().length}`;
+  $('daily-quiz-start').addEventListener('click', (e) => {
+    e.target.textContent = '🔄 ערבב ותתחיל מחדש';
+    renderQuiz('daily-quiz-content', 'daily-quiz-score', PIECES[current].quiz || []);
+  });
+  $('general-quiz-start').addEventListener('click', (e) => {
+    e.target.textContent = '🔄 ערבב ותתחיל מחדש';
+    renderQuiz('general-quiz-content', 'general-quiz-score', allQuestions(), 'general-quiz-analysis');
+  });
+
+  renderPiece(0);
+  renderRead();
+})();
+</script>
+</body>
+</html>
